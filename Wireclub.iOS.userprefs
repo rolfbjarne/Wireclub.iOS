@@ -1,0 +1,20 @@
+﻿<Properties>
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug|iPhoneSimulator" PreferredExecutionTarget="MonoDevelop.IPhone.IPhoneSimulatorTarget.IPhoneRetina.7.0" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="Views/HomeViewController.cs">
+    <Files>
+      <File FileName="Wireclub.iOS/AppDelegate.fs" Line="1" Column="1" />
+      <File FileName="Wireclub.iOS/Wireclub_iOSViewController.fs" Line="1" Column="1" />
+      <File FileName="Views/MainViewController.cs" Line="1" Column="1" />
+      <File FileName="Views/MainViewController.designer.cs" Line="1" Column="1" />
+      <File FileName="Views/HomeViewController.cs" Line="21" Column="3" />
+      <File FileName="Views/HomeViewController.designer.cs" Line="1" Column="1" />
+      <File FileName="Views/Main.storyboard" Line="1" Column="1" />
+      <File FileName="../../wireclub.android/Wireclub.AppClient/Resources/Resource.designer.fs" Line="1" Column="1" />
+      <File FileName="../../wireclub.android/Wireclub.AppClient/Api.fs" Line="1" Column="1" />
+    </Files>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+</Properties>
