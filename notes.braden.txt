@@ -1,10 +1,11 @@
 
 TODO
+
 - FriendsViewController
 	- Compute size of friend data for large (10k+) friend lists
 - PrivateChatViewController
 	- Figure out a better way to handle loading the webview (and errors)
-	- Keyboard resize bug
 - ChatIndexViewController
 - ChatDirectoryViewController
 - DialogViewController
+- Toast: https://github.com/ecstasy2/toast-notifications-ios

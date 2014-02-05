@@ -13,13 +13,29 @@ namespace Views
 	partial class PrivateChatSessionViewController
 	{
 		[Outlet]
+		MonoTouch.UIKit.UIButton SendButton { get; set; }
+
+		[Outlet]
+		MonoTouch.UIKit.UITextField Text { get; set; }
+
+		[Outlet]
 		MonoTouch.UIKit.UIWebView WebView { get; set; }
 		
 		void ReleaseDesignerOutlets ()
-		{			
+		{
 			if (WebView != null) {
 				WebView.Dispose ();
 				WebView = null;
+			}
+
+			if (SendButton != null) {
+				SendButton.Dispose ();
+				SendButton = null;
+			}
+
+			if (Text != null) {
+				Text.Dispose ();
+				Text = null;
 			}
 		}
 	}

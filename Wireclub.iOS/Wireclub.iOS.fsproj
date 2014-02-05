@@ -113,7 +113,9 @@
     <None Include="Info.plist" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Utility.fs" />
     <Compile Include="Dialog.fs" />
+    <Compile Include="Chat.fs" />
     <Compile Include="HomeViewController.fs" />
     <Compile Include="AppDelegate.fs" />
   </ItemGroup>

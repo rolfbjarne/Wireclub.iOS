@@ -2,8 +2,8 @@ namespace Wireclub.iOS
 
 open MonoTouch.Foundation
 open MonoTouch.UIKit
-
-
+open Wireclub.Boundary
+open Wireclub.Boundary.Chat
 
 [<Register ("LoginViewController")>]
 type LoginViewController () =
@@ -22,24 +22,19 @@ type LoginViewController () =
         base.ViewDidLoad ()
 
         this.LoginButton.TouchUpInside.Add(fun _ ->
-            NSUserDefaults.StandardUserDefaults.SetString(this.Email.Text, "email")
-            NSUserDefaults.StandardUserDefaults.SetString(this.Password.Text, "password")
-            NSUserDefaults.StandardUserDefaults.Synchronize() |> ignore
-            this.DismissViewController(true, null)
 
-            (*
             // ## Disable UI
             // ## Progress
             Async.StartImmediate <| async {
                 let! result = Account.login this.Email.Text this.Password.Text
                 match result with
                 | Api.ApiOk result ->
-                    NSUserDefaults.StandardUserDefaults.SetString("email", this.Email.Text)
-                    NSUserDefaults.StandardUserDefaults.SetString("password", this.Password.Text)
+                    NSUserDefaults.StandardUserDefaults.SetString (this.Email.Text, "email")
+                    NSUserDefaults.StandardUserDefaults.SetString (this.Password.Text, "password")
+                    NSUserDefaults.StandardUserDefaults.Synchronize () |> ignore
                     this.DismissViewController(true, null)
                 | _ -> ()
-            }*)
-
+            }
         )
 
 [<Register ("HomeViewController")>]
@@ -72,31 +67,127 @@ type ChatMessage = {
 
 
 [<Register("PrivateChatSessionViewController")>]
-type PrivateChatSessionViewController (user:Wireclub.Boundary.Chat.PrivateChatFriend) =
+type PrivateChatSessionViewController (user:Wireclub.Boundary.Chat.PrivateChatFriend) as this =
     inherit UIViewController ()
+
+    let events = System.Collections.Generic.HashSet<int64>()
+
+    let scrollToBottom () =
+        this.WebView.EvaluateJavascript 
+            (sprintf "window.scrollBy(0, %i);" 
+                (int (this.WebView.EvaluateJavascript "document.body.offsetHeight;"))) |> ignore
+
+    let addMessage id slug avatar color font message sequence =
+        if events.Add sequence then
+            this.WebView.EvaluateJavascript(sprintf "wireclub.Mobile.addMessage(%s)" (Newtonsoft.Json.JsonConvert.SerializeObject {
+                Current = Api.userId
+                NavigateUrl = Api.baseUrl
+                ContentUrl = Api.baseUrl
+                Id = id
+                Slug = slug
+                Avatar = avatar
+                Color = color
+                Font = string font
+                Message = message
+                Sequence = sequence
+            })) |> ignore
+            scrollToBottom ()
+
+    let sendMessage (identity:Models.User) session context text =
+        match text with
+        | "" -> ()
+        | _ ->
+            Async.StartImmediate (async {
+                let! response = PrivateChat.send session.UserId text
+                do! Async.SwitchToContext context
+                match this.HandleApiResult response with
+                | Api.ApiOk response -> 
+                    this.Text.Text <- ""
+                    addMessage identity.Id identity.Slug identity.Avatar "" 0 response.Feedback response.Sequence
+                | error -> this.HandleApiFailure error
+            })
+
+    let placeKeyboard (sender:obj) (args:UIKeyboardEventArgs) =
+        UIView.BeginAnimations ("")
+        UIView.SetAnimationCurve (args.AnimationCurve);
+        UIView.SetAnimationDuration (args.AnimationDuration);
+        let mutable viewFrame = this.View.Frame;
+        let endRelative = this.View.ConvertRectFromView (args.FrameEnd, null);
+        viewFrame.Height <- endRelative.Y;
+        this.View.Frame <- viewFrame;
+        UIView.CommitAnimations ()
+        scrollToBottom()
+        
+
+    let showObserver = UIKeyboard.Notifications.ObserveWillShow(System.EventHandler<UIKeyboardEventArgs>(placeKeyboard))
+    let hideObserver = UIKeyboard.Notifications.ObserveWillHide(System.EventHandler<UIKeyboardEventArgs>(placeKeyboard))
 
     [<Outlet>]
     member val WebView: UIWebView = null with get, set
 
-    override this.ViewDidLoad () =
-        this.NavigationItem.Title <- user.Name
-        this.WebView.LoadRequest(new NSUrlRequest(new NSUrl("http://dev.wireclub.com/mobile/chat")))
-        this.WebView.LoadFinished.Add(fun _ ->
-            this.WebView.EvaluateJavascript(sprintf "wireclub.Mobile.addMessage(%s)" (Newtonsoft.Json.JsonConvert.SerializeObject {
-                        Current = "ahh"
-                        NavigateUrl = Api.baseUrl
-                        ContentUrl = Api.baseUrl
+    [<Outlet>]
+    member val SendButton: UIButton = null with get, set
 
-                        Id = "ahhh"
-                        Slug = "ahh"
-                        Avatar = "ahhAHHh"
-                        Color = "ahhhH"
-                        Font = string 1
-                        Message = "WHAT UP"
-                        Sequence = 0L
-                    })) |> ignore
-            ()
+    [<Outlet>]
+    member val Text: UITextField = null with get, set
+
+    override this.ViewDidLoad () =
+        //this.NavigationItem.BackBarButtonItem.Title <- "Chats"
+        this.NavigationItem.Title <- user.Name
+        this.WebView.LoadRequest(new NSUrlRequest(new NSUrl(Api.baseUrl + "/mobile/chat")))
+        this.WebView.LoadFinished.Add(fun _ ->
+            Async.StartImmediate <| async {
+                let context = System.Threading.SynchronizationContext.Current
+
+                // HAX HAX HAX
+                let! identity = Account.identity ()
+                let identity = 
+                    match identity with
+                    | Api.ApiOk identity -> identity
+                    | _ -> failwith "API ERROR"
+
+                let! session = PrivateChat.session user.Id
+                match session with
+                | Api.ApiOk session ->
+                    let processor = new MailboxProcessor<ChannelEvent>(fun inbox ->
+                        let rec loop () = async {
+                            let! event = inbox.Receive()
+                            do! Async.SwitchToContext context
+                            match event with
+                            | { User = user } when user <> session.UserId  -> ()
+                            | { Event = PrivateMessage (color, font, message) } ->
+                                addMessage session.UserId "??SLUG??" session.PartnerAvatarId color font message event.Sequence
+                            | { Event = PrivateMessageSent (color, font, message) } ->
+                                addMessage Api.userId identity.Slug identity.Avatar color font message event.Sequence
+                            | _ -> ()
+
+                            return! loop ()
+                        }
+
+                        loop ()
+                    )
+
+                    processor.Start()
+                    ChannelClient.handlers.TryAdd(Api.userId, processor) |> ignore
+
+                    // Send message
+                    this.Text.ShouldReturn <- (fun _ ->
+                        sendMessage identity session context this.Text.Text
+                        false
+                    )
+                    this.SendButton.TouchUpInside.Add(fun args ->
+                        sendMessage identity session context this.Text.Text
+                    )
+
+                | _ -> failwith "API FAIL"
+            }
         )
+
+    override this.ViewDidDisappear (animated) =
+        if this.IsMovingToParentViewController then
+            showObserver.Dispose ()
+            hideObserver.Dispose ()
+
 
 [<Register("FriendsViewController")>]
 type FriendsViewController () =
@@ -147,16 +238,28 @@ type EntryViewController () =
         base.ViewDidLoad ()
 
     override this.ViewDidAppear (animated) =
-        match NSUserDefaults.StandardUserDefaults.StringForKey "password" with
-        | null -> 
+        // When the user is authenticated start the channel client and push the main app controller
+        let proceed () =
+            ChannelClient.init ()
+            navigationController.PushViewController(rootController, false)
+            this.PresentViewController (navigationController, true, null)
+
+        let defaults = NSUserDefaults.StandardUserDefaults
+
+        match defaults.StringForKey "email", defaults.StringForKey "password", System.String.IsNullOrEmpty Api.userId with
+        // User has not entered an account
+        | null, null, _ -> 
             this.PresentViewController (new LoginViewController(), false, null)
-        | _ ->
-            this.PresentViewController (new DialogViewController("http://www.wireclub.com/account/login"), false, null)
-            (*
+        // User has an account but has not authenticated with the api
+        | email, password, true -> 
             Async.StartImmediate <| async {
-                // Check login is valid....
-                do! Async.Sleep (1000) // ### REMOVE
-                this.PresentViewController (rootController, true, null)
-                navigationController.PushViewController (rootController, false)
-            }*)
+                let! loginResult = Account.login email password
+                match loginResult with
+                | Api.ApiOk identity -> proceed ()
+                | _ -> this.PresentViewController (new LoginViewController(), true, null)
+            }
+        // User is fully authenticated already
+        | _, _, false -> proceed ()
+            
+                                  
         

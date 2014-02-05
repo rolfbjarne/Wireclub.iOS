@@ -10,7 +10,7 @@ type AppDelegate () =
     inherit UIApplicationDelegate ()
 
     let window = new UIWindow (UIScreen.MainScreen.Bounds)
-
+    
     override this.FinishedLaunching (app, options) =
         window.RootViewController <- new EntryViewController()
         window.MakeKeyAndVisible ()
