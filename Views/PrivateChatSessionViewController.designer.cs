@@ -9,12 +9,18 @@ using System.CodeDom.Compiler;
 
 namespace Views
 {
-	[Register ("MainViewController")]
-	partial class MainViewController
+	[Register ("PrivateChatSessionViewController")]
+	partial class PrivateChatSessionViewController
 	{
+		[Outlet]
+		MonoTouch.UIKit.UIWebView WebView { get; set; }
 		
 		void ReleaseDesignerOutlets ()
-		{
+		{			
+			if (WebView != null) {
+				WebView.Dispose ();
+				WebView = null;
+			}
 		}
 	}
 }

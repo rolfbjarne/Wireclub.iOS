@@ -41,20 +41,32 @@
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
-    <InterfaceDefinition Include="Main.storyboard" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="MainViewController.cs" />
-    <Compile Include="MainViewController.designer.cs">
-      <DependentUpon>MainViewController.cs</DependentUpon>
-    </Compile>
-    <Compile Include="HomeViewController.cs" />
-    <Compile Include="HomeViewController.designer.cs">
-      <DependentUpon>HomeViewController.cs</DependentUpon>
-    </Compile>
     <Compile Include="LoginViewController.cs" />
     <Compile Include="LoginViewController.designer.cs">
       <DependentUpon>LoginViewController.cs</DependentUpon>
     </Compile>
+    <Compile Include="FriendsViewController.cs" />
+    <Compile Include="FriendsViewController.designer.cs">
+      <DependentUpon>FriendsViewController.cs</DependentUpon>
+    </Compile>
+    <Compile Include="PrivateChatSessionViewController.cs" />
+    <Compile Include="PrivateChatSessionViewController.designer.cs">
+      <DependentUpon>PrivateChatSessionViewController.cs</DependentUpon>
+    </Compile>
+    <Compile Include="EntryViewController.cs" />
+    <Compile Include="EntryViewController.designer.cs">
+      <DependentUpon>EntryViewController.cs</DependentUpon>
+    </Compile>
+    <Compile Include="DialogViewController.cs" />
+    <Compile Include="DialogViewController.designer.cs">
+      <DependentUpon>DialogViewController.cs</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <InterfaceDefinition Include="LoginViewController.xib" />
+    <InterfaceDefinition Include="FriendsViewController.xib" />
+    <InterfaceDefinition Include="PrivateChatSessionViewController.xib" />
+    <InterfaceDefinition Include="EntryViewController.xib" />
+    <InterfaceDefinition Include="DialogViewController.xib" />
   </ItemGroup>
 </Project>

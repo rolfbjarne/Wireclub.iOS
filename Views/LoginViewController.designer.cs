@@ -12,9 +12,31 @@ namespace Views
 	[Register ("LoginViewController")]
 	partial class LoginViewController
 	{
+		[Outlet]
+		MonoTouch.UIKit.UITextField Email { get; set; }
+
+		[Outlet]
+		MonoTouch.UIKit.UIButton LoginButton { get; set; }
+
+		[Outlet]
+		MonoTouch.UIKit.UITextField Password { get; set; }
 		
 		void ReleaseDesignerOutlets ()
 		{
+			if (Email != null) {
+				Email.Dispose ();
+				Email = null;
+			}
+
+			if (Password != null) {
+				Password.Dispose ();
+				Password = null;
+			}
+
+			if (LoginButton != null) {
+				LoginButton.Dispose ();
+				LoginButton = null;
+			}
 		}
 	}
 }

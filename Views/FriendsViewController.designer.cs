@@ -9,25 +9,17 @@ using System.CodeDom.Compiler;
 
 namespace Views
 {
-	[Register ("HomeViewController")]
-	partial class HomeViewController
+	[Register ("FriendsViewController")]
+	partial class FriendsViewController
 	{
 		[Outlet]
-		MonoTouch.UIKit.UIButton Button { get; set; }
-
-		[Outlet]
-		MonoTouch.UIKit.UIButton Button2 { get; set; }
+		MonoTouch.UIKit.UITableView Table { get; set; }
 		
 		void ReleaseDesignerOutlets ()
 		{
-			if (Button != null) {
-				Button.Dispose ();
-				Button = null;
-			}
-
-			if (Button2 != null) {
-				Button2.Dispose ();
-				Button2 = null;
+			if (Table != null) {
+				Table.Dispose ();
+				Table = null;
 			}
 		}
 	}

@@ -5,9 +5,9 @@ using MonoTouch.UIKit;
 
 namespace Views
 {
-	public partial class LoginViewController : UIViewController
+	public partial class EntryViewController : UIViewController
 	{
-		public LoginViewController () : base ("LoginViewController", null)
+		public EntryViewController () : base ("EntryViewController", null)
 		{
 		}
 

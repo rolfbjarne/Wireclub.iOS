@@ -5,9 +5,9 @@ using MonoTouch.UIKit;
 
 namespace Views
 {
-	public partial class LoginViewController : UIViewController
+	public partial class PrivateChatSessionViewController : UIViewController
 	{
-		public LoginViewController () : base ("LoginViewController", null)
+		public PrivateChatSessionViewController () : base ("PrivateChatSessionViewController", null)
 		{
 		}
 
@@ -27,4 +27,3 @@ namespace Views
 		}
 	}
 }
-
