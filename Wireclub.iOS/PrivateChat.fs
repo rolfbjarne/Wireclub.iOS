@@ -5,51 +5,6 @@ open MonoTouch.UIKit
 open Wireclub.Boundary
 open Wireclub.Boundary.Chat
 
-[<Register ("LoginViewController")>]
-type LoginViewController () =
-    inherit UIViewController ()
-
-    [<Outlet>]
-    member val Email: UITextField = null with get, set
-    [<Outlet>]
-    member val Password: UITextField = null with get, set
-    //[<Outlet>]
-    //member val ForgotPasswordButton: UIButton = null with get, set
-    [<Outlet>]
-    member val LoginButton: UIButton = null with get, set
-
-    override this.ViewDidLoad () =
-        base.ViewDidLoad ()
-
-        this.LoginButton.TouchUpInside.Add(fun _ ->
-
-            // ## Disable UI
-            // ## Progress
-            Async.StartImmediate <| async {
-                let! result = Account.login this.Email.Text this.Password.Text
-                match result with
-                | Api.ApiOk result ->
-                    NSUserDefaults.StandardUserDefaults.SetString (this.Email.Text, "email")
-                    NSUserDefaults.StandardUserDefaults.SetString (this.Password.Text, "password")
-                    NSUserDefaults.StandardUserDefaults.Synchronize () |> ignore
-                    this.DismissViewController(true, null)
-                | _ -> ()
-            }
-        )
-
-[<Register ("HomeViewController")>]
-type HomeViewController () =
-    inherit UIViewController ()
-    
-    [<Outlet>]
-    member val Button: UIButton = null with get, set
-
-    [<Outlet>]
-    member val Button2: UIButton = null with get, set
-
-    override this.ViewDidLoad () =
-        base.ViewDidLoad ()
-
 
 type ChatMessage = {
     Current:string
@@ -108,14 +63,7 @@ type PrivateChatSessionViewController (user:Wireclub.Boundary.Chat.PrivateChatFr
             })
 
     let placeKeyboard (sender:obj) (args:UIKeyboardEventArgs) =
-        UIView.BeginAnimations ("")
-        UIView.SetAnimationCurve (args.AnimationCurve);
-        UIView.SetAnimationDuration (args.AnimationDuration);
-        let mutable viewFrame = this.View.Frame;
-        let endRelative = this.View.ConvertRectFromView (args.FrameEnd, null);
-        viewFrame.Height <- endRelative.Y;
-        this.View.Frame <- viewFrame;
-        UIView.CommitAnimations ()
+        this.ResizeViewToKeyboard args
         scrollToBottom()
         
 
@@ -188,78 +136,3 @@ type PrivateChatSessionViewController (user:Wireclub.Boundary.Chat.PrivateChatFr
             showObserver.Dispose ()
             hideObserver.Dispose ()
 
-
-[<Register("FriendsViewController")>]
-type FriendsViewController () =
-    inherit UIViewController ()
-     
-    [<Outlet>]
-    member val Table: UITableView = null with get, set
-
-    override controller.ViewDidLoad () =
-        Async.StartImmediate <| async {
-            let! friends = PrivateChat.online()
-            match friends with
-            | Api.ApiOk friends ->
-                controller.Table.Source <- 
-                    { new UITableViewSource() with
-                        override this.GetCell(tableView, indexPath) =
-                            let cell = 
-                                match tableView.DequeueReusableCell "friend-cell" with
-                                | null -> new UITableViewCell()
-                                | c -> c
-                            
-                            cell.TextLabel.Text <- friends.Friends.[indexPath.Row].Name
-                            cell
-
-                        override this.RowsInSection(tableView, section) =
-                            friends.Friends.Length
-
-                        override this.RowSelected(tableView, indexPath) =
-                            controller.NavigationController.PushViewController(new PrivateChatSessionViewController(friends.Friends.[indexPath.Row]), true)
-                            
-                    }
-
-                controller.Table.ReloadData ()
-
-            | er -> printfn "Api Error: %A" er
-        }
-
-        base.ViewDidLoad ()
-
-[<Register ("EntryViewController")>]
-type EntryViewController () =
-    inherit UIViewController ()
-
-    let navigationController = new UINavigationController()
-    let rootController = new FriendsViewController()
-
-    override this.ViewDidLoad () =
-        base.ViewDidLoad ()
-
-    override this.ViewDidAppear (animated) =
-        // When the user is authenticated start the channel client and push the main app controller
-        let proceed () =
-            ChannelClient.init ()
-            navigationController.PushViewController(rootController, false)
-            this.PresentViewController (navigationController, true, null)
-
-        let defaults = NSUserDefaults.StandardUserDefaults
-
-        match defaults.StringForKey "email", defaults.StringForKey "password", System.String.IsNullOrEmpty Api.userId with
-        // User has not entered an account
-        | null, null, _ -> 
-            this.PresentViewController (new LoginViewController(), false, null)
-        // User has an account but has not authenticated with the api
-        | email, password, true -> 
-            Async.StartImmediate <| async {
-                let! loginResult = Account.login email password
-                match loginResult with
-                | Api.ApiOk identity -> proceed ()
-                | _ -> this.PresentViewController (new LoginViewController(), true, null)
-            }
-        // User is fully authenticated already
-        | _, _, false -> proceed ()
-            
-                                  
-        

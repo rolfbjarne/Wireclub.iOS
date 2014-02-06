@@ -115,8 +115,9 @@
   <ItemGroup>
     <Compile Include="Utility.fs" />
     <Compile Include="Dialog.fs" />
+    <Compile Include="PrivateChat.fs" />
     <Compile Include="Chat.fs" />
-    <Compile Include="HomeViewController.fs" />
+    <Compile Include="Home.fs" />
     <Compile Include="AppDelegate.fs" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" />
@@ -145,6 +146,12 @@
     </InterfaceDefinition>
     <InterfaceDefinition Include="..\Views\DialogViewController.xib">
       <Link>Resources\DialogViewController.xib</Link>
+    </InterfaceDefinition>
+    <InterfaceDefinition Include="..\Views\HomeViewController.xib">
+      <Link>Resources\HomeViewController.xib</Link>
+    </InterfaceDefinition>
+    <InterfaceDefinition Include="..\Views\ChatDirectoryViewController.xib">
+      <Link>Resources\ChatDirectoryViewController.xib</Link>
     </InterfaceDefinition>
   </ItemGroup>
 </Project>

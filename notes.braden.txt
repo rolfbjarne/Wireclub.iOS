@@ -1,6 +1,10 @@
 
 TODO
-
+- Chat
+	.directory
+	.join
+	.leave
+- Make ChannelClient/API use some common configuration file
 - FriendsViewController
 	- Compute size of friend data for large (10k+) friend lists
 - PrivateChatViewController
@@ -9,3 +13,6 @@ TODO
 - ChatDirectoryViewController
 - DialogViewController
 - Toast: https://github.com/ecstasy2/toast-notifications-ios
+- Images on table view cells
+- Remove channel handlers
+- Cache session controllers

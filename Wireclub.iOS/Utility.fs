@@ -18,3 +18,14 @@ module Utility =
             | Api.ApiOk _ -> ()
             | _ ->
                 printfn "Api Failure: %A" result
+
+
+        member this.ResizeViewToKeyboard (args:UIKeyboardEventArgs) =
+            UIView.BeginAnimations ("")
+            UIView.SetAnimationCurve (args.AnimationCurve);
+            UIView.SetAnimationDuration (args.AnimationDuration);
+            let mutable viewFrame = this.View.Frame;
+            let endRelative = this.View.ConvertRectFromView (args.FrameEnd, null);
+            viewFrame.Height <- endRelative.Y;
+            this.View.Frame <- viewFrame;
+            UIView.CommitAnimations ()

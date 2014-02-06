@@ -36,9 +36,6 @@
     <Reference Include="System.Core" />
     <Reference Include="monotouch" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Resources\" />
-  </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
     <Compile Include="LoginViewController.cs" />
@@ -61,6 +58,18 @@
     <Compile Include="DialogViewController.designer.cs">
       <DependentUpon>DialogViewController.cs</DependentUpon>
     </Compile>
+    <Compile Include="HomeViewController.cs" />
+    <Compile Include="HomeViewController.designer.cs">
+      <DependentUpon>HomeViewController.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ChatDirectoryViewController.cs" />
+    <Compile Include="ChatDirectoryViewController.designer.cs">
+      <DependentUpon>ChatDirectoryViewController.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ChatRoomViewController.cs" />
+    <Compile Include="ChatRoomViewController.designer.cs">
+      <DependentUpon>ChatRoomViewController.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <InterfaceDefinition Include="LoginViewController.xib" />
@@ -68,5 +77,8 @@
     <InterfaceDefinition Include="PrivateChatSessionViewController.xib" />
     <InterfaceDefinition Include="EntryViewController.xib" />
     <InterfaceDefinition Include="DialogViewController.xib" />
+    <InterfaceDefinition Include="HomeViewController.xib" />
+    <InterfaceDefinition Include="ChatDirectoryViewController.xib" />
+    <InterfaceDefinition Include="ChatRoomViewController.xib" />
   </ItemGroup>
 </Project>

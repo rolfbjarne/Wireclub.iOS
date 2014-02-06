@@ -2,15 +2,16 @@
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug|iPhoneSimulator" PreferredExecutionTarget="MonoDevelop.IPhone.IPhoneSimulatorTarget.IPhoneRetina.7.0" />
   <MonoDevelop.Ide.Workbench ActiveDocument="Wireclub.iOS/HomeViewController.fs">
     <Files>
-      <File FileName="../../wireclub.android/Wireclub.AppClient/Api.fs" Line="1" Column="1" />
-      <File FileName="../../wireclub.android/Wireclub.AppClient/Channel.fs" Line="1" Column="1" />
-      <File FileName="Wireclub.iOS/AppDelegate.fs" Line="22" Column="1" />
-      <File FileName="Wireclub.iOS/HomeViewController.fs" Line="101" Column="5" />
-      <File FileName="notes.braden.txt" Line="12" Column="10" />
+      <File FileName="../../wireclub.android/Wireclub.AppClient/Api.fs" Line="30" Column="17" />
+      <File FileName="../../wireclub.android/Wireclub.AppClient/Channel.fs" Line="81" Column="5" />
+      <File FileName="Wireclub.iOS/AppDelegate.fs" Line="1" Column="1" />
+      <File FileName="Wireclub.iOS/HomeViewController.fs" Line="233" Column="9" />
+      <File FileName="notes.braden.txt" Line="3" Column="60" />
       <File FileName="Wireclub.iOS/Chat.fs" Line="1" Column="1" />
-      <File FileName="Wireclub.iOS/Utility.fs" Line="21" Column="1" />
+      <File FileName="Wireclub.iOS/Utility.fs" Line="1" Column="1" />
       <File FileName="../../wireclub.android/Wireclub.AppClient/Account.fs" Line="1" Column="1" />
       <File FileName="../../wireclub.android/Wireclub.AppClient/Routes.fs" Line="1" Column="1" />
+      <File FileName="Views/HomeViewController.cs" Line="1" Column="1" />
     </Files>
     <Pads>
       <Pad Id="ProjectPad">
@@ -22,11 +23,6 @@
           <Node name="Wireclub.iOS" expanded="True">
             <Node name="HomeViewController.fs" selected="True" />
           </Node>
-        </State>
-      </Pad>
-      <Pad Id="MonoDevelop.Debugger.WatchPad">
-        <State>
-          <Value>session</Value>
         </State>
       </Pad>
     </Pads>
