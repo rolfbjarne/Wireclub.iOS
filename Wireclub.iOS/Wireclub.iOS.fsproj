@@ -153,5 +153,8 @@
     <InterfaceDefinition Include="..\Views\ChatDirectoryViewController.xib">
       <Link>Resources\ChatDirectoryViewController.xib</Link>
     </InterfaceDefinition>
+    <InterfaceDefinition Include="..\Views\ChatRoomUsersViewController.xib">
+      <Link>Resources\ChatRoomUsersViewController.xib</Link>
+    </InterfaceDefinition>
   </ItemGroup>
 </Project>

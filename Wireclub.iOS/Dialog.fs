@@ -16,3 +16,4 @@ type DialogViewController (url:string) =
         this.WebView.LoadFinished.Add(fun _ ->
             ()
         )
+        

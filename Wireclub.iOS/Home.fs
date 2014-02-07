@@ -86,9 +86,9 @@ type ChatDirectoryViewController() =
 
     override controller.ViewDidLoad () =
         Async.StartImmediate <| async {
-            let! rooms = Chat.directory ()
-            match rooms with
-            | Api.ApiOk rooms ->
+            let! directory = Chat.directory ()
+            match directory with
+            | Api.ApiOk directory ->
                 controller.Table.Source <- 
                     { new UITableViewSource() with
                         override this.GetCell(tableView, indexPath) =
@@ -97,14 +97,14 @@ type ChatDirectoryViewController() =
                                 | null -> new UITableViewCell()
                                 | c -> c
                             
-                            cell.TextLabel.Text <- rooms.[indexPath.Row].Name
+                            cell.TextLabel.Text <- directory.Official.[indexPath.Row].Name
                             cell
 
                         override this.RowsInSection(tableView, section) =
-                            rooms.Length
+                            directory.Official.Length
 
                         override this.RowSelected(tableView, indexPath) =
-                            controller.NavigationController.PushViewController(new ChatRoomViewController(rooms.[indexPath.Row]), true)
+                            controller.NavigationController.PushViewController(new ChatRoomViewController(directory.Official .[indexPath.Row]), true)
                             ()
                             
                     }

@@ -1,18 +1,25 @@
 
 TODO
-- Chat
-	.directory
-	.join
-	.leave
-- Make ChannelClient/API use some common configuration file
-- FriendsViewController
-	- Compute size of friend data for large (10k+) friend lists
-- PrivateChatViewController
-	- Figure out a better way to handle loading the webview (and errors)
-- ChatIndexViewController
-- ChatDirectoryViewController
-- DialogViewController
-- Toast: https://github.com/ecstasy2/toast-notifications-ios
-- Images on table view cells
-- Remove channel handlers
-- Cache session controllers
+
+	- Room user list controller
+	- Join / leave messages
+	- Notification messages
+	- Other critical message types?
+
+	- Make ChannelClient/API use some common configuration file
+	- Toast: https://github.com/ecstasy2/toast-notifications-ios
+	- Images on table view cells
+	- Remove channel handlers
+	- Cache session controllers
+	- Show presence information on friends list
+		- For now do not return friends who are not online (since you can't do anything with them)
+	- Mobile/chat page should handle scrolling
+	- Figure out loading remote images into table cells
+	- Session forwarding for WebViews
+
+
+	***
+	- Signup
+	- Forgot Password
+	- ViewProfile
+	- 

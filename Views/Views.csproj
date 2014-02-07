@@ -70,6 +70,10 @@
     <Compile Include="ChatRoomViewController.designer.cs">
       <DependentUpon>ChatRoomViewController.cs</DependentUpon>
     </Compile>
+    <Compile Include="ChatRoomUsersViewController.cs" />
+    <Compile Include="ChatRoomUsersViewController.designer.cs">
+      <DependentUpon>ChatRoomUsersViewController.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <InterfaceDefinition Include="LoginViewController.xib" />
@@ -80,5 +84,6 @@
     <InterfaceDefinition Include="HomeViewController.xib" />
     <InterfaceDefinition Include="ChatDirectoryViewController.xib" />
     <InterfaceDefinition Include="ChatRoomViewController.xib" />
+    <InterfaceDefinition Include="ChatRoomUsersViewController.xib" />
   </ItemGroup>
 </Project>
