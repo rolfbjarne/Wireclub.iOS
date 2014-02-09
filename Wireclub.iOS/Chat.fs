@@ -6,6 +6,7 @@ open MonoTouch.Foundation
 open MonoTouch.UIKit
 open Wireclub.Boundary
 open Wireclub.Boundary.Chat
+open ChannelEvent
 
 [<Register ("ChatRoomUsersViewController")>]
 type ChatRoomUsersViewController (users:ChatUser[]) =
@@ -127,7 +128,11 @@ type ChatRoomViewController (room:ChatDirectoryRoomViewModel) as this =
                             let! event = inbox.Receive()
                             let historic = event.Sequence < result.Sequence
                             do! Async.SwitchToContext context
+
                             match event with
+                            | { Event = Notification message } -> 
+                                addMessage "id" "slug" "avatar" "#000" 0 message event.Sequence
+
                             | { Event = Message (color, font, message); User = user } when (user <> identity.Id || historic) -> 
                                 let nameplate = 
                                     match users.TryGetValue event.User with
@@ -135,10 +140,12 @@ type ChatRoomViewController (room:ChatDirectoryRoomViewModel) as this =
                                     | _ -> sprintf "[%s]" event.User
 
                                 addMessage "id" "slug" "avatar" color font (sprintf "%s: %s" nameplate message) event.Sequence
+
                             | { Event = Join user } -> 
                                 if historic = false then
                                     addUser user
                                 addMessage "id" "slug" "avatar" "#000" 0 (sprintf "%s joined the room" user.Name) event.Sequence
+
                             | { Event = Leave user } -> 
                                 match users.TryGetValue event.User with
                                 | true, user -> 
@@ -146,7 +153,13 @@ type ChatRoomViewController (room:ChatDirectoryRoomViewModel) as this =
                                     if historic = false then
                                         users.TryRemove user.Id |> ignore
                                 | _ -> ()
-                                                                    
+                            
+                            | { Event = DisposableMessage } -> () // Does the app even need to handle this?
+                            | { Event = AddedModerator; User = user } when historic = false -> ()
+                            | { Event = RemovedModerator; User = user } when historic = false -> ()
+                            | { Event = Drink } -> ()
+                            | { Event = AcceptDrink } -> ()
+                            | { Event = Modifier } -> ()
                             | _ -> ()
 
                             return! loop ()

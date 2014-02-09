@@ -1,14 +1,10 @@
 
 TODO
+	- Use cancel buttons for create account / forgot pw (like fb settings)
 
-	- Room user list controller
-	- Join / leave messages
-	- Notification messages
-	- Other critical message types?
-
+	
 	- Make ChannelClient/API use some common configuration file
 	- Toast: https://github.com/ecstasy2/toast-notifications-ios
-	- Images on table view cells
 	- Remove channel handlers
 	- Cache session controllers
 	- Show presence information on friends list
@@ -16,7 +12,7 @@ TODO
 	- Mobile/chat page should handle scrolling
 	- Figure out loading remote images into table cells
 	- Session forwarding for WebViews
-
+	- Preference changes => NSUserDefaults
 
 	***
 	- Signup

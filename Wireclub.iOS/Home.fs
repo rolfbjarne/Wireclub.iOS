@@ -1,28 +1,86 @@
 namespace Wireclub.iOS
 
+open System
 open MonoTouch.Foundation
 open MonoTouch.UIKit
 open Wireclub.Boundary
 open Wireclub.Boundary.Chat
 
-[<Register ("LoginViewController")>]
-type LoginViewController () =
-    inherit UIViewController ()
+[<Register ("ForgotPasswordViewController")>]
+type ForgotPasswordViewController (handle:nativeint) =
+    inherit UITableViewController (handle)
+
+    [<Outlet>]
+    member val Email: UITextField = null with get, set
+    [<Outlet>]
+    member val SubmitButton: UIButton = null with get, set
+
+    override this.ViewDidLoad () =
+        this.NavigationItem.Title <- "Forgot Password"
+        this.NavigationItem.LeftBarButtonItem <- new UIBarButtonItem("Cancel", UIBarButtonItemStyle.Bordered, new EventHandler(fun (s:obj) (e:EventArgs) -> 
+            this.NavigationController.PopViewControllerAnimated (true) |> ignore
+        ))
+        this.SubmitButton.TouchUpInside.Add(fun _ ->
+            Async.StartImmediate <| async {
+                
+                // ## Send / Toast ...
+                this.DismissViewController (true, null)
+            }
+        )
+
+
+[<Register ("SignupViewController")>]
+type SignupViewController (handle:nativeint) =
+    inherit UITableViewController (handle)
 
     [<Outlet>]
     member val Email: UITextField = null with get, set
     [<Outlet>]
     member val Password: UITextField = null with get, set
-    //[<Outlet>]
-    //member val ForgotPasswordButton: UIButton = null with get, set
+    [<Outlet>]
+    member val SignupButton: UIButton = null with get, set
+
+    override this.ViewDidLoad () =
+        this.NavigationItem.Title <- "Join"
+        this.NavigationItem.LeftBarButtonItem <- new UIBarButtonItem("Cancel", UIBarButtonItemStyle.Bordered, new EventHandler(fun (s:obj) (e:EventArgs) -> 
+            this.NavigationController.PopViewControllerAnimated (true) |> ignore
+        ))
+
+        this.SignupButton.TouchUpInside.Add(fun _ ->
+            Async.StartImmediate <| async {
+                let! result = Account.signup this.Email.Text this.Password.Text
+                //result |> this.
+                ()
+            }
+        )
+
+[<Register ("LoginViewController")>]
+type LoginViewController (handle:nativeint) =
+    inherit UITableViewController (handle)
+
+    let signupStoryboard = UIStoryboard.FromName ("Signup", null)
+    let forgotPasswordStoryboard = UIStoryboard.FromName ("ForgotPassword", null)
+
+    [<Outlet>]
+    member val Email: UITextField = null with get, set
+    [<Outlet>]
+    member val Password: UITextField = null with get, set
+    [<Outlet>]
+    member val ForgotPasswordButton: UIButton = null with get, set
+    [<Outlet>]
+    member val CreateAccountButton: UIButton = null with get, set
     [<Outlet>]
     member val LoginButton: UIButton = null with get, set
 
     override this.ViewDidLoad () =
         base.ViewDidLoad ()
 
-        this.LoginButton.TouchUpInside.Add(fun _ ->
+        //this.NavigationItem.LeftBarButtonItem.Title <- "Cancel"
+        this.NavigationItem.Title <- "Login"
+        this.NavigationItem.HidesBackButton <- true
 
+        this.LoginButton.TouchUpInside.Add(fun _ ->
+            
             // ## Disable UI
             // ## Progress
             Async.StartImmediate <| async {
@@ -32,9 +90,17 @@ type LoginViewController () =
                     NSUserDefaults.StandardUserDefaults.SetString (this.Email.Text, "email")
                     NSUserDefaults.StandardUserDefaults.SetString (this.Password.Text, "password")
                     NSUserDefaults.StandardUserDefaults.Synchronize () |> ignore
-                    this.DismissViewController(true, null)
-                | _ -> ()
+                    this.NavigationController.PopViewControllerAnimated true
+                | error -> this.HandleApiFailure error
             }
+        )
+
+        this.ForgotPasswordButton.TouchUpInside.Add(fun _ ->
+            this.NavigationController.PushViewController (forgotPasswordStoryboard.InstantiateInitialViewController() :?> UIViewController, true)
+        )
+
+        this.CreateAccountButton.TouchUpInside.Add(fun _ ->
+            this.NavigationController.PushViewController (signupStoryboard.InstantiateInitialViewController() :?> UIViewController, true)
         )
 
 
@@ -132,6 +198,8 @@ type HomeViewController () =
 
     override this.ViewDidLoad () =
         base.ViewDidLoad ()
+        this.NavigationItem.HidesBackButton <- true
+        this.NavigationItem.Title <- "Wireclub"
         this.AddChildViewController friendsController
         this.AddChildViewController chatController
         this.ContentView.AddSubview friendsController.View
@@ -156,34 +224,37 @@ type EntryViewController () =
     inherit UIViewController ()
 
     let navigationController = new UINavigationController()
-    //let rootController = new FriendsViewController()
     let rootController = new HomeViewController()
+    let loginStoryboard = UIStoryboard.FromName ("Login", null)
 
     override this.ViewDidLoad () =
         base.ViewDidLoad ()
 
     override this.ViewDidAppear (animated) =
         // When the user is authenticated start the channel client and push the main app controller
-        let proceed () =
+        let proceed animated =
             ChannelClient.init ()
-            navigationController.PushViewController(rootController, false)
-            this.PresentViewController (navigationController, true, null)
+            navigationController.PushViewController(rootController, animated)
 
         let defaults = NSUserDefaults.StandardUserDefaults
+        this.PresentViewController (navigationController, true, null)
 
         match defaults.StringForKey "email", defaults.StringForKey "password", System.String.IsNullOrEmpty Api.userId with
         // User has not entered an account
         | null, null, _ -> 
-            this.PresentViewController (new LoginViewController(), false, null)
+            navigationController.PushViewController (loginStoryboard.InstantiateInitialViewController() :?> UIViewController, false)
+
         // User has an account but has not authenticated with the api
         | email, password, true -> 
             Async.StartImmediate <| async {
                 let! loginResult = Account.login email password
                 match loginResult with
-                | Api.ApiOk identity -> proceed ()
-                | _ -> this.PresentViewController (new LoginViewController(), true, null)
+                | Api.ApiOk identity -> proceed true
+                | _ -> 
+                    //this.PresentViewController (new LoginViewController(), true, null)
+                    navigationController.PushViewController (loginStoryboard.InstantiateInitialViewController() :?> UIViewController, true)
             }
         // User is fully authenticated already
-        | _, _, false -> proceed ()
+        | _, _, false -> proceed false
             
        

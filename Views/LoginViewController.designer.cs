@@ -13,7 +13,13 @@ namespace Views
 	partial class LoginViewController
 	{
 		[Outlet]
+		MonoTouch.UIKit.UIButton CreateAccountButton { get; set; }
+
+		[Outlet]
 		MonoTouch.UIKit.UITextField Email { get; set; }
+
+		[Outlet]
+		MonoTouch.UIKit.UIButton ForgotPasswordButton { get; set; }
 
 		[Outlet]
 		MonoTouch.UIKit.UIButton LoginButton { get; set; }
@@ -23,19 +29,29 @@ namespace Views
 		
 		void ReleaseDesignerOutlets ()
 		{
+			if (CreateAccountButton != null) {
+				CreateAccountButton.Dispose ();
+				CreateAccountButton = null;
+			}
+
 			if (Email != null) {
 				Email.Dispose ();
 				Email = null;
 			}
 
-			if (Password != null) {
-				Password.Dispose ();
-				Password = null;
+			if (ForgotPasswordButton != null) {
+				ForgotPasswordButton.Dispose ();
+				ForgotPasswordButton = null;
 			}
 
 			if (LoginButton != null) {
 				LoginButton.Dispose ();
 				LoginButton = null;
+			}
+
+			if (Password != null) {
+				Password.Dispose ();
+				Password = null;
 			}
 		}
 	}

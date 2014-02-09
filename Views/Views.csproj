@@ -74,9 +74,20 @@
     <Compile Include="ChatRoomUsersViewController.designer.cs">
       <DependentUpon>ChatRoomUsersViewController.cs</DependentUpon>
     </Compile>
+    <Compile Include="ForgotPasswordViewController.cs" />
+    <Compile Include="ForgotPasswordViewController.designer.cs">
+      <DependentUpon>ForgotPasswordViewController.cs</DependentUpon>
+    </Compile>
+    <Compile Include="CreateAccountViewController.cs" />
+    <Compile Include="CreateAccountViewController.designer.cs">
+      <DependentUpon>CreateAccountViewController.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SignupViewController.cs" />
+    <Compile Include="SignupViewController.designer.cs">
+      <DependentUpon>SignupViewController.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
-    <InterfaceDefinition Include="LoginViewController.xib" />
     <InterfaceDefinition Include="FriendsViewController.xib" />
     <InterfaceDefinition Include="PrivateChatSessionViewController.xib" />
     <InterfaceDefinition Include="EntryViewController.xib" />
@@ -85,5 +96,12 @@
     <InterfaceDefinition Include="ChatDirectoryViewController.xib" />
     <InterfaceDefinition Include="ChatRoomViewController.xib" />
     <InterfaceDefinition Include="ChatRoomUsersViewController.xib" />
+    <InterfaceDefinition Include="Login.storyboard" />
+    <InterfaceDefinition Include="Profile.storyboard" />
+    <InterfaceDefinition Include="ForgotPassword.storyboard" />
+    <InterfaceDefinition Include="Signup.storyboard" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Resources\" />
   </ItemGroup>
 </Project>

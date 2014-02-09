@@ -132,9 +132,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <InterfaceDefinition Include="..\Views\LoginViewController.xib">
-      <Link>Resources\LoginViewController.xib</Link>
-    </InterfaceDefinition>
     <InterfaceDefinition Include="..\Views\FriendsViewController.xib">
       <Link>Resources\FriendsViewController.xib</Link>
     </InterfaceDefinition>
@@ -155,6 +152,15 @@
     </InterfaceDefinition>
     <InterfaceDefinition Include="..\Views\ChatRoomUsersViewController.xib">
       <Link>Resources\ChatRoomUsersViewController.xib</Link>
+    </InterfaceDefinition>
+    <InterfaceDefinition Include="..\Views\Login.storyboard">
+      <Link>Resources\Login.storyboard</Link>
+    </InterfaceDefinition>
+    <InterfaceDefinition Include="..\Views\Signup.storyboard">
+      <Link>Resources\Signup.storyboard</Link>
+    </InterfaceDefinition>
+    <InterfaceDefinition Include="..\Views\ForgotPassword.storyboard">
+      <Link>Resources\ForgotPassword.storyboard</Link>
     </InterfaceDefinition>
   </ItemGroup>
 </Project>

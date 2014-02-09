@@ -4,7 +4,7 @@ open MonoTouch.Foundation
 open MonoTouch.UIKit
 open Wireclub.Boundary
 open Wireclub.Boundary.Chat
-
+open ChannelEvent
 
 type ChatMessage = {
     Current:string
