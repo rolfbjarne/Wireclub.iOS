@@ -90,7 +90,7 @@ type LoginViewController (handle:nativeint) =
                     NSUserDefaults.StandardUserDefaults.SetString (this.Email.Text, "email")
                     NSUserDefaults.StandardUserDefaults.SetString (this.Password.Text, "password")
                     NSUserDefaults.StandardUserDefaults.Synchronize () |> ignore
-                    this.NavigationController.PopViewControllerAnimated true
+                    this.NavigationController.PopViewControllerAnimated true |> ignore
                 | error -> this.HandleApiFailure error
             }
         )
@@ -142,46 +142,12 @@ type FriendsViewController () =
 
         base.ViewDidLoad ()
 
+[<Register ("MegaMenuViewController")>]
+type MegaMenuViewController (handle:nativeint) =
+    inherit UITableViewController (handle)
 
-[<Register ("ChatDirectoryViewController")>]
-type ChatDirectoryViewController() =
-    inherit UIViewController ()
-
-    [<Outlet>]
-    member val Table: UITableView = null with get, set
-
-    override controller.ViewDidLoad () =
-        Async.StartImmediate <| async {
-            let! directory = Chat.directory ()
-            match directory with
-            | Api.ApiOk directory ->
-                controller.Table.Source <- 
-                    { new UITableViewSource() with
-                        override this.GetCell(tableView, indexPath) =
-                            let cell = 
-                                match tableView.DequeueReusableCell "room-cell" with
-                                | null -> new UITableViewCell()
-                                | c -> c
-                            
-                            cell.TextLabel.Text <- directory.Official.[indexPath.Row].Name
-                            cell
-
-                        override this.RowsInSection(tableView, section) =
-                            directory.Official.Length
-
-                        override this.RowSelected(tableView, indexPath) =
-                            controller.NavigationController.PushViewController(new ChatRoomViewController(directory.Official .[indexPath.Row]), true)
-                            ()
-                            
-                    }
-
-                controller.Table.ReloadData ()
-
-            | er -> printfn "Api Error: %A" er
-        }
-
+    override this.ViewDidLoad () =
         base.ViewDidLoad ()
-
 
 [<Register ("HomeViewController")>]
 type HomeViewController () =
@@ -189,6 +155,7 @@ type HomeViewController () =
 
     let friendsController = new FriendsViewController()
     let chatController = new ChatDirectoryViewController()
+    let menuStoryboard = UIStoryboard.FromName ("MegaMenu", null)
     
     [<Outlet>]
     member val Filter: UISegmentedControl = null with get, set
@@ -200,6 +167,12 @@ type HomeViewController () =
         base.ViewDidLoad ()
         this.NavigationItem.HidesBackButton <- true
         this.NavigationItem.Title <- "Wireclub"
+
+        this.NavigationItem.LeftBarButtonItem <- new UIBarButtonItem("...", UIBarButtonItemStyle.Bordered, new EventHandler(fun (s:obj) (e:EventArgs) -> 
+            this.NavigationController.PushViewController (menuStoryboard.InstantiateInitialViewController() :?> UIViewController, true)
+        ))
+
+        // Set up the child controllers
         this.AddChildViewController friendsController
         this.AddChildViewController chatController
         this.ContentView.AddSubview friendsController.View
@@ -251,7 +224,6 @@ type EntryViewController () =
                 match loginResult with
                 | Api.ApiOk identity -> proceed true
                 | _ -> 
-                    //this.PresentViewController (new LoginViewController(), true, null)
                     navigationController.PushViewController (loginStoryboard.InstantiateInitialViewController() :?> UIViewController, true)
             }
         // User is fully authenticated already

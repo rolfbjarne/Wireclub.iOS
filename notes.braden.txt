@@ -1,6 +1,6 @@
 
 TODO
-	- Use cancel buttons for create account / forgot pw (like fb settings)
+	- Use token auth
 
 	
 	- Make ChannelClient/API use some common configuration file

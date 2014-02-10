@@ -1,14 +1,38 @@
 ﻿<Properties>
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug|iPhoneSimulator" PreferredExecutionTarget="MonoDevelop.IPhone.IPhoneSimulatorTarget.IPhoneRetina.7.0" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Wireclub.iOS/Home.fs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Wireclub.iOS/Resources/Images.xcassets/AppIcons.appiconset/Contents.json">
     <Files>
       <File FileName="Wireclub.iOS/Utility.fs" Line="1" Column="1" />
-      <File FileName="Wireclub.iOS/Home.fs" Line="45" Column="46" />
+      <File FileName="Wireclub.iOS/Home.fs" Line="1" Column="1" />
       <File FileName="notes.braden.txt" Line="1" Column="1" />
       <File FileName="Views/SignupViewController.cs" Line="1" Column="1" />
-      <File FileName="Wireclub.iOS/AppDelegate.fs" Line="1" Column="1" />
+      <File FileName="Wireclub.iOS/AppDelegate.fs" Line="19" Column="14" />
       <File FileName="Wireclub.iOS/Chat.fs" Line="1" Column="1" />
+      <File FileName="Views/ForgotPasswordViewController.cs" Line="1" Column="1" />
+      <File FileName="Wireclub.iOS/PrivateChat.fs" Line="1" Column="1" />
+      <File FileName="Wireclub.iOS/Directory.fs" Line="69" Column="1" />
+      <File FileName="../../wireclub.android/Wireclub.AppClient/Api.fs" Line="71" Column="46" />
+      <File FileName="Wireclub.iOS/Resources/Images.xcassets/AppIcons.appiconset/Contents.json" />
     </Files>
+    <Pads>
+      <Pad Id="ProjectPad">
+        <State expanded="True">
+          <Node name="Views" expanded="True" />
+          <Node name="Wireclub.AppClient.iOS" expanded="True" />
+          <Node name="Wireclub.iOS" expanded="True" selected="True">
+            <Node name="Resources" expanded="True">
+              <Node name="Images" expanded="True" />
+              <Node name="Images.xcassets" expanded="True">
+                <Node name="AppIcons.appiconset" expanded="True" />
+              </Node>
+            </Node>
+          </Node>
+        </State>
+      </Pad>
+      <Pad Id="MonoDevelop.Debugger.WatchPad">
+        <State />
+      </Pad>
+    </Pads>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
     <BreakpointStore />

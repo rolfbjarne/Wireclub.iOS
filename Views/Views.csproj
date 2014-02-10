@@ -86,6 +86,34 @@
     <Compile Include="SignupViewController.designer.cs">
       <DependentUpon>SignupViewController.cs</DependentUpon>
     </Compile>
+    <Compile Include="MegaMenuViewController.cs" />
+    <Compile Include="MegaMenuViewController.designer.cs">
+      <DependentUpon>MegaMenuViewController.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SettingsMenuViewController.cs" />
+    <Compile Include="SettingsMenuViewController.designer.cs">
+      <DependentUpon>SettingsMenuViewController.cs</DependentUpon>
+    </Compile>
+    <Compile Include="PasswordViewController.cs" />
+    <Compile Include="PasswordViewController.designer.cs">
+      <DependentUpon>PasswordViewController.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UsernameViewController.cs" />
+    <Compile Include="UsernameViewController.designer.cs">
+      <DependentUpon>UsernameViewController.cs</DependentUpon>
+    </Compile>
+    <Compile Include="NotificationsViewController.cs" />
+    <Compile Include="NotificationsViewController.designer.cs">
+      <DependentUpon>NotificationsViewController.cs</DependentUpon>
+    </Compile>
+    <Compile Include="PrivacyViewController.cs" />
+    <Compile Include="PrivacyViewController.designer.cs">
+      <DependentUpon>PrivacyViewController.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ChatOptionsViewController.cs" />
+    <Compile Include="ChatOptionsViewController.designer.cs">
+      <DependentUpon>ChatOptionsViewController.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <InterfaceDefinition Include="FriendsViewController.xib" />
@@ -100,6 +128,7 @@
     <InterfaceDefinition Include="Profile.storyboard" />
     <InterfaceDefinition Include="ForgotPassword.storyboard" />
     <InterfaceDefinition Include="Signup.storyboard" />
+    <InterfaceDefinition Include="MegaMenu.storyboard" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Resources\" />

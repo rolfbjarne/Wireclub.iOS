@@ -51,6 +51,8 @@
     </PlatformTarget>
     <ConsolePause>false</ConsolePause>
     <MtouchDebug>true</MtouchDebug>
+    <IpaPackageName>
+    </IpaPackageName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|iPhone' ">
     <DebugSymbols>true</DebugSymbols>
@@ -108,6 +110,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Resources\" />
+    <Folder Include="Resources\Images\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Info.plist" />
@@ -117,6 +120,7 @@
     <Compile Include="Dialog.fs" />
     <Compile Include="PrivateChat.fs" />
     <Compile Include="Chat.fs" />
+    <Compile Include="Directory.fs" />
     <Compile Include="Home.fs" />
     <Compile Include="AppDelegate.fs" />
   </ItemGroup>
@@ -162,5 +166,15 @@
     <InterfaceDefinition Include="..\Views\ForgotPassword.storyboard">
       <Link>Resources\ForgotPassword.storyboard</Link>
     </InterfaceDefinition>
+    <InterfaceDefinition Include="..\Views\MegaMenu.storyboard">
+      <Link>Resources\MegaMenu.storyboard</Link>
+    </InterfaceDefinition>
+  </ItemGroup>
+  <ItemGroup>
+    <BundleResource Include="Resources\Images\PlaceholderChat.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <ImageAsset Include="Resources\Images.xcassets\AppIcons.appiconset\Contents.json" />
+    <ImageAsset Include="Resources\Images.xcassets\AppIcons.appiconset\Icon-60%402x.png" />
   </ItemGroup>
 </Project>
