@@ -14,6 +14,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{590EEF39-8
 		notes.braden.txt = notes.braden.txt
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "websocket-sharp-ios", "..\websocket-sharp\websocket-sharp\websocket-sharp-ios.csproj", "{D476C912-8459-4A6B-AA01-CE3EFDD89CFF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|iPhoneSimulator = Debug|iPhoneSimulator
@@ -60,6 +62,18 @@ Global
 		{CC0D1094-1815-436E-87C7-5FA44A09A561}.Release|iPhone.Build.0 = Release|Any CPU
 		{CC0D1094-1815-436E-87C7-5FA44A09A561}.Release|iPhoneSimulator.ActiveCfg = Release|Any CPU
 		{CC0D1094-1815-436E-87C7-5FA44A09A561}.Release|iPhoneSimulator.Build.0 = Release|Any CPU
+		{D476C912-8459-4A6B-AA01-CE3EFDD89CFF}.Ad-Hoc|iPhone.ActiveCfg = Release|Any CPU
+		{D476C912-8459-4A6B-AA01-CE3EFDD89CFF}.Ad-Hoc|iPhone.Build.0 = Release|Any CPU
+		{D476C912-8459-4A6B-AA01-CE3EFDD89CFF}.AppStore|iPhone.ActiveCfg = Release|Any CPU
+		{D476C912-8459-4A6B-AA01-CE3EFDD89CFF}.AppStore|iPhone.Build.0 = Release|Any CPU
+		{D476C912-8459-4A6B-AA01-CE3EFDD89CFF}.Debug|iPhone.ActiveCfg = Debug|Any CPU
+		{D476C912-8459-4A6B-AA01-CE3EFDD89CFF}.Debug|iPhone.Build.0 = Debug|Any CPU
+		{D476C912-8459-4A6B-AA01-CE3EFDD89CFF}.Debug|iPhoneSimulator.ActiveCfg = Debug|Any CPU
+		{D476C912-8459-4A6B-AA01-CE3EFDD89CFF}.Debug|iPhoneSimulator.Build.0 = Debug|Any CPU
+		{D476C912-8459-4A6B-AA01-CE3EFDD89CFF}.Release|iPhone.ActiveCfg = Release|Any CPU
+		{D476C912-8459-4A6B-AA01-CE3EFDD89CFF}.Release|iPhone.Build.0 = Release|Any CPU
+		{D476C912-8459-4A6B-AA01-CE3EFDD89CFF}.Release|iPhoneSimulator.ActiveCfg = Release|Any CPU
+		{D476C912-8459-4A6B-AA01-CE3EFDD89CFF}.Release|iPhoneSimulator.Build.0 = Release|Any CPU
 		{F83837F7-71B9-4EEB-85B8-276B8767DA2B}.Ad-Hoc|iPhone.ActiveCfg = Release|Any CPU
 		{F83837F7-71B9-4EEB-85B8-276B8767DA2B}.Ad-Hoc|iPhone.Build.0 = Release|Any CPU
 		{F83837F7-71B9-4EEB-85B8-276B8767DA2B}.AppStore|iPhone.ActiveCfg = Release|Any CPU

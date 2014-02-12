@@ -181,8 +181,6 @@ type ChatRoomViewController (room:ChatDirectoryRoomViewModel) as this =
                     result.HistoricMembers |> Array.iter addUser
 
                     ChannelClient.handlers.TryAdd (room.Id, processor) |> ignore
-                    ChannelClient.watching.Add (room.Id)
-                    ChannelClient.reset ()
 
                     // Send message
                     this.Text.ShouldReturn <- (fun _ ->

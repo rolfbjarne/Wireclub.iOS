@@ -1,13 +1,14 @@
 
 TODO
+	- Build robust websocket client
+		- Wait some time before trying to reconnect
 	* Keyboard bug when switching to open rooms
-	- New channel client
-
+	- Chats tab on home page
+ 
 	- Network connectivity tests
 	- Loading indicators
 	- Add friend
 	- Friend requests
-	- Make ChannelClient/API use some common configuration file
 	- Remove channel handlers
 	- Show presence information on friends list
 		- For now do not return friends who are not online (since you can't do anything with them)
@@ -19,3 +20,4 @@ TODO
 	- Placeholder when you have no friends
 	- Toast: https://github.com/ecstasy2/toast-notifications-ios
 	- Handle failure in entry controller (retry endlessly?)
+	- Make sure api is using keepalive connections
