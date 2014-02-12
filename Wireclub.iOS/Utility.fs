@@ -8,6 +8,9 @@ type AlertDelegate (action: int -> unit) =
     override this.Dismissed (view, index) = 
         action index
 
+module Navigation =
+    let mutable navigate: (string -> obj -> unit) = (fun _ _ -> failwith "No navigation handler attached")
+
 [<AutoOpen>]
 module Utility =
     let showSimpleAlert title message button =
@@ -47,6 +50,11 @@ module Image =
     open System.IO
     open System.Collections.Concurrent
     open System.Threading
+
+    let placeholder = UIImage.FromFile "Images/Placeholder.png"
+    let placeholderChat = UIImage.FromFile "Images/PlaceholderChat.png"
+    let placeholderMale = UIImage.FromFile "Images/PlaceholderMale.png"
+    let placeholderFemale = UIImage.FromFile "Images/PlaceholderFemale.png"
 
     let images = ConcurrentDictionary<string, UIImage>()
 
@@ -111,3 +119,18 @@ module Image =
             else
                 return! agent.PostAndAsyncReply (fun replyChannel -> (url, context), replyChannel)
     }
+
+    let loadImageForCell url placeholder (cell:UITableViewCell) (table:UITableView) =
+        let context = SynchronizationContext.Current
+        cell.ImageView.Image <- placeholder
+        let tag = cell.Tag // Cache the cell id, from this point on just assume it is no longer valid (due to cell reuse)
+        Async.StartImmediate <| async {
+            let! image = tryAcquire context url
+            match image with
+            | Some image ->
+                do! Async.SwitchToContext context
+                match table.VisibleCells |> Array.tryFind (fun c -> c.Tag = tag) with
+                | Some cell -> cell.ImageView.Image <- image
+                | None -> ()
+            | None -> ()
+        }

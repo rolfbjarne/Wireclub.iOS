@@ -10,9 +10,14 @@ type AppDelegate () =
     inherit UIApplicationDelegate ()
 
     let window = new UIWindow (UIScreen.MainScreen.Bounds)
-    
+    let entryController = new EntryViewController()
+    let navigationController = new UINavigationController(entryController)
+
     override this.FinishedLaunching (app, options) =
-        window.RootViewController <- new EntryViewController()
+        NSUserDefaults.StandardUserDefaults.RegisterDefaults(
+            NSDictionary.FromObjectAndKey(NSObject.FromObject(Api.agent), NSObject.FromObject("UserAgent")))
+
+        window.RootViewController <- navigationController
         window.MakeKeyAndVisible ()
         true
 

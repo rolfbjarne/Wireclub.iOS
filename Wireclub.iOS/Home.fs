@@ -87,8 +87,7 @@ type LoginViewController (handle:nativeint) =
                 let! result = Account.login this.Email.Text this.Password.Text
                 match result with
                 | Api.ApiOk result ->
-                    NSUserDefaults.StandardUserDefaults.SetString (this.Email.Text, "email")
-                    NSUserDefaults.StandardUserDefaults.SetString (this.Password.Text, "password")
+                    NSUserDefaults.StandardUserDefaults.SetString (result.Token, "auth-token")
                     NSUserDefaults.StandardUserDefaults.Synchronize () |> ignore
                     this.NavigationController.PopViewControllerAnimated true |> ignore
                 | error -> this.HandleApiFailure error
@@ -105,36 +104,47 @@ type LoginViewController (handle:nativeint) =
 
 
 [<Register("FriendsViewController")>]
-type FriendsViewController () =
+type FriendsViewController () as controller =
     inherit UIViewController ()
      
+    let mutable (friends:PrivateChatFriend[]) = [| |]
+    let placeholder = UIImage.FromFile "Images/Placeholder.png"
+
+    let tableSource = { 
+        new UITableViewSource() with
+        override this.GetCell(tableView, indexPath) =
+            let friend = friends.[indexPath.Row]
+            let cell = 
+                match tableView.DequeueReusableCell "friend-cell" with
+                | null -> new UITableViewCell (UITableViewCellStyle.Subtitle, "friend-cell")
+                | c -> c
+            
+            cell.Tag <- indexPath.Row
+            cell.TextLabel.Text <- friend.Name
+            //cell.DetailTextLabel.Text <- room
+            Image.loadImageForCell (App.imageUrl friend.Avatar 100) placeholder cell tableView
+
+            cell
+
+        override this.RowsInSection(tableView, section) =
+            friends.Length
+
+        override this.RowSelected(tableView, indexPath) =
+            tableView.DeselectRow (indexPath, false)
+            let newController = ChatSessions.start friends.[indexPath.Row]
+            controller.NavigationController.PushViewController(newController, true)
+    }
+
     [<Outlet>]
     member val Table: UITableView = null with get, set
 
     override controller.ViewDidLoad () =
+        controller.Table.Source <- tableSource
         Async.StartImmediate <| async {
-            let! friends = PrivateChat.online()
-            match friends with
-            | Api.ApiOk friends ->
-                controller.Table.Source <- 
-                    { new UITableViewSource() with
-                        override this.GetCell(tableView, indexPath) =
-                            let cell = 
-                                match tableView.DequeueReusableCell "friend-cell" with
-                                | null -> new UITableViewCell()
-                                | c -> c
-                            
-                            cell.TextLabel.Text <- friends.Friends.[indexPath.Row].Name
-                            cell
-
-                        override this.RowsInSection(tableView, section) =
-                            friends.Friends.Length
-
-                        override this.RowSelected(tableView, indexPath) =
-                            controller.NavigationController.PushViewController(new PrivateChatSessionViewController(friends.Friends.[indexPath.Row]), true)
-                            
-                    }
-
+            let! response = PrivateChat.online()
+            match response with
+            | Api.ApiOk response ->
+                friends <- response.Friends
                 controller.Table.ReloadData ()
 
             | er -> printfn "Api Error: %A" er
@@ -155,7 +165,6 @@ type HomeViewController () =
 
     let friendsController = new FriendsViewController()
     let chatController = new ChatDirectoryViewController()
-    let menuStoryboard = UIStoryboard.FromName ("MegaMenu", null)
     
     [<Outlet>]
     member val Filter: UISegmentedControl = null with get, set
@@ -165,11 +174,12 @@ type HomeViewController () =
 
     override this.ViewDidLoad () =
         base.ViewDidLoad ()
+        printfn "[Home:Load]" 
         this.NavigationItem.HidesBackButton <- true
         this.NavigationItem.Title <- "Wireclub"
 
         this.NavigationItem.LeftBarButtonItem <- new UIBarButtonItem("...", UIBarButtonItemStyle.Bordered, new EventHandler(fun (s:obj) (e:EventArgs) -> 
-            this.NavigationController.PushViewController (menuStoryboard.InstantiateInitialViewController() :?> UIViewController, true)
+            this.NavigationController.PushViewController (Resources.menuStoryboard.Value.InstantiateInitialViewController() :?> UIViewController, true)
         ))
 
         // Set up the child controllers
@@ -192,41 +202,63 @@ type HomeViewController () =
                 chatController.View.Hidden <- false
         )
 
+
 [<Register ("EntryViewController")>]
 type EntryViewController () =
     inherit UIViewController ()
 
-    let navigationController = new UINavigationController()
     let rootController = new HomeViewController()
-    let loginStoryboard = UIStoryboard.FromName ("Login", null)
 
     override this.ViewDidLoad () =
         base.ViewDidLoad ()
+
+        let navigate url (data:obj) =
+            match url with
+            | Routes.User id -> 
+                let controller = (Resources.userStoryboard.Value.InstantiateInitialViewController () :?> UITabBarController).ChildViewControllers.[0] :?> UserViewController
+                controller.User <- Some (data :?> Wireclub.Boundary.Chat.PrivateChatFriend)
+                this.NavigationController.PushViewController (controller, true)
+
+            | Routes.ChatSession id ->             
+                this.NavigationController.PopToViewController (rootController, false) |> ignore // Straight yolo
+                let controller = ChatSessions.start (data :?> Wireclub.Boundary.Chat.PrivateChatFriend)
+                this.NavigationController.PushViewController (controller, true)
+
+            | Routes.ChatRoom id ->
+                this.NavigationController.PopToViewController (rootController, false) |> ignore
+                let controller = ChatRooms.join (data :?> Wireclub.Boundary.Chat.ChatDirectoryRoomViewModel)
+                this.NavigationController.PushViewController (controller, true)
+
+            | url -> 
+                this.NavigationController.PushViewController (new DialogViewController (url), true)
+
+        Navigation.navigate <- navigate
+
+
+        printfn "[Entry:Load]"
 
     override this.ViewDidAppear (animated) =
         // When the user is authenticated start the channel client and push the main app controller
         let proceed animated =
             ChannelClient.init ()
-            navigationController.PushViewController(rootController, animated)
+            this.NavigationController.PushViewController(rootController, animated)
 
         let defaults = NSUserDefaults.StandardUserDefaults
-        this.PresentViewController (navigationController, true, null)
-
-        match defaults.StringForKey "email", defaults.StringForKey "password", System.String.IsNullOrEmpty Api.userId with
+        match defaults.StringForKey "auth-token", System.String.IsNullOrEmpty Api.userId with
         // User has not entered an account
-        | null, null, _ -> 
-            navigationController.PushViewController (loginStoryboard.InstantiateInitialViewController() :?> UIViewController, false)
+        | null, _ -> 
+            this.NavigationController.PushViewController (Resources.loginStoryboard.Value.InstantiateInitialViewController() :?> UIViewController, false)
 
         // User has an account but has not authenticated with the api
-        | email, password, true -> 
+        | token, true -> 
             Async.StartImmediate <| async {
-                let! loginResult = Account.login email password
+                let! loginResult = Account.loginToken token
                 match loginResult with
                 | Api.ApiOk identity -> proceed true
                 | _ -> 
-                    navigationController.PushViewController (loginStoryboard.InstantiateInitialViewController() :?> UIViewController, true)
+                    this.NavigationController.PushViewController (Resources.loginStoryboard.Value.InstantiateInitialViewController() :?> UIViewController, true)
             }
         // User is fully authenticated already
-        | _, _, false -> proceed false
+        | _, false -> proceed false
             
        

@@ -114,6 +114,14 @@
     <Compile Include="ChatOptionsViewController.designer.cs">
       <DependentUpon>ChatOptionsViewController.cs</DependentUpon>
     </Compile>
+    <Compile Include="UserViewController.cs" />
+    <Compile Include="UserViewController.designer.cs">
+      <DependentUpon>UserViewController.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UserFeedViewController.cs" />
+    <Compile Include="UserFeedViewController.designer.cs">
+      <DependentUpon>UserFeedViewController.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <InterfaceDefinition Include="FriendsViewController.xib" />
@@ -125,10 +133,11 @@
     <InterfaceDefinition Include="ChatRoomViewController.xib" />
     <InterfaceDefinition Include="ChatRoomUsersViewController.xib" />
     <InterfaceDefinition Include="Login.storyboard" />
-    <InterfaceDefinition Include="Profile.storyboard" />
     <InterfaceDefinition Include="ForgotPassword.storyboard" />
     <InterfaceDefinition Include="Signup.storyboard" />
     <InterfaceDefinition Include="MegaMenu.storyboard" />
+    <InterfaceDefinition Include="EditProfile.storyboard" />
+    <InterfaceDefinition Include="User.storyboard" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Resources\" />

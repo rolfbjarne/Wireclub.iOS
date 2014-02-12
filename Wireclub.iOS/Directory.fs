@@ -13,22 +13,8 @@ type ChatDirectoryViewController() as controller =
     inherit UIViewController ()
 
     let mutable rooms: ChatDirectoryRoomViewModel[] = [| |]
-    let images = ConcurrentDictionary<string, UIImage>()
-    let placeholder = UIImage.FromFile "Images/PlaceholderChat.png"
-
-    let loadImageForCell room (cell:UITableViewCell) =
-        let context = SynchronizationContext.Current
-        Async.StartImmediate <| async {
-            let! image = Image.tryAcquire context room.Image
-            match image with
-            | Some image ->
-                do! Async.SwitchToContext context
-                match controller.Table.VisibleCells |> Array.tryFind (fun c -> c.Tag = cell.Tag) with
-                | Some cell -> cell.ImageView.Image <- image
-                | None -> ()
-            | None -> ()
-        }
-
+    let openRooms = ConcurrentDictionary<string, ChatRoomViewController> ()
+   
     let tableSource = { 
         new UITableViewSource() with
         override this.GetCell(tableView, indexPath) =
@@ -41,20 +27,20 @@ type ChatDirectoryViewController() as controller =
             cell.Tag <- indexPath.Row
             cell.TextLabel.Text <- room.Name
             cell.DetailTextLabel.Text <- room.Description
-            cell.ImageView.Image <-
-                match images.TryGetValue room.Image with
-                | true, image -> image
-                | false, _ -> 
-                    loadImageForCell room cell
-                    placeholder
+            Image.loadImageForCell (App.imageUrl room.Image 100) Image.placeholderChat cell tableView
             cell
 
         override this.RowsInSection(tableView, section) =
             rooms.Length
 
         override this.RowSelected(tableView, indexPath) =
-            controller.NavigationController.PushViewController(new ChatRoomViewController(rooms.[indexPath.Row]), true)
-            ()
+            tableView.DeselectRow (indexPath, false)
+            let room = rooms.[indexPath.Row].Slug
+            let roomController = 
+                match openRooms.TryGetValue room with
+                | true, controller -> controller
+                | false, _ -> ChatRooms.join rooms.[indexPath.Row]
+            controller.NavigationController.PushViewController(roomController, true)
     }
 
     let updateDirectory () = async {
@@ -75,5 +61,3 @@ type ChatDirectoryViewController() as controller =
         controller.Table.Source <- tableSource
         updateDirectory () |> Async.StartImmediate
         base.ViewDidLoad ()
-
-

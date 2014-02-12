@@ -1,5 +1,7 @@
 namespace Wireclub.iOS
 
+open System
+open System.Collections.Concurrent
 open MonoTouch.Foundation
 open MonoTouch.UIKit
 open Wireclub.Boundary
@@ -81,6 +83,13 @@ type PrivateChatSessionViewController (user:Wireclub.Boundary.Chat.PrivateChatFr
 
     override this.ViewDidLoad () =
         //this.NavigationItem.BackBarButtonItem.Title <- "Chats"
+
+        this.NavigationItem.RightBarButtonItem <- new UIBarButtonItem("...", UIBarButtonItemStyle.Bordered, new EventHandler(fun (s:obj) (e:EventArgs) -> 
+            let controller = (Resources.userStoryboard.Value.InstantiateInitialViewController () :?> UITabBarController).ChildViewControllers.[0] :?> UserViewController
+            controller.User <- Some user
+            this.NavigationController.PushViewController (controller, true)
+        ))
+
         this.NavigationItem.Title <- user.Name
         this.WebView.LoadRequest(new NSUrlRequest(new NSUrl(Api.baseUrl + "/mobile/chat")))
         this.WebView.LoadFinished.Add(fun _ ->
@@ -136,3 +145,19 @@ type PrivateChatSessionViewController (user:Wireclub.Boundary.Chat.PrivateChatFr
             showObserver.Dispose ()
             hideObserver.Dispose ()
 
+
+module ChatSessions =
+    let sessions = ConcurrentDictionary<string, PrivateChatSessionViewController>()
+
+    let start (user:Wireclub.Boundary.Chat.PrivateChatFriend) =
+        sessions.AddOrUpdate (
+                user.Slug,
+                (fun _ -> new PrivateChatSessionViewController (user) ),
+                (fun _ room -> room)
+            )
+
+    let leave slug =
+        match sessions.TryRemove slug with
+        | _ -> ()
+    
+                  

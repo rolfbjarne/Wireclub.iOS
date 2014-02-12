@@ -4,38 +4,45 @@ open System
 open System.Collections.Concurrent
 open MonoTouch.Foundation
 open MonoTouch.UIKit
+open Wireclub.Models
 open Wireclub.Boundary
 open Wireclub.Boundary.Chat
 open ChannelEvent
+
 
 [<Register ("ChatRoomUsersViewController")>]
 type ChatRoomUsersViewController (users:ChatUser[]) =
     inherit UIViewController ("ChatRoomUsersViewController", null)
 
-    [<Outlet>]
-    member val Table: UITableView = null with get, set
-
-    override controller.ViewDidLoad () =
-        controller.Table.Source <- 
-            { new UITableViewSource() with
+    let source = { new UITableViewSource() with
                 override this.GetCell(tableView, indexPath) =
+                    let user = users.[indexPath.Row]
                     let cell = 
                         match tableView.DequeueReusableCell "room-user-cell" with
-                        | null -> new UITableViewCell()
+                        | null -> new UITableViewCell (UITableViewCellStyle.Subtitle, "room-user-cell")
                         | c -> c
                     
-                    cell.TextLabel.Text <- users.[indexPath.Row].Name
+                    cell.Tag <- indexPath.Row
+                    cell.TextLabel.Text <- user.Name
+                    Image.loadImageForCell (App.imageUrl user.Avatar 100) Image.placeholder cell tableView
                     cell
 
                 override this.RowsInSection(tableView, section) =
                     users.Length
 
                 override this.RowSelected(tableView, indexPath) =
-                    controller.NavigationController.PushViewController(new DialogViewController ("http://dev.wireclub.com/users/" + users.[indexPath.Row].Slug + "?mobile=true"), true)
+                    tableView.DeselectRow (indexPath, false)
+                    let user = users.[indexPath.Row]
+                    Navigation.navigate ("/users/" + user.Slug) ({ PrivateChatFriend.Id = user.Id; Name = user.Name; Slug = user.Slug; Avatar = user.Avatar; State = OnlineStateType.Visible  })
                     ()
 
             }
 
+    [<Outlet>]
+    member val Table: UITableView = null with get, set
+
+    override controller.ViewDidLoad () =
+        controller.Table.Source <- source
         controller.Table.ReloadData ()
         ()
 
@@ -197,4 +204,19 @@ type ChatRoomViewController (room:ChatDirectoryRoomViewModel) as this =
             showObserver.Dispose ()
             hideObserver.Dispose ()
 
+
+module ChatRooms =
+    let rooms = ConcurrentDictionary<string, ChatRoomViewController>()
+
+    let join (room:ChatDirectoryRoomViewModel) =
+        rooms.AddOrUpdate (
+                room.Slug,
+                (fun _ -> new ChatRoomViewController (room)),
+                (fun _ room -> room)
+            )
+
+    let leave slug =
+        match rooms.TryRemove slug with
+        | _ -> ()
+    
                   

@@ -1,31 +1,32 @@
 ﻿<Properties>
-  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug|iPhoneSimulator" PreferredExecutionTarget="MonoDevelop.IPhone.IPhoneSimulatorTarget.IPhoneRetina.7.0" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Wireclub.iOS/Resources/Images.xcassets/AppIcons.appiconset/Contents.json">
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" PreferredExecutionTarget="MonoDevelop.IPhone.IPhoneSimulatorTarget.IPhoneRetina.7.0" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="Wireclub.iOS/PrivateChat.fs">
     <Files>
-      <File FileName="Wireclub.iOS/Utility.fs" Line="1" Column="1" />
-      <File FileName="Wireclub.iOS/Home.fs" Line="1" Column="1" />
-      <File FileName="notes.braden.txt" Line="1" Column="1" />
-      <File FileName="Views/SignupViewController.cs" Line="1" Column="1" />
-      <File FileName="Wireclub.iOS/AppDelegate.fs" Line="19" Column="14" />
-      <File FileName="Wireclub.iOS/Chat.fs" Line="1" Column="1" />
-      <File FileName="Views/ForgotPasswordViewController.cs" Line="1" Column="1" />
-      <File FileName="Wireclub.iOS/PrivateChat.fs" Line="1" Column="1" />
-      <File FileName="Wireclub.iOS/Directory.fs" Line="69" Column="1" />
-      <File FileName="../../wireclub.android/Wireclub.AppClient/Api.fs" Line="71" Column="46" />
-      <File FileName="Wireclub.iOS/Resources/Images.xcassets/AppIcons.appiconset/Contents.json" />
+      <File FileName="Wireclub.iOS/Home.fs" Line="225" Column="1" />
+      <File FileName="notes.braden.txt" Line="17" Column="11" />
+      <File FileName="Wireclub.iOS/Dialog.fs" Line="19" Column="50" />
+      <File FileName="../../wireclub.android/Wireclub.AppClient/Api.fs" Line="86" Column="10" />
+      <File FileName="Wireclub.iOS/AppDelegate.fs" Line="12" Column="5" />
+      <File FileName="Wireclub.iOS/PrivateChat.fs" Line="91" Column="1" />
+      <File FileName="Wireclub.iOS/Utility.fs" Line="108" Column="26" />
+      <File FileName="../../NEXT/Wireclub.Boundary/Models.fs" Line="1" Column="1" />
+      <File FileName="Wireclub.iOS/Chat.fs" Line="123" Column="1" />
+      <File FileName="../../wireclub.android/Wireclub.AppClient/Chat.fs" Line="23" Column="6" />
+      <File FileName="../../wireclub.android/Wireclub.AppClient/Channel.fs" Line="22" Column="15" />
+      <File FileName="Wireclub.iOS/Directory.fs" Line="35" Column="31" />
+      <File FileName="../../wireclub.android/Wireclub.AppClient/ChannelEvent.fs" Line="1" Column="1" />
+      <File FileName="../../wireclub.android/Wireclub.AppClient/App.fs" Line="46" Column="31" />
+      <File FileName="Wireclub.iOS/Resources.fs" Line="9" Column="56" />
     </Files>
     <Pads>
       <Pad Id="ProjectPad">
         <State expanded="True">
+          <Node name="Docs" expanded="True" />
           <Node name="Views" expanded="True" />
           <Node name="Wireclub.AppClient.iOS" expanded="True" />
-          <Node name="Wireclub.iOS" expanded="True" selected="True">
-            <Node name="Resources" expanded="True">
-              <Node name="Images" expanded="True" />
-              <Node name="Images.xcassets" expanded="True">
-                <Node name="AppIcons.appiconset" expanded="True" />
-              </Node>
-            </Node>
+          <Node name="Wireclub.Boundary.iOS" expanded="True" />
+          <Node name="Wireclub.iOS" expanded="True">
+            <Node name="Home.fs" selected="True" />
           </Node>
         </State>
       </Pad>
@@ -35,7 +36,9 @@
     </Pads>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
-    <BreakpointStore />
+    <BreakpointStore>
+      <Breakpoint file="/Users/bradene/Projects/Wireclub.iOS/Wireclub.iOS/PrivateChat.fs" line="90" column="1" />
+    </BreakpointStore>
   </MonoDevelop.Ide.DebuggingService.Breakpoints>
   <MonoDevelop.Ide.DebuggingService.PinnedWatches />
 </Properties>

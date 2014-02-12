@@ -1,21 +1,21 @@
 
 TODO
-	- Use token auth
+	* Keyboard bug when switching to open rooms
+	- New channel client
 
-	
+	- Network connectivity tests
+	- Loading indicators
+	- Add friend
+	- Friend requests
 	- Make ChannelClient/API use some common configuration file
-	- Toast: https://github.com/ecstasy2/toast-notifications-ios
 	- Remove channel handlers
-	- Cache session controllers
 	- Show presence information on friends list
 		- For now do not return friends who are not online (since you can't do anything with them)
 	- Mobile/chat page should handle scrolling
 	- Figure out loading remote images into table cells
 	- Session forwarding for WebViews
 	- Preference changes => NSUserDefaults
-
-	***
-	- Signup
-	- Forgot Password
-	- ViewProfile
-	- 
+	- Private chat log
+	- Placeholder when you have no friends
+	- Toast: https://github.com/ecstasy2/toast-notifications-ios
+	- Handle failure in entry controller (retry endlessly?)
