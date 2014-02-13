@@ -117,6 +117,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Utility.fs" />
+    <Compile Include="Reachability.fs" />
     <Compile Include="Resources.fs" />
     <Compile Include="Dialog.fs" />
     <Compile Include="User.fs" />

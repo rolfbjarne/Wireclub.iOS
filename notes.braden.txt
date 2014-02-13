@@ -2,22 +2,27 @@
 TODO
 	- Build robust websocket client
 		- Wait some time before trying to reconnect
-	* Keyboard bug when switching to open rooms
-	- Chats tab on home page
- 
+	* Keyboard bug when switching to open rooms - subview resizing
 	- Network connectivity tests
 	- Loading indicators
 	- Add friend
-	- Friend requests
+	- Friend requests??
+		- Show as special view on friends list
+	- Channel context menu 
+		- Leave room
 	- Remove channel handlers
 	- Show presence information on friends list
 		- For now do not return friends who are not online (since you can't do anything with them)
 	- Mobile/chat page should handle scrolling
-	- Figure out loading remote images into table cells
-	- Session forwarding for WebViews
 	- Preference changes => NSUserDefaults
 	- Private chat log
 	- Placeholder when you have no friends
-	- Toast: https://github.com/ecstasy2/toast-notifications-ios
+	- Placeholder when you have no chats (hide filter?)
 	- Handle failure in entry controller (retry endlessly?)
-	- Make sure api is using keepalive connections
+	- Find a way to show alert badges to indicate background chat activity
+	- Image uploading
+	- Button/icons for nav items
+	- Create shared resources class, for strings on wire/apps
+	- Profile create / edit wireup
+		- Api to get profile
+	- Investigate profiler

@@ -27,6 +27,15 @@ type AppDelegate () =
             return! tick()
         }    
         Async.Start(tick())
+
+        Reachability.onReachabilityChanged.Publish |> Event.add (fun _ ->
+            printfn "[Reachability] %A" (Reachability.internetConnectionStatus ())
+            (*
+            match Reachability.internetConnectionStatus () with
+            | Reachability.NetworkStatus.ReachableViaCarrierDataNetwork -> printfn "[Reachability] Carrier"
+            | Reachability.NetworkStatus.ReachableViaWiFiNetwork -> printfn "[Reachability] Wifi"
+            | _ -> printfn "[Reachability] None"*)
+            )
 #endif
 
         true

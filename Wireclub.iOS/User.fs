@@ -14,11 +14,6 @@ open Routes
 type UserFeedViewController (handle:nativeint) =
     inherit UIViewController (handle)
 
-(*[<Register ("UserFeedViewController")>]
-type UserFeedViewController (handle:nativeint) =
-    inherit UIViewController (handle)*)
-
-
 [<Register ("UserViewController")>]
 type UserViewController (handle:nativeint) =
     inherit UIViewController (handle)
@@ -42,7 +37,25 @@ type UserViewController (handle:nativeint) =
 
         match this.User with
         | Some user -> 
+            loadImageForView (Image.
+
             this.ChatButton.TouchUpInside.Add(fun _ ->            
                 Navigation.navigate ("/privateChat/session/" + user.Slug) (user :> obj)
             )
+
+            this.FriendButton.TouchUpInside.Add(fun _ ->
+                let alert = new UIAlertView (Title="Send Friend Request?", Message="")
+                alert.AddButton "Cancel" |> ignore
+                alert.AddButton "Send" |> ignore
+                alert.Show ()
+                alert.Dismissed.Add(fun args ->
+                    match args.ButtonIndex with
+                    | 0 -> ()
+                    | _ -> 
+                        Async.startWithContinuation
+                            (User.addFriend user.Slug)
+                            (this.HandleApiResult >> ignore)
+                )
+            )
+
         | _ -> failwith "No user"

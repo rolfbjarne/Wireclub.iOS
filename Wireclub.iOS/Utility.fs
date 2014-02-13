@@ -25,13 +25,6 @@ module Utility =
         ()
 
     type UIViewController with
-        member this.HandleApiResult<'A> (result:Api.ApiResult<'A>) =
-            match result with
-            | Api.ApiOk result -> ()
-            | _ -> ()
-            
-            result
-
         member this.HandleApiFailure<'A> (result:Api.ApiResult<'A>) =
             match result with
             | Api.ApiOk _ -> ()
@@ -39,6 +32,11 @@ module Utility =
             | Api.BadRequest ({Key=key; Value=value}::_) -> showSimpleAlert key value "Close"
             | _ -> printfn "Api Failure: %A" result
 
+        member this.HandleApiResult<'A> (result:Api.ApiResult<'A>) =
+            match result with
+            | Api.ApiOk result -> ()
+            | failure -> this.HandleApiFailure failure
+            result
 
         member this.ResizeViewToKeyboard (args:UIKeyboardEventArgs) =
             UIView.BeginAnimations ("")
@@ -104,26 +102,32 @@ module Image =
         loop ()
     )
 
-    let loadImageForCell url placeholder (cell:UITableViewCell) (table:UITableView) =
+    // Continuation may be called twice, to set the placeholder and then later to set the final image
+    let loadImageWithContinuation url placeholder (continuation: UIImage -> unit) =
         match tryAcquireFromCache url with
-        | Some image -> cell.ImageView.Image <- image
+        | Some image -> continuation image
         | None ->
             match tryAcquireFromDisk url with
-            | Some image -> cell.ImageView.Image <- image
+            | Some image -> continuation image
             | None ->
-                let tag = cell.Tag // Cache the cell id, from this point on just assume it is no longer valid (due to cell reuse)
-                cell.ImageView.Image <- placeholder // Set the placeholder while we load
+                continuation placeholder // Set the placeholder while we load
                 Async.startWithContinuation
                     (agent.PostAndAsyncReply (fun replyChannel -> url, replyChannel))
                     (function
                         | Some data ->
                             let image = UIImage.LoadFromData (NSData.FromArray data)
-                            images.AddOrUpdate (url, image, (fun _ i -> i)) |> ignore
-                            
-                            // Find the cell if it is still visible in the table
-                            match table.VisibleCells |> Array.tryFind (fun c -> c.Tag = tag) with
-                            | Some cell -> cell.ImageView.Image <- image
-                            | None -> ()
+                            continuation (images.AddOrUpdate (url, image, (fun _ i -> i)))
                         | None -> ()
                     )
 
+    let loadImageForView url placeholder (imageView:UIImageView) =
+        loadImageWithContinuation url placeholder (fun image -> imageView.Image <- image)
+
+    let loadImageForCell url placeholder (cell:UITableViewCell) (table:UITableView) =
+        let tag = cell.Tag // Cache the cell id, from this point on just assume it is no longer valid (due to cell reuse)
+        loadImageWithContinuation url placeholder (fun image ->
+            // Find the cell if it is still visible in the table
+            match table.VisibleCells |> Array.tryFind (fun c -> c.Tag = tag) with
+            | Some cell -> cell.ImageView.Image <- image
+            | None -> ()
+        )
