@@ -1,30 +1,32 @@
 ﻿<Properties>
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug|iPhoneSimulator" PreferredExecutionTarget="MonoDevelop.IPhone.IPhoneSimulatorTarget.IPhoneRetina.7.0" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="../../wireclub.android/Wireclub.AppClient/Channel.fs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Wireclub.iOS/Utility.fs">
     <Files>
       <File FileName="Wireclub.iOS/PrivateChat.fs" Line="1" Column="1" />
-      <File FileName="notes.braden.txt" Line="25" Column="43" />
-      <File FileName="Wireclub.iOS/Chat.fs" Line="205" Column="13" />
+      <File FileName="notes.braden.txt" Line="1" Column="1" />
+      <File FileName="Wireclub.iOS/Chat.fs" Line="1" Column="1" />
       <File FileName="Wireclub.iOS/Directory.fs" Line="1" Column="1" />
       <File FileName="Wireclub.iOS/AppDelegate.fs" Line="1" Column="1" />
       <File FileName="Wireclub.iOS/User.fs" Line="1" Column="1" />
       <File FileName="../../wireclub.android/Wireclub.AppClient/Routes.fs" Line="1" Column="1" />
-      <File FileName="Wireclub.iOS/Utility.fs" Line="1" Column="1" />
+      <File FileName="Wireclub.iOS/Utility.fs" Line="94" Column="5" />
       <File FileName="Views/UserViewController.designer.cs" Line="1" Column="1" />
-      <File FileName="Wireclub.iOS/Home.fs" Line="1" Column="1" />
+      <File FileName="Wireclub.iOS/Home.fs" Line="147" Column="49" />
       <File FileName="../../wireclub.android/Wireclub.AppClient/ChannelEvent.fs" Line="1" Column="1" />
-      <File FileName="../../wireclub.android/Wireclub.AppClient/Channel.fs" Line="102" Column="5" />
+      <File FileName="../../wireclub.android/Wireclub.AppClient/Channel.fs" Line="1" Column="1" />
       <File FileName="../../NEXT/Wireclub.Boundary/Models.fs" Line="1" Column="1" />
       <File FileName="Wireclub.iOS/Resources.fs" Line="1" Column="1" />
+      <File FileName="../../wireclub.android/Wireclub.AppClient/Api.fs" Line="1" Column="1" />
+      <File FileName="Views/ChatsViewController.cs" Line="11" Column="4" />
     </Files>
     <Pads>
       <Pad Id="ProjectPad">
         <State expanded="True">
-          <Node name="Wireclub.AppClient.iOS" expanded="True">
-            <Node name="References" expanded="True" />
-            <Node name="Channel.fs" selected="True" />
+          <Node name="Views" expanded="True" />
+          <Node name="Wireclub.AppClient.iOS" expanded="True" />
+          <Node name="Wireclub.iOS" expanded="True">
+            <Node name="Utility.fs" selected="True" />
           </Node>
-          <Node name="Wireclub.iOS" expanded="True" />
         </State>
       </Pad>
     </Pads>

@@ -19,6 +19,16 @@ type AppDelegate () =
 
         window.RootViewController <- navigationController
         window.MakeKeyAndVisible ()
+
+#if DEBUG
+        let rec tick () = async {
+            System.GC.Collect ()
+            do! Async.Sleep (100)
+            return! tick()
+        }    
+        Async.Start(tick())
+#endif
+
         true
 
 module Main =

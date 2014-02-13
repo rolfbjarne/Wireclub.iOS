@@ -21,11 +21,8 @@ type ForgotPasswordViewController (handle:nativeint) =
             this.NavigationController.PopViewControllerAnimated (true) |> ignore
         ))
         this.SubmitButton.TouchUpInside.Add(fun _ ->
-            Async.StartImmediate <| async {
-                
-                // ## Send / Toast ...
-                this.DismissViewController (true, null)
-            }
+            // ## Send / Toast ...
+            this.DismissViewController (true, null)
         )
 
 
@@ -47,11 +44,9 @@ type SignupViewController (handle:nativeint) =
         ))
 
         this.SignupButton.TouchUpInside.Add(fun _ ->
-            Async.StartImmediate <| async {
-                let! result = Account.signup this.Email.Text this.Password.Text
-                //result |> this.
-                ()
-            }
+            Async.startWithContinuation
+                (Account.signup this.Email.Text this.Password.Text)
+                (fun _ -> ())
         )
 
 [<Register ("LoginViewController")>]
@@ -83,15 +78,15 @@ type LoginViewController (handle:nativeint) =
             
             // ## Disable UI
             // ## Progress
-            Async.StartImmediate <| async {
-                let! result = Account.login this.Email.Text this.Password.Text
-                match result with
-                | Api.ApiOk result ->
-                    NSUserDefaults.StandardUserDefaults.SetString (result.Token, "auth-token")
-                    NSUserDefaults.StandardUserDefaults.Synchronize () |> ignore
-                    this.NavigationController.PopViewControllerAnimated true |> ignore
-                | error -> this.HandleApiFailure error
-            }
+            Async.startWithContinuation
+                (Account.login this.Email.Text this.Password.Text)
+                (function
+                    | Api.ApiOk result ->
+                        NSUserDefaults.StandardUserDefaults.SetString (result.Token, "auth-token")
+                        NSUserDefaults.StandardUserDefaults.Synchronize () |> ignore
+                        this.NavigationController.PopViewControllerAnimated true |> ignore
+                    | error -> this.HandleApiFailure error
+                )
         )
 
         this.ForgotPasswordButton.TouchUpInside.Add(fun _ ->
@@ -102,13 +97,80 @@ type LoginViewController (handle:nativeint) =
             this.NavigationController.PushViewController (signupStoryboard.InstantiateInitialViewController() :?> UIViewController, true)
         )
 
+[<RequireQualifiedAccess>]
+type ChatSession =
+| User of PrivateChatFriend
+| ChatRoom of ChatDirectoryRoomViewModel
+
+[<Register("ChatsViewController")>]
+type ChatsViewController () as controller =
+    inherit UIViewController ()
+         
+    let mutable (chats:ChatSession[]) = [| |]
+
+    let tableSource = { 
+        new UITableViewSource() with
+        override this.GetCell(tableView, indexPath) =
+            let chat = chats.[indexPath.Row]
+            let cell = 
+                match tableView.DequeueReusableCell "chat-cell" with
+                | null -> new UITableViewCell (UITableViewCellStyle.Subtitle, "chat-cell")
+                | c -> c
+            
+            cell.Tag <- indexPath.Row
+            match chat with
+            | ChatSession.User user ->
+                cell.TextLabel.Text <- user.Name
+                //cell.DetailTextLabel.Text <-// Last line of text & bolding if possible
+                Image.loadImageForCell (App.imageUrl user.Avatar 100) Image.placeholder cell tableView
+            | ChatSession.ChatRoom room ->
+                cell.TextLabel.Text <- room.Name
+                //cell.DetailTextLabel.Text <-// Last line of text & bolding if possible
+                Image.loadImageForCell (App.imageUrl room.Image 100) Image.placeholder cell tableView
+
+            cell
+
+        override this.RowsInSection(tableView, section) =
+            chats.Length
+
+        override this.RowSelected(tableView, indexPath) =
+            tableView.DeselectRow (indexPath, false)
+            let session = chats.[indexPath.Row]
+            match session with
+            | ChatSession.User user ->
+                let newController = ChatSessions.start user
+                controller.NavigationController.PushViewController(newController, true)
+            | ChatSession.ChatRoom room ->
+                let newController = ChatRooms.join room
+                controller.NavigationController.PushViewController(newController, true)
+    }
+
+    [<Outlet>]
+    member val Table: UITableView = null with get, set
+
+    override controller.ViewDidLoad () =
+        controller.Table.Source <- tableSource
+        base.ViewDidLoad ()
+
+    override this.ViewDidAppear (animated) =
+        base.ViewDidAppear (animated)
+
+        chats <- (seq {
+            for session in ChatSessions.sessions ->
+                let user, _ = session.Value
+                ChatSession.User user
+            for room in ChatRooms.rooms ->
+                let room, _ = room.Value
+                ChatSession.ChatRoom room
+            }) |> Seq.toArray
+        this.Table.ReloadData()
+
 
 [<Register("FriendsViewController")>]
 type FriendsViewController () as controller =
     inherit UIViewController ()
      
     let mutable (friends:PrivateChatFriend[]) = [| |]
-    let placeholder = UIImage.FromFile "Images/Placeholder.png"
 
     let tableSource = { 
         new UITableViewSource() with
@@ -122,7 +184,7 @@ type FriendsViewController () as controller =
             cell.Tag <- indexPath.Row
             cell.TextLabel.Text <- friend.Name
             //cell.DetailTextLabel.Text <- room
-            Image.loadImageForCell (App.imageUrl friend.Avatar 100) placeholder cell tableView
+            Image.loadImageForCell (App.imageUrl friend.Avatar 100) Image.placeholder cell tableView
 
             cell
 
@@ -131,7 +193,8 @@ type FriendsViewController () as controller =
 
         override this.RowSelected(tableView, indexPath) =
             tableView.DeselectRow (indexPath, false)
-            let newController = ChatSessions.start friends.[indexPath.Row]
+            let friend = friends.[indexPath.Row]
+            let newController = ChatSessions.start friend
             controller.NavigationController.PushViewController(newController, true)
     }
 
@@ -140,17 +203,25 @@ type FriendsViewController () as controller =
 
     override controller.ViewDidLoad () =
         controller.Table.Source <- tableSource
-        Async.StartImmediate <| async {
-            let! response = PrivateChat.online()
-            match response with
-            | Api.ApiOk response ->
-                friends <- response.Friends
-                controller.Table.ReloadData ()
+        Async.startWithContinuation
+            (PrivateChat.online())
+            (function
+                | Api.ApiOk response ->
+                    friends <- response.Friends
+                    controller.Table.ReloadData ()
 
-            | er -> printfn "Api Error: %A" er
-        }
+                | er -> printfn "Api Error: %A" er
+            )
 
         base.ViewDidLoad ()
+
+[<Register ("SettingsMenuViewController")>]
+type SettingsMenuViewController (handle:nativeint) =
+    inherit UITableViewController (handle)
+
+    override this.ViewDidLoad () =
+        base.ViewDidLoad ()
+            
 
 [<Register ("MegaMenuViewController")>]
 type MegaMenuViewController (handle:nativeint) =
@@ -163,8 +234,9 @@ type MegaMenuViewController (handle:nativeint) =
 type HomeViewController () =
     inherit UIViewController ()
 
-    let friendsController = new FriendsViewController()
-    let chatController = new ChatDirectoryViewController()
+    let chatsController = new ChatsViewController ()
+    let friendsController = new FriendsViewController ()
+    let directoryController = new ChatDirectoryViewController ()
     
     [<Outlet>]
     member val Filter: UISegmentedControl = null with get, set
@@ -183,23 +255,30 @@ type HomeViewController () =
         ))
 
         // Set up the child controllers
+        this.AddChildViewController chatsController
         this.AddChildViewController friendsController
-        this.AddChildViewController chatController
+        this.AddChildViewController directoryController
+        this.ContentView.AddSubview chatsController.View
         this.ContentView.AddSubview friendsController.View
-        this.ContentView.AddSubview chatController.View
+        this.ContentView.AddSubview directoryController.View
         let frame = System.Drawing.RectangleF(0.0f, 0.0f, this.ContentView.Bounds.Width, this.ContentView.Bounds.Height)            
-        chatController.View.Frame <- frame
+        chatsController.View.Frame <- frame
         friendsController.View.Frame <- frame
-        chatController.View.Hidden <- true
+        directoryController.View.Frame <- frame
 
+        let changeFilter index =
+            chatsController.View.Hidden <- true
+            friendsController.View.Hidden <- true
+            directoryController.View.Hidden <- true
+            match index with
+            | 0 -> chatsController.View.Hidden <- false
+            | 1 -> friendsController.View.Hidden <- false
+            | _ -> directoryController.View.Hidden <- false
+
+        changeFilter 0
+        
         this.Filter.ValueChanged.Add (fun _ ->
-            match this.Filter.SelectedSegment with
-            | 0 ->
-                friendsController.View.Hidden <- false
-                chatController.View.Hidden <- true
-            | _ ->
-                friendsController.View.Hidden <- true
-                chatController.View.Hidden <- false
+            changeFilter (this.Filter.SelectedSegment)
         )
 
 
@@ -208,6 +287,7 @@ type EntryViewController () =
     inherit UIViewController ()
 
     let rootController = new HomeViewController()
+    let loginController = lazy (Resources.loginStoryboard.Value.InstantiateInitialViewController() :?> UIViewController)
 
     override this.ViewDidLoad () =
         base.ViewDidLoad ()
@@ -247,17 +327,17 @@ type EntryViewController () =
         match defaults.StringForKey "auth-token", System.String.IsNullOrEmpty Api.userId with
         // User has not entered an account
         | null, _ -> 
-            this.NavigationController.PushViewController (Resources.loginStoryboard.Value.InstantiateInitialViewController() :?> UIViewController, false)
+            this.NavigationController.PushViewController (loginController.Value, false)
 
         // User has an account but has not authenticated with the api
         | token, true -> 
-            Async.StartImmediate <| async {
-                let! loginResult = Account.loginToken token
-                match loginResult with
-                | Api.ApiOk identity -> proceed true
-                | _ -> 
-                    this.NavigationController.PushViewController (Resources.loginStoryboard.Value.InstantiateInitialViewController() :?> UIViewController, true)
-            }
+            Async.startWithContinuation
+                (Account.loginToken token)
+                (function
+                    | Api.ApiOk identity -> proceed true
+                    | _ -> this.NavigationController.PushViewController (loginController.Value, true)
+                )
+
         // User is fully authenticated already
         | _, false -> proceed false
             

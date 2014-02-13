@@ -50,19 +50,17 @@ type PrivateChatSessionViewController (user:Wireclub.Boundary.Chat.PrivateChatFr
             })) |> ignore
             scrollToBottom ()
 
-    let sendMessage (identity:Models.User) session context text =
+    let sendMessage (identity:Models.User) session text =
         match text with
         | "" -> ()
         | _ ->
-            Async.StartImmediate (async {
-                let! response = PrivateChat.send session.UserId text
-                do! Async.SwitchToContext context
-                match this.HandleApiResult response with
-                | Api.ApiOk response -> 
-                    this.Text.Text <- ""
-                    addMessage identity.Id identity.Slug identity.Avatar "" 0 response.Feedback response.Sequence
-                | error -> this.HandleApiFailure error
-            })
+            Async.startWithContinuation
+                (PrivateChat.send session.UserId text)
+                (function
+                    | Api.ApiOk response -> 
+                        this.Text.Text <- ""
+                        addMessage identity.Id identity.Slug identity.Avatar "" 0 response.Feedback response.Sequence
+                    | error -> this.HandleApiFailure error)
 
     let placeKeyboard (sender:obj) (args:UIKeyboardEventArgs) =
         this.ResizeViewToKeyboard args
@@ -129,11 +127,11 @@ type PrivateChatSessionViewController (user:Wireclub.Boundary.Chat.PrivateChatFr
 
                     // Send message
                     this.Text.ShouldReturn <- (fun _ ->
-                        sendMessage identity session context this.Text.Text
+                        sendMessage identity session this.Text.Text
                         false
                     )
                     this.SendButton.TouchUpInside.Add(fun args ->
-                        sendMessage identity session context this.Text.Text
+                        sendMessage identity session this.Text.Text
                     )
 
                 | _ -> failwith "API FAIL"
@@ -147,14 +145,16 @@ type PrivateChatSessionViewController (user:Wireclub.Boundary.Chat.PrivateChatFr
 
 
 module ChatSessions =
-    let sessions = ConcurrentDictionary<string, PrivateChatSessionViewController>()
+    let sessions = ConcurrentDictionary<string, Wireclub.Boundary.Chat.PrivateChatFriend * PrivateChatSessionViewController>()
 
     let start (user:Wireclub.Boundary.Chat.PrivateChatFriend) =
-        sessions.AddOrUpdate (
-                user.Slug,
-                (fun _ -> new PrivateChatSessionViewController (user) ),
-                (fun _ room -> room)
-            )
+        let _, controller =
+            sessions.AddOrUpdate (
+                    user.Slug,
+                    (fun _ -> user, new PrivateChatSessionViewController (user) ),
+                    (fun _ x -> x)
+                )
+        controller
 
     let leave slug =
         match sessions.TryRemove slug with

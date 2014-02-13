@@ -122,6 +122,10 @@
     <Compile Include="UserFeedViewController.designer.cs">
       <DependentUpon>UserFeedViewController.cs</DependentUpon>
     </Compile>
+    <Compile Include="ChatsViewController.cs" />
+    <Compile Include="ChatsViewController.designer.cs">
+      <DependentUpon>ChatsViewController.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <InterfaceDefinition Include="FriendsViewController.xib" />
@@ -138,6 +142,7 @@
     <InterfaceDefinition Include="MegaMenu.storyboard" />
     <InterfaceDefinition Include="EditProfile.storyboard" />
     <InterfaceDefinition Include="User.storyboard" />
+    <InterfaceDefinition Include="ChatsViewController.xib" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Resources\" />

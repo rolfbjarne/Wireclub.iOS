@@ -11,6 +11,11 @@ type AlertDelegate (action: int -> unit) =
 module Navigation =
     let mutable navigate: (string -> obj -> unit) = (fun _ _ -> failwith "No navigation handler attached")
 
+
+module Async =
+    let startWithContinuation (computation: Async<'T>) (continuation: 'T -> unit) =
+        Async.StartWithContinuations (computation, continuation, (fun ex -> raise ex), (fun _ -> ()))
+
 [<AutoOpen>]
 module Utility =
     let showSimpleAlert title message button =
@@ -45,6 +50,7 @@ module Utility =
             this.View.Frame <- viewFrame;
             UIView.CommitAnimations ()
 
+
 module Image =
     open System
     open System.IO
@@ -59,7 +65,6 @@ module Image =
     let images = ConcurrentDictionary<string, UIImage>()
 
     let cachePath url =
-        // ## TODO Android tmp directory
         let documents = Environment.GetFolderPath (Environment.SpecialFolder.MyDocuments)
         let cache = Path.Combine (documents, "..", "Library", "Caches")
         Path.Combine (cache, System.Text.RegularExpressions.Regex.Replace(url, "[^\w]", "_"))
@@ -69,68 +74,56 @@ module Image =
         | true, image -> Some image
         | false, _ -> None
 
-    let tryAcquireFromDisk context url = async {
+    let tryAcquireFromDisk url =
         let file = cachePath url
         match File.Exists file with
-        | true -> 
-            // Must be on the ui thread to create images
-            do! Async.SwitchToContext context
-            let image = UIImage.FromFile  file
-            return Some (images.AddOrUpdate (url, image, (fun _ i -> i)))
-        | false -> return None
-    }
+        | true -> Some (images.AddOrUpdate (url, (UIImage.FromFile  file), (fun _ i -> i)))
+        | false -> None
 
-    let tryAcquireFromServer context url = async {
+    let tryAcquireFromServer url = async {
         let! image = Api.req<byte[]> url "get" []
         match image with
         | Api.ApiOk data ->             
             use stream = new FileStream(cachePath url, FileMode.Create)
             do! stream.AsyncWrite data
-            //return! tryAcquireFromDisk context url
-            let image = UIImage.LoadFromData (NSData.FromArray data)
-            return Some (images.AddOrUpdate (url, image, (fun _ i -> i)))
+            return Some data
         | error -> 
             printfn "Failed to load image: %A" error
             return None
     }
 
     // Agent handles loading remote images, requests will be processed serially
-    type Request = (string * SynchronizationContext) * AsyncReplyChannel<UIImage option>
+    type Request = (string) * AsyncReplyChannel<byte[] option>
     let agent = MailboxProcessor<Request>.Start(fun inbox ->
         let rec loop () = async {
-            let! ((url, context), replyChannel) = inbox.Receive ()
-            let! image = tryAcquireFromServer context url
+            let! (url, replyChannel) = inbox.Receive ()
+            let! image = tryAcquireFromServer url
             replyChannel.Reply image
-
             return! loop ()
         }
-
         loop ()
     )
 
-    let tryAcquire context url = async {
-        let image = tryAcquireFromCache url
-        if image <> None then 
-            return image
-        else
-            let! image = tryAcquireFromDisk context url
-            if image <> None then 
-                return image
-            else
-                return! agent.PostAndAsyncReply (fun replyChannel -> (url, context), replyChannel)
-    }
-
     let loadImageForCell url placeholder (cell:UITableViewCell) (table:UITableView) =
-        let context = SynchronizationContext.Current
-        cell.ImageView.Image <- placeholder
-        let tag = cell.Tag // Cache the cell id, from this point on just assume it is no longer valid (due to cell reuse)
-        Async.StartImmediate <| async {
-            let! image = tryAcquire context url
-            match image with
-            | Some image ->
-                do! Async.SwitchToContext context
-                match table.VisibleCells |> Array.tryFind (fun c -> c.Tag = tag) with
-                | Some cell -> cell.ImageView.Image <- image
-                | None -> ()
-            | None -> ()
-        }
+        match tryAcquireFromCache url with
+        | Some image -> cell.ImageView.Image <- image
+        | None ->
+            match tryAcquireFromDisk url with
+            | Some image -> cell.ImageView.Image <- image
+            | None ->
+                let tag = cell.Tag // Cache the cell id, from this point on just assume it is no longer valid (due to cell reuse)
+                cell.ImageView.Image <- placeholder // Set the placeholder while we load
+                Async.startWithContinuation
+                    (agent.PostAndAsyncReply (fun replyChannel -> url, replyChannel))
+                    (function
+                        | Some data ->
+                            let image = UIImage.LoadFromData (NSData.FromArray data)
+                            images.AddOrUpdate (url, image, (fun _ i -> i)) |> ignore
+                            
+                            // Find the cell if it is still visible in the table
+                            match table.VisibleCells |> Array.tryFind (fun c -> c.Tag = tag) with
+                            | Some cell -> cell.ImageView.Image <- image
+                            | None -> ()
+                        | None -> ()
+                    )
+

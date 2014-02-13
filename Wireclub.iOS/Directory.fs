@@ -43,21 +43,23 @@ type ChatDirectoryViewController() as controller =
             controller.NavigationController.PushViewController(roomController, true)
     }
 
-    let updateDirectory () = async {
-        let! directory = Chat.directory ()
-        match directory with
-        | Api.ApiOk directory ->
-            rooms <- directory.Official
-            controller.Table.ReloadData ()
-        | er -> 
-            // ## Handle "soft" errors (no alertview, maybe a toast if the table is empty?)
-            printfn "Api Error: %A" er
-    }
+    let updateDirectory () = 
+        Async.startWithContinuation
+            (Chat.directory ())
+            (function
+                | Api.ApiOk directory ->
+                    rooms <- directory.Official
+                    controller.Table.ReloadData ()
+                | er -> 
+                    // ## Handle "soft" errors (no alertview, maybe a toast if the table is empty?)
+                    printfn "Api Error: %A" er
+            )
+    
 
     [<Outlet>]
     member val Table: UITableView = null with get, set
 
     override controller.ViewDidLoad () =
         controller.Table.Source <- tableSource
-        updateDirectory () |> Async.StartImmediate
+        updateDirectory ()
         base.ViewDidLoad ()
