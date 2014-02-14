@@ -81,12 +81,9 @@ type PrivateChatSessionViewController (user:Entity) as this =
     member val Text: UITextField = null with get, set
 
     override this.ViewDidLoad () =
-        //this.NavigationItem.BackBarButtonItem.Title <- "Chats"
-
+        
         this.NavigationItem.RightBarButtonItem <- new UIBarButtonItem("...", UIBarButtonItemStyle.Bordered, new EventHandler(fun (s:obj) (e:EventArgs) -> 
-            let controller = (Resources.userStoryboard.Value.InstantiateInitialViewController () :?> UITabBarController).ChildViewControllers.[0] :?> UserViewController
-            controller.User <- Some user
-            this.NavigationController.PushViewController (controller, true)
+            Navigation.navigate (sprintf "/users/%s" user.Slug) (Some user)
         ))
 
         this.NavigationItem.Title <- user.Label

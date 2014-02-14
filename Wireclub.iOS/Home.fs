@@ -311,8 +311,8 @@ type EntryViewController () =
         let navigate url (data:Entity option) =
             match url with
             | Routes.User id -> 
-                let controller = (Resources.userStoryboard.Value.InstantiateInitialViewController () :?> UITabBarController).ChildViewControllers.[0] :?> UserViewController
-                controller.User <- data
+                let controller = Resources.userStoryboard.Value.InstantiateInitialViewController () :?> UITabBarController
+                (controller.ChildViewControllers.[0] :?> UserViewController).User <- data
                 this.NavigationController.PushViewController (controller, true)
 
             | Routes.ChatSession id ->             

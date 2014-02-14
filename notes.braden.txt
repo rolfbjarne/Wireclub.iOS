@@ -1,12 +1,10 @@
 
 TODO
-	- Persist private chats
 	- Build robust websocket client
 		- Wait some time before trying to reconnect
 	* Keyboard bug when switching to open rooms - subview resizing
-	- Network connectivity tests
 	- Loading indicators
-	- Add friend
+	 * Add friend
 	- Friend requests??
 		- Show as special view on friends list
 	- Channel context menu 
@@ -29,3 +27,14 @@ TODO
 	- Investigate profiler
 	- Guard against db errors
 		- Consider killing db if fatal error
+	- Block/Unblock
+	- MegaMenu
+		- Set online state
+		- Settings
+
+	- User
+		- Viewing self
+
+	- Chat Rooms
+		- Chat users shows historic
+		- Select users from chat body
