@@ -1,6 +1,7 @@
 module Wireclub.iOS.DB
 
 open System
+open System.IO
 open SQLite
 open Wireclub.Models
 open Wireclub.Boundary
@@ -23,7 +24,7 @@ type ChatHistory() =
     member val Read = true with get, set
     member val Type = ChatHistoryType.PrivateChat with get, set
 
-let db = new SQLiteAsyncConnection("db")
+let db = new SQLiteAsyncConnection(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "db"))
 let dbChatHistory = db.CreateTableAsync<ChatHistory> () |> Async.AwaitTask |> Async.RunSynchronously
 
 let createChatHistory (entity:Entity) historyType (last:(string * bool) option) = async {

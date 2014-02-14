@@ -1,5 +1,11 @@
 
 TODO
+	- Background watch all pms / chats
+		- Create/join rooms/chats as events received
+		- Forward events to appropriate live controllers
+		- Use mailbox processor to load session data before starting loop() ?
+
+
 	- Build robust websocket client
 		- Wait some time before trying to reconnect
 	* Keyboard bug when switching to open rooms - subview resizing
@@ -38,3 +44,8 @@ TODO
 	- Chat Rooms
 		- Chat users shows historic
 		- Select users from chat body
+
+	- Launch images fffffff
+
+	- Device
+		- Username box should not autocomplete
