@@ -99,14 +99,17 @@ type LoginViewController (handle:nativeint) =
 
 [<RequireQualifiedAccess>]
 type ChatSession =
-| User of PrivateChatFriend
-| ChatRoom of ChatDirectoryRoomViewModel
+| User of Entity
+| ChatRoom of Entity
 
 [<Register("ChatsViewController")>]
 type ChatsViewController () as controller =
     inherit UIViewController ()
          
-    let mutable (chats:ChatSession[]) = [| |]
+    let mutable (chats:DB.ChatHistory[]) = [| |]
+
+    let readColor = new UIColor(0.3f, 0.3f, 0.3f, 1.0f)
+    let unreadColor = new UIColor(0.0f, 0.0f, 0.0f, 1.0f)
 
     let tableSource = { 
         new UITableViewSource() with
@@ -118,16 +121,17 @@ type ChatsViewController () as controller =
                 | c -> c
             
             cell.Tag <- indexPath.Row
-            match chat with
-            | ChatSession.User user ->
-                cell.TextLabel.Text <- user.Name
-                //cell.DetailTextLabel.Text <-// Last line of text & bolding if possible
-                Image.loadImageForCell (App.imageUrl user.Avatar 100) Image.placeholder cell tableView
-            | ChatSession.ChatRoom room ->
-                cell.TextLabel.Text <- room.Name
-                //cell.DetailTextLabel.Text <-// Last line of text & bolding if possible
-                Image.loadImageForCell (App.imageUrl room.Image 100) Image.placeholder cell tableView
-
+            match chat.Type with
+            | DB.ChatHistoryType.PrivateChat
+            | DB.ChatHistoryType.ChatRoom
+            | _ ->
+                let color = if chat.Read then readColor else unreadColor
+                cell.TextLabel.Text <- chat.Label
+                cell.TextLabel.TextColor <- color
+                cell.DetailTextLabel.Text <- chat.Last
+                cell.DetailTextLabel.TextColor <- color
+                Image.loadImageForCell (App.imageUrl chat.Image 100) Image.placeholder cell tableView
+            
             cell
 
         override this.RowsInSection(tableView, section) =
@@ -136,12 +140,19 @@ type ChatsViewController () as controller =
         override this.RowSelected(tableView, indexPath) =
             tableView.DeselectRow (indexPath, false)
             let session = chats.[indexPath.Row]
-            match session with
-            | ChatSession.User user ->
-                let newController = ChatSessions.start user
+            let entity = {
+                Id = session.EntityId
+                Slug = session.Slug
+                Label = session.Label
+                Image = session.Image
+            }
+            match session.Type with
+            | DB.ChatHistoryType.PrivateChat ->
+                let newController = ChatSessions.start entity
                 controller.NavigationController.PushViewController(newController, true)
-            | ChatSession.ChatRoom room ->
-                let newController = ChatRooms.join room
+            | DB.ChatHistoryType.ChatRoom
+            | _ ->
+                let newController = ChatRooms.join entity
                 controller.NavigationController.PushViewController(newController, true)
     }
 
@@ -155,16 +166,14 @@ type ChatsViewController () as controller =
     override this.ViewDidAppear (animated) =
         base.ViewDidAppear (animated)
 
-        chats <- (seq {
-            for session in ChatSessions.sessions ->
-                let user, _ = session.Value
-                ChatSession.User user
-            for room in ChatRooms.rooms ->
-                let room, _ = room.Value
-                ChatSession.ChatRoom room
-            }) |> Seq.toArray
-        this.Table.ReloadData()
-
+        Async.startWithContinuation
+            (async {
+                return! DB.fetchChatHistory ()
+            })
+            (fun sessions ->
+                chats <- sessions |> Seq.toArray
+                this.Table.ReloadData()
+            )
 
 [<Register("FriendsViewController")>]
 type FriendsViewController () as controller =
@@ -194,7 +203,12 @@ type FriendsViewController () as controller =
         override this.RowSelected(tableView, indexPath) =
             tableView.DeselectRow (indexPath, false)
             let friend = friends.[indexPath.Row]
-            let newController = ChatSessions.start friend
+            let newController = ChatSessions.start {
+                    Id = friend.Id
+                    Slug = friend.Slug
+                    Label = friend.Name
+                    Image = friend.Avatar
+                }
             controller.NavigationController.PushViewController(newController, true)
     }
 
@@ -292,21 +306,23 @@ type EntryViewController () =
     override this.ViewDidLoad () =
         base.ViewDidLoad ()
 
-        let navigate url (data:obj) =
+        let objOrFail = function | Some o -> o | _ -> failwith "Expected Some"
+            
+        let navigate url (data:Entity option) =
             match url with
             | Routes.User id -> 
                 let controller = (Resources.userStoryboard.Value.InstantiateInitialViewController () :?> UITabBarController).ChildViewControllers.[0] :?> UserViewController
-                controller.User <- Some (data :?> Wireclub.Boundary.Chat.PrivateChatFriend)
+                controller.User <- data
                 this.NavigationController.PushViewController (controller, true)
 
             | Routes.ChatSession id ->             
                 this.NavigationController.PopToViewController (rootController, false) |> ignore // Straight yolo
-                let controller = ChatSessions.start (data :?> Wireclub.Boundary.Chat.PrivateChatFriend)
+                let controller = ChatSessions.start (objOrFail data)
                 this.NavigationController.PushViewController (controller, true)
 
             | Routes.ChatRoom id ->
                 this.NavigationController.PopToViewController (rootController, false) |> ignore
-                let controller = ChatRooms.join (data :?> Wireclub.Boundary.Chat.ChatDirectoryRoomViewModel)
+                let controller = ChatRooms.join (objOrFail data)
                 this.NavigationController.PushViewController (controller, true)
 
             | url -> 

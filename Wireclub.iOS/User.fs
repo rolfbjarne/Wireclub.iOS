@@ -18,7 +18,7 @@ type UserFeedViewController (handle:nativeint) =
 type UserViewController (handle:nativeint) =
     inherit UIViewController (handle)
 
-    member val User: Wireclub.Boundary.Chat.PrivateChatFriend option = None with get, set // TODO: Generic....
+    member val User: Entity option = None with get, set
 
     [<Outlet>]
     member val Avatar: UIImageView = null with get, set
@@ -37,10 +37,10 @@ type UserViewController (handle:nativeint) =
 
         match this.User with
         | Some user -> 
-            loadImageForView (Image.
+            Image.loadImageForView (App.imageUrl user.Image 200) Image.placeholder this.Avatar
 
             this.ChatButton.TouchUpInside.Add(fun _ ->            
-                Navigation.navigate ("/privateChat/session/" + user.Slug) (user :> obj)
+                Navigation.navigate ("/privateChat/session/" + user.Slug) this.User
             )
 
             this.FriendButton.TouchUpInside.Add(fun _ ->

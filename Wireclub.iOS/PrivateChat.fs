@@ -4,6 +4,7 @@ open System
 open System.Collections.Concurrent
 open MonoTouch.Foundation
 open MonoTouch.UIKit
+open Wireclub.Models
 open Wireclub.Boundary
 open Wireclub.Boundary.Chat
 open ChannelEvent
@@ -24,7 +25,7 @@ type ChatMessage = {
 
 
 [<Register("PrivateChatSessionViewController")>]
-type PrivateChatSessionViewController (user:Wireclub.Boundary.Chat.PrivateChatFriend) as this =
+type PrivateChatSessionViewController (user:Entity) as this =
     inherit UIViewController ()
 
     let events = System.Collections.Generic.HashSet<int64>()
@@ -88,7 +89,7 @@ type PrivateChatSessionViewController (user:Wireclub.Boundary.Chat.PrivateChatFr
             this.NavigationController.PushViewController (controller, true)
         ))
 
-        this.NavigationItem.Title <- user.Name
+        this.NavigationItem.Title <- user.Label
         this.WebView.LoadRequest(new NSUrlRequest(new NSUrl(Api.baseUrl + "/mobile/chat")))
         this.WebView.LoadFinished.Add(fun _ ->
             Async.StartImmediate <| async {
@@ -112,8 +113,10 @@ type PrivateChatSessionViewController (user:Wireclub.Boundary.Chat.PrivateChatFr
                             | { User = user } when user <> session.UserId  -> ()
                             | { Event = PrivateMessage (color, font, message) } ->
                                 addMessage session.UserId "??SLUG??" session.PartnerAvatarId color font message event.Sequence
+                                do! (DB.createChatHistory user DB.ChatHistoryType.PrivateChat (Some (message, false)))
                             | { Event = PrivateMessageSent (color, font, message) } ->
                                 addMessage Api.userId identity.Slug identity.Avatar color font message event.Sequence
+                                do! (DB.createChatHistory user DB.ChatHistoryType.PrivateChat (Some ("You: " + message, false)))
                             | _ -> ()
 
                             return! loop ()
@@ -145,19 +148,27 @@ type PrivateChatSessionViewController (user:Wireclub.Boundary.Chat.PrivateChatFr
 
 
 module ChatSessions =
-    let sessions = ConcurrentDictionary<string, Wireclub.Boundary.Chat.PrivateChatFriend * PrivateChatSessionViewController>()
+    open SQLite
+    open System.Linq
 
-    let start (user:Wireclub.Boundary.Chat.PrivateChatFriend) =
+    let sessions = ConcurrentDictionary<string, Entity * PrivateChatSessionViewController>()
+
+    let start (user:Entity) =
         let _, controller =
             sessions.AddOrUpdate (
                     user.Slug,
                     (fun _ -> user, new PrivateChatSessionViewController (user) ),
                     (fun _ x -> x)
                 )
+        Async.Start (DB.createChatHistory user DB.ChatHistoryType.PrivateChat None)
         controller
+
+    let touch (user:Wireclub.Boundary.Chat.PrivateChatFriend) =
+        ()
 
     let leave slug =
         match sessions.TryRemove slug with
         | _ -> ()
     
+
                   

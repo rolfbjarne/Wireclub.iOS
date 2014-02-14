@@ -182,3 +182,8 @@ Desktop.ini
 
 # Recycle Bin used on file shares
 $RECYCLE.BIN/
+
+# Xamarin Studio
+*.userprefs
+Components/
+Resource.designer.fs

@@ -33,7 +33,7 @@ type ChatRoomUsersViewController (users:ChatUser[]) =
                 override this.RowSelected(tableView, indexPath) =
                     tableView.DeselectRow (indexPath, false)
                     let user = users.[indexPath.Row]
-                    Navigation.navigate ("/users/" + user.Slug) ({ PrivateChatFriend.Id = user.Id; Name = user.Name; Slug = user.Slug; Avatar = user.Avatar; State = OnlineStateType.Visible  })
+                    Navigation.navigate ("/users/" + user.Slug) (Some { Id = user.Id; Label = user.Name; Slug = user.Slug; Image = user.Avatar })
                     ()
 
             }
@@ -47,7 +47,7 @@ type ChatRoomUsersViewController (users:ChatUser[]) =
         ()
 
 [<Register ("ChatRoomViewController")>]
-type ChatRoomViewController (room:ChatDirectoryRoomViewModel) as this =
+type ChatRoomViewController (room:Entity) as this =
     inherit UIViewController ("PrivateChatSessionViewController", null)
 
     // ## FACTOR
@@ -104,7 +104,7 @@ type ChatRoomViewController (room:ChatDirectoryRoomViewModel) as this =
     member val Text: UITextField = null with get, set
 
     override this.ViewDidLoad () =
-        this.NavigationItem.Title <- room.Name
+        this.NavigationItem.Title <- room.Label
 
         this.WebView.LoadRequest(new NSUrlRequest(new NSUrl(Api.baseUrl + "/mobile/chat")))
         this.WebView.LoadFinished.Add(fun _ ->
@@ -208,15 +208,16 @@ type ChatRoomViewController (room:ChatDirectoryRoomViewModel) as this =
 
 
 module ChatRooms =
-    let rooms = ConcurrentDictionary<string, ChatDirectoryRoomViewModel * ChatRoomViewController>()
+    let rooms = ConcurrentDictionary<string, Entity * ChatRoomViewController>()
 
-    let join (room:ChatDirectoryRoomViewModel) =
+    let join (room:Entity) =
         let _, controller =
             rooms.AddOrUpdate (
                     room.Slug,
                     (fun _ -> room, new ChatRoomViewController (room)),
                     (fun _ room -> room)
                 )
+        Async.Start (DB.createChatHistory room DB.ChatHistoryType.ChatRoom None)
         controller
 
     let leave slug =

@@ -9,8 +9,7 @@ type AlertDelegate (action: int -> unit) =
         action index
 
 module Navigation =
-    let mutable navigate: (string -> obj -> unit) = (fun _ _ -> failwith "No navigation handler attached")
-
+    let mutable navigate: (string -> (Entity option) -> unit) = (fun _ _ -> failwith "No navigation handler attached")
 
 module Async =
     let startWithContinuation (computation: Async<'T>) (continuation: 'T -> unit) =
@@ -103,31 +102,34 @@ module Image =
     )
 
     // Continuation may be called twice, to set the placeholder and then later to set the final image
-    let loadImageWithContinuation url placeholder (continuation: UIImage -> unit) =
+    let loadImageWithContinuation url placeholder (continuation: UIImage -> bool -> unit) =
         match tryAcquireFromCache url with
-        | Some image -> continuation image
+        | Some image -> continuation image true
         | None ->
             match tryAcquireFromDisk url with
-            | Some image -> continuation image
+            | Some image -> continuation image true
             | None ->
-                continuation placeholder // Set the placeholder while we load
+                continuation placeholder true // Set the placeholder while we load
                 Async.startWithContinuation
                     (agent.PostAndAsyncReply (fun replyChannel -> url, replyChannel))
                     (function
                         | Some data ->
                             let image = UIImage.LoadFromData (NSData.FromArray data)
-                            continuation (images.AddOrUpdate (url, image, (fun _ i -> i)))
+                            continuation (images.AddOrUpdate (url, image, (fun _ i -> i))) false
                         | None -> ()
                     )
 
     let loadImageForView url placeholder (imageView:UIImageView) =
-        loadImageWithContinuation url placeholder (fun image -> imageView.Image <- image)
+        loadImageWithContinuation url placeholder (fun image _ -> imageView.Image <- image)
 
     let loadImageForCell url placeholder (cell:UITableViewCell) (table:UITableView) =
         let tag = cell.Tag // Cache the cell id, from this point on just assume it is no longer valid (due to cell reuse)
-        loadImageWithContinuation url placeholder (fun image ->
-            // Find the cell if it is still visible in the table
-            match table.VisibleCells |> Array.tryFind (fun c -> c.Tag = tag) with
-            | Some cell -> cell.ImageView.Image <- image
-            | None -> ()
+        loadImageWithContinuation url placeholder (fun image fromCache ->
+            if fromCache then
+                cell.ImageView.Image <- image
+            else
+                // Find the cell if it is still visible in the table
+                match table.VisibleCells |> Array.tryFind (fun c -> c.Tag = tag) with
+                | Some cell -> cell.ImageView.Image <- image
+                | None -> ()
         )

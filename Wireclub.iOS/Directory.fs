@@ -13,7 +13,6 @@ type ChatDirectoryViewController() as controller =
     inherit UIViewController ()
 
     let mutable rooms: ChatDirectoryRoomViewModel[] = [| |]
-    let openRooms = ConcurrentDictionary<string, ChatRoomViewController> ()
    
     let tableSource = { 
         new UITableViewSource() with
@@ -35,11 +34,8 @@ type ChatDirectoryViewController() as controller =
 
         override this.RowSelected(tableView, indexPath) =
             tableView.DeselectRow (indexPath, false)
-            let room = rooms.[indexPath.Row].Slug
-            let roomController = 
-                match openRooms.TryGetValue room with
-                | true, controller -> controller
-                | false, _ -> ChatRooms.join rooms.[indexPath.Row]
+            let room = rooms.[indexPath.Row]
+            let roomController = ChatRooms.join { Id=room.Id; Slug=room.Slug; Label=room.Name; Image=room.Image }
             controller.NavigationController.PushViewController(roomController, true)
     }
 

@@ -1,5 +1,6 @@
 
 TODO
+	- Persist private chats
 	- Build robust websocket client
 		- Wait some time before trying to reconnect
 	* Keyboard bug when switching to open rooms - subview resizing
@@ -26,3 +27,5 @@ TODO
 	- Profile create / edit wireup
 		- Api to get profile
 	- Investigate profiler
+	- Guard against db errors
+		- Consider killing db if fatal error
