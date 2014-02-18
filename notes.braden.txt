@@ -49,3 +49,13 @@ TODO
 
 	- Device
 		- Username box should not autocomplete
+		- Filter view not enough space / replace with tabs?
+
+	- Prodution
+		- Service for ws channel server
+		- Hostname for ws channel server
+
+	- Perf
+		- Unload views
+		- Limit length of pm de-dupe cache
+		- Batch events sent to the webview

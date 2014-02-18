@@ -258,6 +258,8 @@ type HomeViewController () =
     [<Outlet>]
     member val ContentView: UIView = null with get, set
 
+    member val ChatsController = chatsController
+
     override this.ViewDidLoad () =
         base.ViewDidLoad ()
         printfn "[Home:Load]" 
@@ -303,40 +305,54 @@ type EntryViewController () =
     let rootController = new HomeViewController()
     let loginController = lazy (Resources.loginStoryboard.Value.InstantiateInitialViewController() :?> UIViewController)
 
+    let handleEvent channel (event:ChannelEvent.ChannelEvent) =        
+        if channel = Api.userId then
+            match ChatSessions.sessions.TryGetValue event.User with
+            | true, (_, controller) -> controller.HandleChannelEvent event
+            | _ -> ChatSessions.startById event.User (fun controller -> 
+                    controller.HandleChannelEvent event
+                    if rootController.ChatsController.IsViewLoaded then
+                        rootController.ChatsController.Table.ReloadData ()
+                )
+        else
+            match ChatRooms.rooms.TryGetValue channel with
+            | true, (_, controller) -> controller.HandleChannelEvent event
+            | _ -> ChatRooms.joinById channel
+
+
     override this.ViewDidLoad () =
         base.ViewDidLoad ()
 
         let objOrFail = function | Some o -> o | _ -> failwith "Expected Some"
             
         let navigate url (data:Entity option) =
-            match url with
-            | Routes.User id -> 
+            match url, data with
+            | Routes.User id, _ -> 
                 let controller = Resources.userStoryboard.Value.InstantiateInitialViewController () :?> UITabBarController
                 (controller.ChildViewControllers.[0] :?> UserViewController).User <- data
                 this.NavigationController.PushViewController (controller, true)
 
-            | Routes.ChatSession id ->             
+            | Routes.ChatSession id, Some data ->
                 this.NavigationController.PopToViewController (rootController, false) |> ignore // Straight yolo
-                let controller = ChatSessions.start (objOrFail data)
+                let controller = ChatSessions.start data
                 this.NavigationController.PushViewController (controller, true)
 
-            | Routes.ChatRoom id ->
+            | Routes.ChatRoom id, Some data ->
                 this.NavigationController.PopToViewController (rootController, false) |> ignore
-                let controller = ChatRooms.join (objOrFail data)
+                let controller = ChatRooms.join data
                 this.NavigationController.PushViewController (controller, true)
 
-            | url -> 
+            | url, _ -> 
                 this.NavigationController.PushViewController (new DialogViewController (url), true)
 
         Navigation.navigate <- navigate
-
 
         printfn "[Entry:Load]"
 
     override this.ViewDidAppear (animated) =
         // When the user is authenticated start the channel client and push the main app controller
         let proceed animated =
-            ChannelClient.init ()
+            ChannelClient.init handleEvent
             this.NavigationController.PushViewController(rootController, animated)
 
         let defaults = NSUserDefaults.StandardUserDefaults

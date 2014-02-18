@@ -28,7 +28,9 @@ type ChatMessage = {
 type PrivateChatSessionViewController (user:Entity) as this =
     inherit UIViewController ()
 
+    let identity = match Api.userIdentity with | Some id -> id | None -> failwith "User must be logged in"
     let events = System.Collections.Generic.HashSet<int64>()
+    let mutable session: SessionResponse option = None
 
     let scrollToBottom () =
         this.WebView.EvaluateJavascript 
@@ -51,12 +53,12 @@ type PrivateChatSessionViewController (user:Entity) as this =
             })) |> ignore
             scrollToBottom ()
 
-    let sendMessage (identity:Models.User) session text =
+    let sendMessage text =
         match text with
         | "" -> ()
         | _ ->
             Async.startWithContinuation
-                (PrivateChat.send session.UserId text)
+                (PrivateChat.send session.Value.UserId text)
                 (function
                     | Api.ApiOk response -> 
                         this.Text.Text <- ""
@@ -67,9 +69,29 @@ type PrivateChatSessionViewController (user:Entity) as this =
         this.ResizeViewToKeyboard args
         scrollToBottom()
         
-
     let showObserver = UIKeyboard.Notifications.ObserveWillShow(System.EventHandler<UIKeyboardEventArgs>(placeKeyboard))
     let hideObserver = UIKeyboard.Notifications.ObserveWillHide(System.EventHandler<UIKeyboardEventArgs>(placeKeyboard))
+
+    let processor = new MailboxProcessor<ChannelEvent>(fun inbox ->
+        let rec loop () = async {
+            let! event = inbox.Receive()
+            this.InvokeOnMainThread (fun _ ->
+                match event with
+                | { Event = PrivateMessage (color, font, message) } ->
+                    addMessage session.Value.UserId "??SLUG??" session.Value.PartnerAvatarId color font message event.Sequence
+                    Async.Start (DB.createChatHistory user DB.ChatHistoryType.PrivateChat (Some (message, false)))
+
+                | { Event = PrivateMessageSent (color, font, message) } ->
+                    addMessage Api.userId identity.Slug identity.Avatar color font message event.Sequence
+                    Async.Start (DB.createChatHistory user DB.ChatHistoryType.PrivateChat (Some ("You: " + message, false)))
+                
+                | _ -> ()
+            )
+            return! loop ()
+        }
+
+        loop ()
+    )
 
     [<Outlet>]
     member val WebView: UIWebView = null with get, set
@@ -92,49 +114,23 @@ type PrivateChatSessionViewController (user:Entity) as this =
             Async.StartImmediate <| async {
                 let context = System.Threading.SynchronizationContext.Current
 
-                // HAX HAX HAX
-                let! identity = Account.identity ()
-                let identity = 
-                    match identity with
-                    | Api.ApiOk identity -> identity
-                    | _ -> failwith "API ERROR"
+                let! sessionResponse = PrivateChat.session user.Id
 
-                let! session = PrivateChat.session user.Id
-                match session with
-                | Api.ApiOk session ->
-                    let processor = new MailboxProcessor<ChannelEvent>(fun inbox ->
-                        let rec loop () = async {
-                            let! event = inbox.Receive()
-                            do! Async.SwitchToContext context
-                            match event with
-                            | { User = user } when user <> session.UserId  -> ()
-                            | { Event = PrivateMessage (color, font, message) } ->
-                                addMessage session.UserId "??SLUG??" session.PartnerAvatarId color font message event.Sequence
-                                do! (DB.createChatHistory user DB.ChatHistoryType.PrivateChat (Some (message, false)))
-                            | { Event = PrivateMessageSent (color, font, message) } ->
-                                addMessage Api.userId identity.Slug identity.Avatar color font message event.Sequence
-                                do! (DB.createChatHistory user DB.ChatHistoryType.PrivateChat (Some ("You: " + message, false)))
-                            | _ -> ()
-
-                            return! loop ()
-                        }
-
-                        loop ()
-                    )
-
-                    processor.Start()
-                    ChannelClient.handlers.TryAdd(Api.userId, processor) |> ignore
+                match sessionResponse with
+                | Api.ApiOk newSession ->
+                    session <- Some newSession
+                    processor.Start ()
 
                     // Send message
                     this.Text.ShouldReturn <- (fun _ ->
-                        sendMessage identity session this.Text.Text
+                        sendMessage this.Text.Text
                         false
                     )
                     this.SendButton.TouchUpInside.Add(fun args ->
-                        sendMessage identity session this.Text.Text
+                        sendMessage this.Text.Text
                     )
 
-                | _ -> failwith "API FAIL"
+                | error -> this.HandleApiFailure error // TODO: In case of an error kill the controller?
             }
         )
 
@@ -143,6 +139,7 @@ type PrivateChatSessionViewController (user:Entity) as this =
             showObserver.Dispose ()
             hideObserver.Dispose ()
 
+    member this.HandleChannelEvent = processor.Post
 
 module ChatSessions =
     open SQLite
@@ -153,12 +150,33 @@ module ChatSessions =
     let start (user:Entity) =
         let _, controller =
             sessions.AddOrUpdate (
-                    user.Slug,
+                    user.Id,
                     (fun _ -> user, new PrivateChatSessionViewController (user) ),
                     (fun _ x -> x)
                 )
+
         Async.Start (DB.createChatHistory user DB.ChatHistoryType.PrivateChat None)
         controller
+
+    let startById id continuation =
+        if id = Api.userId then failwith "Can't chat with yourself"
+
+        Async.startWithContinuation
+            (PrivateChat.session id)
+            (function
+                | Api.ApiOk newSession ->
+                    start
+                        {
+                            Id = newSession.UserId
+                            Slug = newSession.Url // FIXME
+                            Label = newSession.DisplayName
+                            Image = newSession.PartnerAvatar
+                        } 
+                    |> continuation
+                    
+                | error -> printfn "Failed to start PM session: %A" error
+            )
+        ()
 
     let touch (user:Wireclub.Boundary.Chat.PrivateChatFriend) =
         ()
