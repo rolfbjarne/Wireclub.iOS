@@ -141,16 +141,6 @@
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" />
   <ItemGroup>
-    <ProjectReference Include="..\..\..\NEXT\Wireclub.Boundary\Wireclub.Boundary.iOS.fsproj">
-      <Project>{F83837F7-71B9-4EEB-85B8-276B8767DA2B}</Project>
-      <Name>Wireclub.Boundary.iOS</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\wireclub.android\Wireclub.AppClient\Wireclub.AppClient.iOS.fsproj">
-      <Project>{0AA0452B-6D60-4FA3-A54C-0BAF2A672111}</Project>
-      <Name>Wireclub.AppClient.iOS</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <InterfaceDefinition Include="..\Views\FriendsViewController.xib">
       <Link>Resources\FriendsViewController.xib</Link>
     </InterfaceDefinition>
@@ -208,5 +198,15 @@
       <Version>1.0.1</Version>
       <Visible>False</Visible>
     </XamarinComponentReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\NEXT\Wireclub.Boundary\Wireclub.Boundary.iOS.fsproj">
+      <Project>{F83837F7-71B9-4EEB-85B8-276B8767DA2B}</Project>
+      <Name>Wireclub.Boundary.iOS</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\wireclub.android\Wireclub.AppClient\Wireclub.AppClient.iOS.fsproj">
+      <Project>{0AA0452B-6D60-4FA3-A54C-0BAF2A672111}</Project>
+      <Name>Wireclub.AppClient.iOS</Name>
+    </ProjectReference>
   </ItemGroup>
 </Project>
