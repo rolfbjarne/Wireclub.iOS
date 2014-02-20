@@ -179,7 +179,7 @@ type ChatRoomViewController (room:Entity) as this =
                     | Api.ApiOk (result, events) ->
                         startSequence <- result.Sequence
                         processor.Start()
-//events |> Array.iter processor.Post
+                        events |> Array.iter processor.Post
                         result.Members |> Array.iter addUser
                         result.HistoricMembers |> Array.iter addUser
                     | Api.BadRequest errors -> ()

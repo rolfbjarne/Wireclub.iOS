@@ -25,10 +25,61 @@ type ForgotPasswordViewController (handle:nativeint) =
             this.DismissViewController (true, null)
         )
 
+[<Register ("EditProfileViewController")>]
+type EditProfileViewController (handle:nativeint) =
+    inherit UITableViewController (handle)
+
+    [<Outlet>]
+    member val Birthday:UITextField = null with get, set
+
+    [<Outlet>]
+    member val Description:UITextField = null with get, set
+
+    [<Outlet>]
+    member val First:UITextField  = null with get, set
+
+    [<Outlet>]
+    member val GenderSelect:UISegmentedControl = null with get, set
+
+    [<Outlet>]
+    member val Last:UITextField  = null with get, set
+
+    [<Outlet>]
+    member val Location:UITextField   = null with get, set
+
+    [<Outlet>]
+    member val ProfileImage:UIImageView  = null with get, set
+
+    [<Outlet>]
+    member val SaveButton: UIButton = null with get, set
+
+    override this.ViewDidLoad () =
+        this.NavigationItem.Title <- "Create Profile"
+
+        this.Birthday.Text <- "Some Nonsense"
+        this.Description.Text <- "Some Nonsense"
+        this.First.Text <- "Some Nonsense"
+        this.Last.Text <- "Some Nonsense"
+        this.Location.Text <- "Some Nonsense"
+
+        this.GenderSelect.SelectedSegment <- 1
+
+
+        this.SaveButton.TouchUpInside.Add(fun _ ->
+            Async.startWithContinuation
+                (async { return Api.ApiOk 1 })
+                (function
+                    | Api.ApiOk result -> 
+                        showSimpleAlert "Hooray" "An awesome occured submitting your request" "Close"
+                    | error -> this.HandleApiFailure error
+                )
+        )
 
 [<Register ("SignupViewController")>]
 type SignupViewController (handle:nativeint) =
     inherit UITableViewController (handle)
+
+    let editProfileStoryboard = UIStoryboard.FromName ("EditProfile", null)
 
     [<Outlet>]
     member val Email: UITextField = null with get, set
@@ -46,7 +97,13 @@ type SignupViewController (handle:nativeint) =
         this.SignupButton.TouchUpInside.Add(fun _ ->
             Async.startWithContinuation
                 (Account.signup this.Email.Text this.Password.Text)
-                (fun _ -> ())
+                (function
+                    | Api.ApiOk result ->
+                        NSUserDefaults.StandardUserDefaults.SetString (result.Token, "auth-token")
+                        NSUserDefaults.StandardUserDefaults.Synchronize () |> ignore
+                        this.NavigationController.PushViewController (editProfileStoryboard.InstantiateInitialViewController() :?> UIViewController, true)
+                    | error -> this.HandleApiFailure error
+                )
         )
 
 [<Register ("LoginViewController")>]

@@ -126,6 +126,10 @@
     <Compile Include="ChatsViewController.designer.cs">
       <DependentUpon>ChatsViewController.cs</DependentUpon>
     </Compile>
+    <Compile Include="EditProfileViewController.cs" />
+    <Compile Include="EditProfileViewController.designer.cs">
+      <DependentUpon>EditProfileViewController.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <InterfaceDefinition Include="FriendsViewController.xib" />

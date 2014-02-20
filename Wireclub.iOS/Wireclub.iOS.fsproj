@@ -180,6 +180,9 @@
     <InterfaceDefinition Include="..\Views\ChatsViewController.xib">
       <Link>Resources\ChatsViewController.xib</Link>
     </InterfaceDefinition>
+    <InterfaceDefinition Include="..\Views\EditProfile.storyboard">
+      <Link>Resources\EditProfile.storyboard</Link>
+    </InterfaceDefinition>
   </ItemGroup>
   <ItemGroup>
     <BundleResource Include="Resources\Images\PlaceholderChat.png" />
