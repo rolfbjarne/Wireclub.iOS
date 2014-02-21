@@ -413,7 +413,11 @@ type EntryViewController () =
         // When the user is authenticated start the channel client and push the main app controller
         let proceed animated =
             ChannelClient.init handleEvent
-            this.NavigationController.PushViewController(rootController, animated)
+            match Api.userIdentity.Value.Membership with
+            | MembershipTypePublic.Pending -> this.NavigationController.PushViewController (editProfileController.Value, true)
+            | _ -> this.NavigationController.PushViewController(rootController, animated)
+
+
 
         let defaults = NSUserDefaults.StandardUserDefaults
         match defaults.StringForKey "auth-token", System.String.IsNullOrEmpty Api.userId with
@@ -426,10 +430,7 @@ type EntryViewController () =
             Async.startWithContinuation
                 (Account.loginToken token)
                 (function
-                    | Api.ApiOk identity -> 
-                        match identity.Identity.Membership with
-                        | MembershipTypePublic.Pending -> this.NavigationController.PushViewController (editProfileController.Value, true)
-                        | _ -> proceed true
+                    | Api.ApiOk identity -> proceed true
                     | _ -> this.NavigationController.PushViewController (loginController.Value, true)
                 )
 
