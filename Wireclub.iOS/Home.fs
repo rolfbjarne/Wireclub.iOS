@@ -3,6 +3,7 @@ namespace Wireclub.iOS
 open System
 open MonoTouch.Foundation
 open MonoTouch.UIKit
+open Wireclub.Models
 open Wireclub.Boundary
 open Wireclub.Boundary.Chat
 
@@ -361,6 +362,8 @@ type EntryViewController () =
 
     let rootController = new HomeViewController()
     let loginController = lazy (Resources.loginStoryboard.Value.InstantiateInitialViewController() :?> UIViewController)
+    let editProfileController = lazy (Resources.editProfileStoryboard.Value.InstantiateInitialViewController() :?> UIViewController)
+    
 
     let handleEvent channel (event:ChannelEvent.ChannelEvent) =        
         if channel = Api.userId then
@@ -381,7 +384,7 @@ type EntryViewController () =
         base.ViewDidLoad ()
 
         let objOrFail = function | Some o -> o | _ -> failwith "Expected Some"
-            
+  
         let navigate url (data:Entity option) =
             match url, data with
             | Routes.User id, _ -> 
@@ -423,7 +426,10 @@ type EntryViewController () =
             Async.startWithContinuation
                 (Account.loginToken token)
                 (function
-                    | Api.ApiOk identity -> proceed true
+                    | Api.ApiOk identity -> 
+                        match identity.Identity.Membership with
+                        | MembershipTypePublic.Pending -> this.NavigationController.PushViewController (editProfileController.Value, true)
+                        | _ -> proceed true
                     | _ -> this.NavigationController.PushViewController (loginController.Value, true)
                 )
 
