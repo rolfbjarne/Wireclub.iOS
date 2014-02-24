@@ -1,11 +1,14 @@
 namespace Wireclub.iOS
 
 open System
+open System.Collections.Generic
 open MonoTouch.Foundation
 open MonoTouch.UIKit
 open Wireclub.Models
 open Wireclub.Boundary
 open Wireclub.Boundary.Chat
+
+open Xamarin.Media 
 
 [<Register ("ForgotPasswordViewController")>]
 type ForgotPasswordViewController (handle:nativeint) =
@@ -29,6 +32,8 @@ type ForgotPasswordViewController (handle:nativeint) =
 [<Register ("EditProfileViewController")>]
 type EditProfileViewController (handle:nativeint) =
     inherit UITableViewController (handle)
+
+    let picker = new MediaPicker()
 
     [<Outlet>]
     member val Birthday:UITextField = null with get, set
@@ -54,17 +59,18 @@ type EditProfileViewController (handle:nativeint) =
     [<Outlet>]
     member val SaveButton: UIButton = null with get, set
 
+    [<Outlet>]
+    member val Username:UITextField  = null with get, set
+
+
     override this.ViewDidLoad () =
         this.NavigationItem.Title <- "Create Profile"
+        this.NavigationItem.HidesBackButton <- true
 
-        this.Birthday.Text <- "Some Nonsense"
-        this.Description.Text <- "Some Nonsense"
-        this.First.Text <- "Some Nonsense"
-        this.Last.Text <- "Some Nonsense"
-        this.Location.Text <- "Some Nonsense"
-
-        this.GenderSelect.SelectedSegment <- 1
-
+        match Api.userIdentity with
+        | Some identity ->
+            Image.loadImageForView (App.imageUrl identity.Avatar 100) Image.placeholder this.ProfileImage
+        | None -> ()
 
         this.SaveButton.TouchUpInside.Add(fun _ ->
             Async.startWithContinuation
@@ -75,6 +81,49 @@ type EditProfileViewController (handle:nativeint) =
                     | error -> this.HandleApiFailure error
                 )
         )
+
+    override this.RowSelected (view, indexPath) =
+        match indexPath.Section, indexPath.Row with
+        | 0, 0 -> 
+            let alert = new UIAlertView (Title="Send Friend Request?", Message="")
+            alert.AddButton "Choose Existing" |> ignore
+            alert.AddButton "Take Photo" |> ignore
+            alert.AddButton "Cancel" |> ignore
+            alert.Show ()
+            alert.Dismissed.Add(fun args ->
+                let updateAvatar (controller:MediaPickerController) = 
+                    this.PresentViewController (controller, true, null)
+                    Async.startWithContinuation
+                        (Async.AwaitTask (controller.GetResultAsync()))
+                        (fun result ->
+                            controller.DismissViewController (true, fun _ -> 
+                                let image = UIImage.FromFile result.Path
+                                this.ProfileImage.Image <- image
+
+
+                                use data = image.AsJPEG()
+                                let dataBuffer = Array.zeroCreate (int data.Length)
+
+                                System.Runtime.InteropServices.Marshal.Copy(data.Bytes, (dataBuffer:byte []), 0, int data.Length)
+
+                                Async.startWithContinuation
+                                    (Api.upload<Dictionary<string,string>> "settings/doAvatar" "avatar" "avatar.jpg" dataBuffer)
+                                    (function 
+                                    | Api.ApiOk image -> ()
+                                    | _ -> ()
+                                   )
+
+                            )
+                        )
+
+                match args.ButtonIndex with
+                | 0 -> picker.GetPickPhotoUI() |> updateAvatar
+                | 1 -> picker.GetTakePhotoUI (new StoreCameraMediaOptions(Name = sprintf "%s.jpg" (System.IO.Path.GetTempFileName()), Directory = "Wireclub")) |> updateAvatar
+                | _ -> ()
+            )
+        | _, _ -> ()
+
+
 
 [<Register ("SignupViewController")>]
 type SignupViewController (handle:nativeint) =
@@ -416,8 +465,6 @@ type EntryViewController () =
             match Api.userIdentity.Value.Membership with
             | MembershipTypePublic.Pending -> this.NavigationController.PushViewController (editProfileController.Value, true)
             | _ -> this.NavigationController.PushViewController(rootController, animated)
-
-
 
         let defaults = NSUserDefaults.StandardUserDefaults
         match defaults.StringForKey "auth-token", System.String.IsNullOrEmpty Api.userId with

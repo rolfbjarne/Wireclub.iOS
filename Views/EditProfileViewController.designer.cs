@@ -35,6 +35,9 @@ namespace Views
 
 		[Outlet]
 		MonoTouch.UIKit.UIButton SaveButton { get; set; }
+
+		[Outlet]
+		MonoTouch.UIKit.UITextField Username { get; set; }
 		
 		void ReleaseDesignerOutlets ()
 		{
@@ -76,6 +79,11 @@ namespace Views
 			if (SaveButton != null) {
 				SaveButton.Dispose ();
 				SaveButton = null;
+			}
+
+			if (Username != null) {
+				Username.Dispose ();
+				Username = null;
 			}
 		}
 	}
