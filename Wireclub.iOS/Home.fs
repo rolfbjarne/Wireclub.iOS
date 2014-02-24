@@ -6,6 +6,7 @@ open MonoTouch.Foundation
 open MonoTouch.UIKit
 open Wireclub.Models
 open Wireclub.Boundary
+open Wireclub.Boundary.Models
 open Wireclub.Boundary.Chat
 
 open Xamarin.Media 
@@ -76,9 +77,9 @@ type EditProfileViewController (handle:nativeint) =
             Async.startWithContinuation
                 (async { return Api.ApiOk 1 })
                 (function
-                    | Api.ApiOk result -> 
-                        showSimpleAlert "Hooray" "An awesome occured submitting your request" "Close"
-                    | error -> this.HandleApiFailure error
+                | Api.ApiOk result -> 
+                    showSimpleAlert "Hooray" "An awesome occured submitting your request" "Close"
+                | error -> this.HandleApiFailure error
                 )
         )
 
@@ -98,20 +99,21 @@ type EditProfileViewController (handle:nativeint) =
                         (fun result ->
                             controller.DismissViewController (true, fun _ -> 
                                 let image = UIImage.FromFile result.Path
-                                this.ProfileImage.Image <- image
-
-
                                 use data = image.AsJPEG()
                                 let dataBuffer = Array.zeroCreate (int data.Length)
-
                                 System.Runtime.InteropServices.Marshal.Copy(data.Bytes, (dataBuffer:byte []), 0, int data.Length)
-
                                 Async.startWithContinuation
-                                    (Api.upload<Dictionary<string,string>> "settings/doAvatar" "avatar" "avatar.jpg" dataBuffer)
+                                    (Api.upload<Image> "settings/doAvatar" "avatar" "avatar.jpg" dataBuffer)
                                     (function 
-                                    | Api.ApiOk image -> ()
-                                    | _ -> ()
-                                   )
+                                    | Api.ApiOk image ->
+                                        match Api.userIdentity with
+                                        | Some identity ->
+                                            
+                                            Api.userIdentity <- Some { identity with Avatar = image.Token }
+                                            Image.loadImageForView (App.imageUrl image.Token 100) Image.placeholder this.ProfileImage
+                                        | None -> printfn "identity not set"
+                                    | error -> this.HandleApiFailure error
+                                    )
 
                             )
                         )
