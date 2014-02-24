@@ -1,7 +1,7 @@
 namespace Wireclub.iOS
 
 open System
-open System.Collections.Generic
+open System.Drawing
 open MonoTouch.Foundation
 open MonoTouch.UIKit
 open Wireclub.Models
@@ -98,8 +98,20 @@ type EditProfileViewController (handle:nativeint) =
                         (Async.AwaitTask (controller.GetResultAsync()))
                         (fun result ->
                             controller.DismissViewController (true, fun _ -> 
-                                let image = UIImage.FromFile result.Path
-                                use data = image.AsJPEG()
+                                let imageOriginal = UIImage.FromFile result.Path
+                                let data = 
+                                    match imageOriginal.Orientation with
+                                    | UIImageOrientation.Up | UIImageOrientation.UpMirrored -> imageOriginal.AsJPEG()
+                                    | _ ->
+                                        //redraw the raw image without the orientation
+                                        UIGraphics.BeginImageContext(imageOriginal.Size)
+                                        imageOriginal.Draw(new RectangleF(0.0f, 0.0f, imageOriginal.Size.Width, imageOriginal.Size.Height))
+                                        let data = UIGraphics.GetImageFromCurrentImageContext().AsJPEG()
+                                        UIGraphics.EndImageContext()
+                                        data
+                                printfn "%s" (imageOriginal.Orientation.ToString())
+
+
                                 let dataBuffer = Array.zeroCreate (int data.Length)
                                 System.Runtime.InteropServices.Marshal.Copy(data.Bytes, (dataBuffer:byte []), 0, int data.Length)
                                 Async.startWithContinuation
@@ -108,7 +120,6 @@ type EditProfileViewController (handle:nativeint) =
                                     | Api.ApiOk image ->
                                         match Api.userIdentity with
                                         | Some identity ->
-                                            
                                             Api.userIdentity <- Some { identity with Avatar = image.Token }
                                             Image.loadImageForView (App.imageUrl image.Token 100) Image.placeholder this.ProfileImage
                                         | None -> printfn "identity not set"
