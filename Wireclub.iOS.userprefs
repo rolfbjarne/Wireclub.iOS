@@ -1,32 +1,15 @@
 ﻿<Properties>
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug|iPhone" PreferredExecutionTarget="MonoDevelop.IPhone.IPhoneDeviceTarget.Braden Evans’s iPod" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="../wireclub.android/Wireclub.AppClient/Api.fs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Wireclub.iOS/Home.fs">
     <Files>
-      <File FileName="Wireclub.iOS/Home.fs" Line="109" Column="1" />
-      <File FileName="../wireclub.android/Wireclub.AppClient/Api.fs" Line="101" Column="2" />
+      <File FileName="Wireclub.iOS/Home.fs" Line="569" Column="26" />
+      <File FileName="Wireclub.iOS/Directory.fs" Line="19" Column="42" />
+      <File FileName="Wireclub.iOS/Chat.fs" Line="14" Column="6" />
     </Files>
-    <Pads>
-      <Pad Id="ProjectPad">
-        <State expanded="True">
-          <Node name="Views" expanded="True" />
-          <Node name="Wireclub.AppClient.iOS" expanded="True" />
-          <Node name="Wireclub.Boundary.iOS" expanded="True" />
-          <Node name="Wireclub.iOS" expanded="True">
-            <Node name="References" expanded="True" />
-            <Node name="ComponentReferenceFolder" expanded="True" />
-            <Node name="Home.fs" selected="True" />
-          </Node>
-        </State>
-      </Pad>
-    </Pads>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
     <BreakpointStore>
       <Breakpoint file="/Users/bradene/wireclub.android/Wireclub.AppClient/App.fs" line="5" column="1" />
-      <Breakpoint file="/Volumes/Fatty/repo/Wireclub.iOS/Wireclub.iOS/Home.fs" line="109" column="1" />
-      <Breakpoint file="/Volumes/Fatty/repo/wireclub.android/Wireclub.AppClient/Api.fs" line="155" column="1" />
-      <Breakpoint file="/Volumes/Fatty/repo/wireclub.android/Wireclub.AppClient/Api.fs" line="154" column="1" />
-      <Breakpoint file="/Volumes/Fatty/repo/wireclub.android/Wireclub.AppClient/Api.fs" line="75" column="1" />
     </BreakpointStore>
   </MonoDevelop.Ide.DebuggingService.Breakpoints>
   <MonoDevelop.Ide.DebuggingService.PinnedWatches />

@@ -16,6 +16,12 @@ namespace Views
 		MonoTouch.UIKit.UITextField Birthday { get; set; }
 
 		[Outlet]
+		MonoTouch.UIKit.UITextField City { get; set; }
+
+		[Outlet]
+		MonoTouch.UIKit.UITextField Country { get; set; }
+
+		[Outlet]
 		MonoTouch.UIKit.UITextView Description { get; set; }
 
 		[Outlet]
@@ -28,10 +34,10 @@ namespace Views
 		MonoTouch.UIKit.UITextField Last { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField Location { get; set; }
+		MonoTouch.UIKit.UIImageView ProfileImage { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UIImageView ProfileImage { get; set; }
+		MonoTouch.UIKit.UITextField Region { get; set; }
 
 		[Outlet]
 		MonoTouch.UIKit.UIButton SaveButton { get; set; }
@@ -44,6 +50,16 @@ namespace Views
 			if (Birthday != null) {
 				Birthday.Dispose ();
 				Birthday = null;
+			}
+
+			if (City != null) {
+				City.Dispose ();
+				City = null;
+			}
+
+			if (Country != null) {
+				Country.Dispose ();
+				Country = null;
 			}
 
 			if (Description != null) {
@@ -66,14 +82,14 @@ namespace Views
 				Last = null;
 			}
 
-			if (Location != null) {
-				Location.Dispose ();
-				Location = null;
-			}
-
 			if (ProfileImage != null) {
 				ProfileImage.Dispose ();
 				ProfileImage = null;
+			}
+
+			if (Region != null) {
+				Region.Dispose ();
+				Region = null;
 			}
 
 			if (SaveButton != null) {

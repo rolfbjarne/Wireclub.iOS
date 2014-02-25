@@ -186,6 +186,12 @@
     <InterfaceDefinition Include="..\Views\EditProfile.storyboard">
       <Link>Resources\EditProfile.storyboard</Link>
     </InterfaceDefinition>
+    <InterfaceDefinition Include="..\Views\CountryPickerViewController.xib">
+      <Link>Resources\CountryPickerViewController.xib</Link>
+    </InterfaceDefinition>
+    <InterfaceDefinition Include="..\Views\RegionPickerViewController.xib">
+      <Link>Resources\RegionPickerViewController.xib</Link>
+    </InterfaceDefinition>
   </ItemGroup>
   <ItemGroup>
     <BundleResource Include="Resources\Images\PlaceholderChat.png" />

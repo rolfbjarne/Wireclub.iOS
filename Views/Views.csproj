@@ -130,6 +130,14 @@
     <Compile Include="EditProfileViewController.designer.cs">
       <DependentUpon>EditProfileViewController.cs</DependentUpon>
     </Compile>
+    <Compile Include="CountryPickerViewController.cs" />
+    <Compile Include="CountryPickerViewController.designer.cs">
+      <DependentUpon>CountryPickerViewController.cs</DependentUpon>
+    </Compile>
+    <Compile Include="RegionPickerViewController.cs" />
+    <Compile Include="RegionPickerViewController.designer.cs">
+      <DependentUpon>RegionPickerViewController.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <InterfaceDefinition Include="FriendsViewController.xib" />
@@ -147,6 +155,8 @@
     <InterfaceDefinition Include="EditProfile.storyboard" />
     <InterfaceDefinition Include="User.storyboard" />
     <InterfaceDefinition Include="ChatsViewController.xib" />
+    <InterfaceDefinition Include="CountryPickerViewController.xib" />
+    <InterfaceDefinition Include="RegionPickerViewController.xib" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Resources\" />

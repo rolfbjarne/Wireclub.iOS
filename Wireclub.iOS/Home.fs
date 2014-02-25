@@ -30,11 +30,77 @@ type ForgotPasswordViewController (handle:nativeint) =
             this.DismissViewController (true, null)
         )
 
+[<Register("CountryPickerViewController")>]
+type CountryPickerViewController (countries:string []) as controller =
+    inherit UIViewController ("CountryPickerViewController", null)
+
+    let source = { 
+        new UITableViewSource() with
+        override this.GetCell(tableView, indexPath) =
+            let country = countries.[indexPath.Row]
+            let cell = 
+                match tableView.DequeueReusableCell "country-cell" with
+                | null -> new UITableViewCell (UITableViewCellStyle.Default, "country-cell")
+                | c -> c
+
+            cell.Tag <- indexPath.Row
+            cell.TextLabel.Text <- country
+            cell
+
+        override this.RowsInSection(tableView, section) = countries.Length
+
+        override this.RowSelected(tableView, indexPath) =
+            tableView.DeselectRow (indexPath, false)
+            let country = countries.[indexPath.Row]
+            controller.NavigationController.PopViewControllerAnimated (true) |> ignore
+    }
+
+    [<Outlet>]
+    member val Table: UITableView = null with get, set
+
+    override this.ViewDidLoad () =
+        this.Table.Source <- source
+        this.Table.ReloadData()
+
+[<Register("RegionPickerViewController")>]
+type RegionPickerViewController (regions:string []) as controller =
+    inherit UIViewController ("RegionPickerViewController", null)
+
+    let source = { 
+        new UITableViewSource() with
+        override this.GetCell(tableView, indexPath) =
+            let country = regions.[indexPath.Row]
+            let cell = 
+                match tableView.DequeueReusableCell "region-cell" with
+                | null -> new UITableViewCell (UITableViewCellStyle.Default, "region-cell")
+                | c -> c
+
+            cell.Tag <- indexPath.Row
+            cell.TextLabel.Text <- country
+            cell
+
+        override this.RowsInSection(tableView, section) = regions.Length
+
+        override this.RowSelected(tableView, indexPath) =
+            tableView.DeselectRow (indexPath, false)
+            let country = regions.[indexPath.Row]
+            controller.NavigationController.PopViewControllerAnimated (true) |> ignore
+    }
+
+    [<Outlet>]
+    member val Table: UITableView = null with get, set
+
+    override this.ViewDidLoad () =
+        controller.Table.Source <- source
+        controller.Table.ReloadData()
+
 [<Register ("EditProfileViewController")>]
 type EditProfileViewController (handle:nativeint) =
     inherit UITableViewController (handle)
 
-    let picker = new MediaPicker()
+    let pickerMedia = new MediaPicker()
+    let pickerCountry = new CountryPickerViewController([| "Canada"; "United States"; "United Kingdom" |])
+    let pickerRegion = new RegionPickerViewController([|  "Canada"; "United States"; "United Kingdom"  |])
 
     [<Outlet>]
     member val Birthday:UITextField = null with get, set
@@ -63,60 +129,62 @@ type EditProfileViewController (handle:nativeint) =
     [<Outlet>]
     member val Username:UITextField  = null with get, set
 
+    [<Outlet>]
+    member val Country:UITextField  = null with get, set
+
+    [<Outlet>]
+    member val Region:UITextField  = null with get, set
+
+    [<Outlet>]
+    member val City:UITextField  = null with get, set
 
     override this.ViewDidLoad () =
         this.NavigationItem.Title <- "Create Profile"
         this.NavigationItem.HidesBackButton <- true
 
         match Api.userIdentity with
-        | Some identity ->
-            Image.loadImageForView (App.imageUrl identity.Avatar 100) Image.placeholder this.ProfileImage
+        | Some identity -> Image.loadImageForView (App.imageUrl identity.Avatar 100) Image.placeholder this.ProfileImage
         | None -> ()
 
         this.SaveButton.TouchUpInside.Add(fun _ ->
             Async.startWithContinuation
                 (async { return Api.ApiOk 1 })
                 (function
-                | Api.ApiOk result -> 
-                    showSimpleAlert "Hooray" "An awesome occured submitting your request" "Close"
-                | error -> this.HandleApiFailure error
+                    | Api.ApiOk result ->  showSimpleAlert "Hooray" "An awesome occured submitting your request" "Close"
+                    | error -> this.HandleApiFailure error
                 )
         )
 
-    override this.RowSelected (view, indexPath) =
-        match indexPath.Section, indexPath.Row with
-        | 0, 0 -> 
-            let alert = new UIAlertView (Title="Send Friend Request?", Message="")
-            alert.AddButton "Choose Existing" |> ignore
-            alert.AddButton "Take Photo" |> ignore
-            alert.AddButton "Cancel" |> ignore
-            alert.Show ()
-            alert.Dismissed.Add(fun args ->
-                let updateAvatar (controller:MediaPickerController) = 
-                    this.PresentViewController (controller, true, null)
-                    Async.startWithContinuation
-                        (Async.AwaitTask (controller.GetResultAsync()))
-                        (fun result ->
-                            controller.DismissViewController (true, fun _ -> 
-                                let imageOriginal = UIImage.FromFile result.Path
-                                let data = 
-                                    match imageOriginal.Orientation with
-                                    | UIImageOrientation.Up | UIImageOrientation.UpMirrored -> imageOriginal.AsJPEG()
-                                    | _ ->
-                                        //redraw the raw image without the orientation
-                                        UIGraphics.BeginImageContext(imageOriginal.Size)
-                                        imageOriginal.Draw(new RectangleF(0.0f, 0.0f, imageOriginal.Size.Width, imageOriginal.Size.Height))
-                                        let data = UIGraphics.GetImageFromCurrentImageContext().AsJPEG()
-                                        UIGraphics.EndImageContext()
-                                        data
-                                printfn "%s" (imageOriginal.Orientation.ToString())
+    member this.ChooseProfileImage () =
+        let alert = new UIAlertView (Title="Send Friend Request?", Message="")
+        alert.AddButton "Choose Existing" |> ignore
+        alert.AddButton "Take Photo" |> ignore
+        alert.AddButton "Cancel" |> ignore
+        alert.Show ()
+        alert.Dismissed.Add(fun args ->
+            let updateAvatar (controller:MediaPickerController) = 
+                this.PresentViewController (controller, true, null)
+                Async.startWithContinuation
+                    (Async.AwaitTask (controller.GetResultAsync()))
+                    (fun result ->
+                        controller.DismissViewController (true, fun _ -> 
+                            let imageOriginal = UIImage.FromFile result.Path
+                            let data = 
+                                match imageOriginal.Orientation with
+                                | UIImageOrientation.Up | UIImageOrientation.UpMirrored -> imageOriginal.AsJPEG()
+                                | _ ->
+                                    //redraw the raw image without the orientation
+                                    UIGraphics.BeginImageContext(imageOriginal.Size)
+                                    imageOriginal.Draw(new RectangleF(0.0f, 0.0f, imageOriginal.Size.Width, imageOriginal.Size.Height))
+                                    let data = UIGraphics.GetImageFromCurrentImageContext().AsJPEG()
+                                    UIGraphics.EndImageContext()
+                                    data
 
-
-                                let dataBuffer = Array.zeroCreate (int data.Length)
-                                System.Runtime.InteropServices.Marshal.Copy(data.Bytes, (dataBuffer:byte []), 0, int data.Length)
-                                Async.startWithContinuation
-                                    (Api.upload<Image> "settings/doAvatar" "avatar" "avatar.jpg" dataBuffer)
-                                    (function 
+                            let dataBuffer = Array.zeroCreate (int data.Length)
+                            System.Runtime.InteropServices.Marshal.Copy(data.Bytes, (dataBuffer:byte []), 0, int data.Length)
+                            Async.startWithContinuation
+                                (Api.upload<Image> "settings/doAvatar" "avatar" "avatar.jpg" dataBuffer)
+                                (function 
                                     | Api.ApiOk image ->
                                         match Api.userIdentity with
                                         | Some identity ->
@@ -124,16 +192,28 @@ type EditProfileViewController (handle:nativeint) =
                                             Image.loadImageForView (App.imageUrl image.Token 100) Image.placeholder this.ProfileImage
                                         | None -> printfn "identity not set"
                                     | error -> this.HandleApiFailure error
-                                    )
-
-                            )
+                                )
                         )
+                    )
 
-                match args.ButtonIndex with
-                | 0 -> picker.GetPickPhotoUI() |> updateAvatar
-                | 1 -> picker.GetTakePhotoUI (new StoreCameraMediaOptions(Name = sprintf "%s.jpg" (System.IO.Path.GetTempFileName()), Directory = "Wireclub")) |> updateAvatar
-                | _ -> ()
-            )
+            match args.ButtonIndex with
+            | 0 -> pickerMedia.GetPickPhotoUI() |> updateAvatar
+            | 1 -> pickerMedia.GetTakePhotoUI (new StoreCameraMediaOptions(Name = sprintf "%s.jpg" (System.IO.Path.GetTempFileName()), Directory = "Wireclub")) |> updateAvatar
+            | _ -> ()
+        )
+
+    member this.ChooseCountry () = 
+        this.NavigationController.PushViewController (new CountryPickerViewController([| "Canada"; "United States"; "United Kingdom" |]), true)
+
+
+    member this.ChooseRegion () = 
+        this.NavigationController.PushViewController (new RegionPickerViewController([| "Canada"; "United States"; "United Kingdom" |]), true)
+
+    override this.RowSelected (view, indexPath) =
+        match indexPath.Section, indexPath.Row with
+        | 0, 0 -> this.ChooseProfileImage () 
+        | 2, 0 -> this.ChooseCountry () 
+        | 2, 1 -> this.ChooseRegion () 
         | _, _ -> ()
 
 
