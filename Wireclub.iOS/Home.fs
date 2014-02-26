@@ -116,6 +116,8 @@ type EditProfileViewController (handle:nativeint) =
     inherit UITableViewController (handle)
 
     let pickerMedia = new MediaPicker()
+    let pickerDate = new UIDatePicker(new RectangleF(0.0f,0.0f,320.0f,216.0f))
+
     let mutable country:LocationCountry option = None
     let mutable region:LocationRegion option = None
 
@@ -158,10 +160,21 @@ type EditProfileViewController (handle:nativeint) =
     override this.ViewDidLoad () =
         this.NavigationItem.Title <- "Create Profile"
         this.NavigationItem.HidesBackButton <- true
+        pickerDate.MinimumDate <-  NSDate.op_Implicit (DateTime.UtcNow.AddYears(-120))
+        pickerDate.MaximumDate <- NSDate.op_Implicit (DateTime.UtcNow.AddYears(-13))
+
+        pickerDate.Mode <- UIDatePickerMode.Date
+        this.Birthday.InputView <- pickerDate
 
         match Api.userIdentity with
         | Some identity -> Image.loadImageForView (App.imageUrl identity.Avatar 100) Image.placeholder this.ProfileImage
         | None -> ()
+
+
+        pickerDate.ValueChanged.Add(fun _ ->
+            let value = NSDate.op_Implicit pickerDate.Date
+            this.Birthday.Text <- value.ToString("M/d/yyyy")
+        )
 
         this.SaveButton.TouchUpInside.Add(fun _ ->
             Async.startWithContinuation
