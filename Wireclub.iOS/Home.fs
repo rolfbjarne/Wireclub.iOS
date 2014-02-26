@@ -1,6 +1,7 @@
 namespace Wireclub.iOS
 
 open System
+open System.Linq
 open System.Drawing
 open MonoTouch.Foundation
 open MonoTouch.UIKit
@@ -31,9 +32,10 @@ type ForgotPasswordViewController (handle:nativeint) =
         )
 
 [<Register("CountryPickerViewController")>]
-type CountryPickerViewController (countries:string []) as controller =
+type CountryPickerViewController (itemSelected) =
     inherit UIViewController ("CountryPickerViewController", null)
 
+    let mutable countries:LocationCountry [] = [||]
     let source = { 
         new UITableViewSource() with
         override this.GetCell(tableView, indexPath) =
@@ -44,15 +46,14 @@ type CountryPickerViewController (countries:string []) as controller =
                 | c -> c
 
             cell.Tag <- indexPath.Row
-            cell.TextLabel.Text <- country
+            cell.TextLabel.Text <- country.Name
             cell
 
         override this.RowsInSection(tableView, section) = countries.Length
 
         override this.RowSelected(tableView, indexPath) =
             tableView.DeselectRow (indexPath, false)
-            let country = countries.[indexPath.Row]
-            controller.NavigationController.PopViewControllerAnimated (true) |> ignore
+            itemSelected countries.[indexPath.Row]
     }
 
     [<Outlet>]
@@ -60,31 +61,39 @@ type CountryPickerViewController (countries:string []) as controller =
 
     override this.ViewDidLoad () =
         this.Table.Source <- source
-        this.Table.ReloadData()
+
+        Async.startWithContinuation
+            (Places.countries ())
+            (function
+                | Api.ApiOk cs -> 
+                    countries <- cs
+                    this.Table.ReloadData()
+                | error -> this.HandleApiFailure error
+            )
 
 [<Register("RegionPickerViewController")>]
-type RegionPickerViewController (regions:string []) as controller =
+type RegionPickerViewController (country:LocationCountry, itemSelected) as controller =
     inherit UIViewController ("RegionPickerViewController", null)
 
+    let mutable regions:LocationRegion [] = [||]
     let source = { 
         new UITableViewSource() with
         override this.GetCell(tableView, indexPath) =
-            let country = regions.[indexPath.Row]
+            let region = regions.[indexPath.Row]
             let cell = 
                 match tableView.DequeueReusableCell "region-cell" with
                 | null -> new UITableViewCell (UITableViewCellStyle.Default, "region-cell")
                 | c -> c
 
             cell.Tag <- indexPath.Row
-            cell.TextLabel.Text <- country
+            cell.TextLabel.Text <- region.Name
             cell
 
         override this.RowsInSection(tableView, section) = regions.Length
 
         override this.RowSelected(tableView, indexPath) =
             tableView.DeselectRow (indexPath, false)
-            let country = regions.[indexPath.Row]
-            controller.NavigationController.PopViewControllerAnimated (true) |> ignore
+            itemSelected regions.[indexPath.Row]
     }
 
     [<Outlet>]
@@ -92,15 +101,23 @@ type RegionPickerViewController (regions:string []) as controller =
 
     override this.ViewDidLoad () =
         controller.Table.Source <- source
-        controller.Table.ReloadData()
+
+        Async.startWithContinuation
+            (Places.regions country.Id)
+            (function
+                | Api.ApiOk rs -> 
+                    regions <- rs
+                    this.Table.ReloadData()
+                | error -> this.HandleApiFailure error
+            )
 
 [<Register ("EditProfileViewController")>]
 type EditProfileViewController (handle:nativeint) =
     inherit UITableViewController (handle)
 
     let pickerMedia = new MediaPicker()
-    let pickerCountry = new CountryPickerViewController([| "Canada"; "United States"; "United Kingdom" |])
-    let pickerRegion = new RegionPickerViewController([|  "Canada"; "United States"; "United Kingdom"  |])
+    let mutable country:LocationCountry option = None
+    let mutable region:LocationRegion option = None
 
     [<Outlet>]
     member val Birthday:UITextField = null with get, set
@@ -203,11 +220,25 @@ type EditProfileViewController (handle:nativeint) =
         )
 
     member this.ChooseCountry () = 
-        this.NavigationController.PushViewController (new CountryPickerViewController([| "Canada"; "United States"; "United Kingdom" |]), true)
+        let picker = new CountryPickerViewController(fun item ->
+            country <- Some item
+            this.Country.Text <- item.Name
+            this.NavigationController.PopViewControllerAnimated true |> ignore
+        )
+
+        this.NavigationController.PushViewController (picker, true)
 
 
     member this.ChooseRegion () = 
-        this.NavigationController.PushViewController (new RegionPickerViewController([| "Canada"; "United States"; "United Kingdom" |]), true)
+        match country with
+        | Some country ->
+            let picker = new RegionPickerViewController(country, fun item ->
+                region <- Some item
+                this.Region.Text <- item.Name
+                this.NavigationController.PopViewControllerAnimated true |> ignore
+            )
+            this.NavigationController.PushViewController (picker, true)
+        | None -> showSimpleAlert "Country" "Please pick a country" "Close"
 
     override this.RowSelected (view, indexPath) =
         match indexPath.Section, indexPath.Row with
@@ -215,7 +246,6 @@ type EditProfileViewController (handle:nativeint) =
         | 2, 0 -> this.ChooseCountry () 
         | 2, 1 -> this.ChooseRegion () 
         | _, _ -> ()
-
 
 
 [<Register ("SignupViewController")>]
