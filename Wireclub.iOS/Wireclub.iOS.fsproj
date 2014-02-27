@@ -192,12 +192,27 @@
     <InterfaceDefinition Include="..\Views\RegionPickerViewController.xib">
       <Link>Resources\RegionPickerViewController.xib</Link>
     </InterfaceDefinition>
+    <InterfaceDefinition Include="..\Views\NavigateInputAccessoryViewController.xib">
+      <Link>Resources\NavigateInputAccessoryViewController.xib</Link>
+    </InterfaceDefinition>
   </ItemGroup>
   <ItemGroup>
     <BundleResource Include="Resources\Images\PlaceholderChat.png" />
     <BundleResource Include="Resources\Images\Placeholder.png" />
     <BundleResource Include="Resources\Images\PlaceholderFemale.png" />
     <BundleResource Include="Resources\Images\PlaceholderMale.png" />
+    <BundleResource Include="..\Views\Resources\UIButtonBarArrowLeft%402x.png">
+      <Link>Resources\Images\UIButtonBarArrowLeft%402x.png</Link>
+    </BundleResource>
+    <BundleResource Include="..\Views\Resources\UIButtonBarArrowLeftLandscape%402x.png">
+      <Link>Resources\Images\UIButtonBarArrowLeftLandscape%402x.png</Link>
+    </BundleResource>
+    <BundleResource Include="..\Views\Resources\UIButtonBarArrowRight%402x.png">
+      <Link>Resources\Images\UIButtonBarArrowRight%402x.png</Link>
+    </BundleResource>
+    <BundleResource Include="..\Views\Resources\UIButtonBarArrowRightLandscape%402x.png">
+      <Link>Resources\Images\UIButtonBarArrowRightLandscape%402x.png</Link>
+    </BundleResource>
   </ItemGroup>
   <ItemGroup>
     <ImageAsset Include="Resources\Images.xcassets\AppIcons.appiconset\Contents.json" />

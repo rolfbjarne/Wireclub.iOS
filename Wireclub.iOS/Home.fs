@@ -30,7 +30,15 @@ type ForgotPasswordViewController (handle:nativeint) =
             // ## Send / Toast ...
             this.DismissViewController (true, null)
         )
+            
 
+[<Register ("NavigateAccessoryViewController")>]
+type NavigateAccessoryViewController () =
+    inherit UIViewController ("NavigateAccessoryViewController", null)
+
+    [<Outlet>] member val NextButton: UIButton = null with get, set
+    [<Outlet>] member val PrevButton: UIButton = null with get, set
+    [<Outlet>] member val DoneButton: UIButton = null with get, set
 
 [<Register ("EditProfileViewController")>]
 type EditProfileViewController (handle:nativeint) as controller =

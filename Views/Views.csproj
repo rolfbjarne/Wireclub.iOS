@@ -130,6 +130,10 @@
     <Compile Include="EditProfileViewController.designer.cs">
       <DependentUpon>EditProfileViewController.cs</DependentUpon>
     </Compile>
+    <Compile Include="NavigateInputAccessoryViewController.cs" />
+    <Compile Include="NavigateInputAccessoryViewController.designer.cs">
+      <DependentUpon>NavigateInputAccessoryViewController.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <InterfaceDefinition Include="FriendsViewController.xib" />
@@ -147,8 +151,15 @@
     <InterfaceDefinition Include="EditProfile.storyboard" />
     <InterfaceDefinition Include="User.storyboard" />
     <InterfaceDefinition Include="ChatsViewController.xib" />
+    <InterfaceDefinition Include="NavigateInputAccessoryViewController.xib" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Resources\" />
+  </ItemGroup>
+  <ItemGroup>
+    <BundleResource Include="Resources\UIButtonBarArrowLeft%402x.png" />
+    <BundleResource Include="Resources\UIButtonBarArrowLeftLandscape%402x.png" />
+    <BundleResource Include="Resources\UIButtonBarArrowRight%402x.png" />
+    <BundleResource Include="Resources\UIButtonBarArrowRightLandscape%402x.png" />
   </ItemGroup>
 </Project>
