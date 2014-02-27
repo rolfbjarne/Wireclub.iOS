@@ -32,13 +32,23 @@ type ForgotPasswordViewController (handle:nativeint) =
         )
             
 
-[<Register ("NavigateAccessoryViewController")>]
-type NavigateAccessoryViewController () =
-    inherit UIViewController ("NavigateAccessoryViewController", null)
+[<Register ("NavigateInputAccessoryViewController")>]
+type NavigateInputAccessoryViewController (next, prev, ``done``) =
+    inherit UIViewController ("NavigateInputAccessoryViewController", null)
 
-    [<Outlet>] member val NextButton: UIButton = null with get, set
-    [<Outlet>] member val PrevButton: UIButton = null with get, set
-    [<Outlet>] member val DoneButton: UIButton = null with get, set
+    [<Outlet>]
+    member val NextButton: UIButton = null with get, set
+
+    [<Outlet>]
+    member val PrevButton: UIButton = null with get, set
+
+    [<Outlet>]
+    member val DoneButton: UIButton = null with get, set
+
+    override this.ViewDidLoad () = 
+        this.NextButton.TouchUpInside.Add (next)
+        this.PrevButton.TouchUpInside.Add (prev)
+        this.DoneButton.TouchUpInside.Add (``done``)
 
 [<Register ("EditProfileViewController")>]
 type EditProfileViewController (handle:nativeint) as controller =
@@ -46,8 +56,28 @@ type EditProfileViewController (handle:nativeint) as controller =
 
     let pickerMedia = new MediaPicker()
     let pickerDate = new UIDatePicker(new RectangleF(0.0f,0.0f,320.0f,216.0f))
+    let accessoryBirthday =
+        new NavigateInputAccessoryViewController(
+            (fun _ -> controller.Country.BecomeFirstResponder() |> ignore),
+            (fun _ -> controller.Username.BecomeFirstResponder() |> ignore),
+            (fun _ -> controller.Birthday.ResignFirstResponder() |> ignore)
+        )
+
     let pickerCountry = new UIPickerView(new RectangleF(0.0f,0.0f,320.0f,216.0f))
+    let accessoryCountry =
+        new NavigateInputAccessoryViewController(
+            (fun _ -> controller.Region.BecomeFirstResponder() |> ignore),
+            (fun _ -> controller.Birthday.BecomeFirstResponder() |> ignore),
+            (fun _ -> controller.Country.ResignFirstResponder() |> ignore)
+        )
+
     let pickerRegion = new UIPickerView(new RectangleF(0.0f,0.0f,320.0f,216.0f))
+    let accessoryRegion =
+        new NavigateInputAccessoryViewController(
+            (fun _ -> controller.City.BecomeFirstResponder() |> ignore),
+            (fun _ -> controller.Country.BecomeFirstResponder() |> ignore),
+            (fun _ -> controller.Region.ResignFirstResponder() |> ignore)
+        )
 
     let mutable country:LocationCountry option = None
     let mutable countries:LocationCountry [] = [||]
@@ -105,6 +135,7 @@ type EditProfileViewController (handle:nativeint) as controller =
             this.Birthday.Text <- value.ToString("M/d/yyyy")
         )
         this.Birthday.InputView <- pickerDate
+        this.Birthday.InputAccessoryView <- accessoryBirthday.View
 
         // Country Picker
         pickerCountry.Source <- { 
@@ -117,6 +148,8 @@ type EditProfileViewController (handle:nativeint) as controller =
                 controller.Country.Text <- country.Value.Name
         }
         this.Country.InputView <- pickerCountry
+        this.Country.InputAccessoryView <- accessoryCountry.View
+        this.Country.I
         this.Country.EditingDidBegin.Add(fun _ ->
             Async.startWithContinuation
                 (Places.countries ())
@@ -140,6 +173,7 @@ type EditProfileViewController (handle:nativeint) as controller =
                 controller.Region.Text <- region.Value.Name
         }
         this.Region.InputView <- pickerRegion
+        this.Region.InputAccessoryView <- accessoryRegion.View
         this.Region.EditingDidBegin.Add(fun _ ->
             match country with
             | Some country ->
@@ -151,30 +185,14 @@ type EditProfileViewController (handle:nativeint) as controller =
                             pickerRegion.ReloadAllComponents()
                         | error -> this.HandleApiFailure error
                     )
-            | None ->
-                this.Region.ResignFirstResponder() |> ignore
-                this.Country.BecomeFirstResponder() |> ignore    
+            | None -> // Can't resign first responder at this point
+                showSimpleAlert "Error" "Please pick a country" "Close"
         )
 
         // Next input
-        for input, next in List.pairNext [ this.Username; this.Birthday; this.First; this.Last; this.Country; this.Region; this.City ] do
+        for input, next in List.nextTuple [ this.Username; this.Birthday; this.First; this.Last; this.Country; this.Region; this.City ] do
             input.ReturnKeyType <- UIReturnKeyType.Next
-            match input with
-            | input when input = this.Birthday || input = this.Country || input = this.Region -> 
-                let accessoryView = new UIView(RectangleF(0.0f,0.0f,320.0f,44.0f))
-                accessoryView.BackgroundColor <- UIColor.White
-                let nextButton = UIButton.FromType(UIButtonType.RoundedRect)
-                nextButton.TouchUpInside.Add(fun _ -> printfn "test" ; next.BecomeFirstResponder() |> ignore)
-                nextButton.SetTitle("Next", UIControlState.Normal)
-                nextButton.Frame <- RectangleF(250.0f,00.0f,60.0f,44.0f)
-                accessoryView.AddSubview nextButton
-                input.InputAccessoryView <- accessoryView
-            | _ -> ()
-
-            input.EditingDidEndOnExit.Add (fun _ ->
-                match next with
-                | _ -> next.BecomeFirstResponder() |> ignore
-            )
+            input.EditingDidEndOnExit.Add (fun _ -> next.BecomeFirstResponder() |> ignore)
 
         this.City.EditingDidEndOnExit.Add (fun _ -> this.Description.BecomeFirstResponder() |> ignore)
 

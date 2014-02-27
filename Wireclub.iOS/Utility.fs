@@ -16,15 +16,27 @@ module Async =
         Async.StartWithContinuations (computation, continuation, (fun ex -> raise ex), (fun _ -> ()))
 
 module List =
-    let rec pairNext list =
+    let rec nextTuple list =
         match list with
         | [] | [_] -> []
         | head::tail ->
             [
                 yield head, tail.Head
-                yield! pairNext tail
+                yield! nextTuple tail
             ]
 
+    let nextPrevTuple list =
+        let rec nextPrevTuple prev list =
+            match list with
+            | [] -> []
+            | [current] -> [prev, current, None]
+            | head::tail ->
+                [
+                    yield prev, head, Some tail.Head
+                    yield! nextPrevTuple (Some head) tail
+                ]
+
+        nextPrevTuple None list
 
 [<AutoOpen>]
 module Utility =

@@ -1,10 +1,9 @@
 ﻿<Properties>
-  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug|iPhone" PreferredExecutionTarget="MonoDevelop.IPhone.IPhoneDeviceTarget.Braden Evans’s iPod" />
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug|iPhoneSimulator" PreferredExecutionTarget="MonoDevelop.IPhone.IPhoneSimulatorTarget.IPhoneRetina4_64.7.0" />
   <MonoDevelop.Ide.Workbench ActiveDocument="Wireclub.iOS/Home.fs">
     <Files>
-      <File FileName="Wireclub.iOS/Home.fs" Line="569" Column="26" />
-      <File FileName="Wireclub.iOS/Directory.fs" Line="19" Column="42" />
-      <File FileName="Wireclub.iOS/Chat.fs" Line="14" Column="6" />
+      <File FileName="Wireclub.iOS/Home.fs" Line="153" Column="50" />
+      <File FileName="Wireclub.iOS/AppDelegate.fs" Line="33" Column="15" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>

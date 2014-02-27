@@ -6,11 +6,8 @@
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="NavigateInputAccessoryViewController">
             <connections>
-                <outlet property="Done" destination="Sve-9a-GaX" id="T04-iD-Q9G"/>
                 <outlet property="DoneButton" destination="Sve-9a-GaX" id="OUh-nJ-Vv5"/>
-                <outlet property="Next" destination="RXZ-cs-eRx" id="Qne-sW-D3R"/>
                 <outlet property="NextButton" destination="RXZ-cs-eRx" id="8cl-N5-fnF"/>
-                <outlet property="Prev" destination="Fjm-vm-xIe" id="I7j-do-f8t"/>
                 <outlet property="PrevButton" destination="Fjm-vm-xIe" id="yoc-iB-5V4"/>
                 <outlet property="view" destination="1" id="3"/>
             </connections>

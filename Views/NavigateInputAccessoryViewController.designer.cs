@@ -23,9 +23,9 @@ namespace Views
 		
 		void ReleaseDesignerOutlets ()
 		{
-			if (PrevButton != null) {
-				PrevButton.Dispose ();
-				PrevButton = null;
+			if (DoneButton != null) {
+				DoneButton.Dispose ();
+				DoneButton = null;
 			}
 
 			if (NextButton != null) {
@@ -33,9 +33,9 @@ namespace Views
 				NextButton = null;
 			}
 
-			if (DoneButton != null) {
-				DoneButton.Dispose ();
-				DoneButton = null;
+			if (PrevButton != null) {
+				PrevButton.Dispose ();
+				PrevButton = null;
 			}
 		}
 	}
