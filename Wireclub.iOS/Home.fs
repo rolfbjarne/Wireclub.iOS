@@ -89,16 +89,10 @@ type EditProfileViewController (handle:nativeint) as controller =
     member val Birthday:UITextField = null with get, set
 
     [<Outlet>]
-    member val Description:UITextView = null with get, set
-
-    [<Outlet>]
-    member val First:UITextField  = null with get, set
+    member val About:UITextView = null with get, set
 
     [<Outlet>]
     member val GenderSelect:UISegmentedControl = null with get, set
-
-    [<Outlet>]
-    member val Last:UITextField  = null with get, set
 
     [<Outlet>]
     member val Location:UITextField   = null with get, set
@@ -149,7 +143,6 @@ type EditProfileViewController (handle:nativeint) as controller =
         }
         this.Country.InputView <- pickerCountry
         this.Country.InputAccessoryView <- accessoryCountry.View
-        this.Country.I
         this.Country.EditingDidBegin.Add(fun _ ->
             Async.startWithContinuation
                 (Places.countries ())
@@ -185,16 +178,16 @@ type EditProfileViewController (handle:nativeint) as controller =
                             pickerRegion.ReloadAllComponents()
                         | error -> this.HandleApiFailure error
                     )
-            | None -> // Can't resign first responder at this point
-                showSimpleAlert "Error" "Please pick a country" "Close"
+            | None -> showSimpleAlert "Error" "Please pick a country" "Close" // Can't resign first responder at this point
         )
 
         // Next input
-        for input, next in List.nextTuple [ this.Username; this.Birthday; this.First; this.Last; this.Country; this.Region; this.City ] do
+        for input, next in List.nextTuple [ this.Username; this.Birthday; this.Country; this.Region; this.City ] do
             input.ReturnKeyType <- UIReturnKeyType.Next
             input.EditingDidEndOnExit.Add (fun _ -> next.BecomeFirstResponder() |> ignore)
 
-        this.City.EditingDidEndOnExit.Add (fun _ -> this.Description.BecomeFirstResponder() |> ignore)
+        this.City.EditingDidEndOnExit.Add (fun _ -> this.About.BecomeFirstResponder() |> ignore)
+        this.City.ReturnKeyType <- UIReturnKeyType.Next
 
         // Profile image
         match Api.userIdentity with
@@ -210,56 +203,54 @@ type EditProfileViewController (handle:nativeint) as controller =
                 )
         )
 
-    member this.ChooseProfileImage () =
-        let alert = new UIAlertView (Title="Send Friend Request?", Message="")
-        alert.AddButton "Choose Existing" |> ignore
-        alert.AddButton "Take Photo" |> ignore
-        alert.AddButton "Cancel" |> ignore
-        alert.Show ()
-        alert.Dismissed.Add(fun args ->
-            let updateAvatar (controller:MediaPickerController) = 
-                this.PresentViewController (controller, true, null)
-                Async.startWithContinuation
-                    (Async.AwaitTask (controller.GetResultAsync()))
-                    (fun result ->
-                        controller.DismissViewController (true, fun _ -> 
-                            let imageOriginal = UIImage.FromFile result.Path
-                            let data = 
-                                match imageOriginal.Orientation with
-                                | UIImageOrientation.Up | UIImageOrientation.UpMirrored -> imageOriginal.AsJPEG()
-                                | _ ->
-                                    //redraw the raw image without the orientation
-                                    UIGraphics.BeginImageContext(imageOriginal.Size)
-                                    imageOriginal.Draw(new RectangleF(0.0f, 0.0f, imageOriginal.Size.Width, imageOriginal.Size.Height))
-                                    let data = UIGraphics.GetImageFromCurrentImageContext().AsJPEG()
-                                    UIGraphics.EndImageContext()
-                                    data
-
-                            let dataBuffer = Array.zeroCreate (int data.Length)
-                            System.Runtime.InteropServices.Marshal.Copy(data.Bytes, (dataBuffer:byte []), 0, int data.Length)
-                            Async.startWithContinuation
-                                (Api.upload<Image> "settings/doAvatar" "avatar" "avatar.jpg" dataBuffer)
-                                (function 
-                                    | Api.ApiOk image ->
-                                        match Api.userIdentity with
-                                        | Some identity ->
-                                            Api.userIdentity <- Some { identity with Avatar = image.Token }
-                                            Image.loadImageForView (App.imageUrl image.Token 100) Image.placeholder this.ProfileImage
-                                        | None -> printfn "identity not set"
-                                    | error -> this.HandleApiFailure error
-                                )
-                        )
-                    )
-
-            match args.ButtonIndex with
-            | 0 -> pickerMedia.GetPickPhotoUI() |> updateAvatar
-            | 1 -> pickerMedia.GetTakePhotoUI (new StoreCameraMediaOptions(Name = sprintf "%s.jpg" (System.IO.Path.GetTempFileName()), Directory = "Wireclub")) |> updateAvatar
-            | _ -> ()
-        )
-
     override this.RowSelected (view, indexPath) =
         match indexPath.Section, indexPath.Row with
-        | 0, 0 -> this.ChooseProfileImage () 
+        | 0, 0 -> 
+            let alert = new UIAlertView (Title="Send Friend Request?", Message="")
+            alert.AddButton "Choose Existing" |> ignore
+            alert.AddButton "Take Photo" |> ignore
+            alert.AddButton "Cancel" |> ignore
+            alert.Show ()
+            alert.Dismissed.Add(fun args ->
+                let updateAvatar (controller:MediaPickerController) = 
+                    this.PresentViewController (controller, true, null)
+                    Async.startWithContinuation
+                        (Async.AwaitTask (controller.GetResultAsync()))
+                        (fun result ->
+                            controller.DismissViewController (true, fun _ -> 
+                                let imageOriginal = UIImage.FromFile result.Path
+                                let data = 
+                                    match imageOriginal.Orientation with
+                                    | UIImageOrientation.Up | UIImageOrientation.UpMirrored -> imageOriginal.AsJPEG()
+                                    | _ ->
+                                        //redraw the raw image without the orientation
+                                        UIGraphics.BeginImageContext(imageOriginal.Size)
+                                        imageOriginal.Draw(new RectangleF(0.0f, 0.0f, imageOriginal.Size.Width, imageOriginal.Size.Height))
+                                        let data = UIGraphics.GetImageFromCurrentImageContext().AsJPEG()
+                                        UIGraphics.EndImageContext()
+                                        data
+
+                                let dataBuffer = Array.zeroCreate (int data.Length)
+                                System.Runtime.InteropServices.Marshal.Copy(data.Bytes, (dataBuffer:byte []), 0, int data.Length)
+                                Async.startWithContinuation
+                                    (Api.upload<Image> "settings/doAvatar" "avatar" "avatar.jpg" dataBuffer)
+                                    (function 
+                                        | Api.ApiOk image ->
+                                            match Api.userIdentity with
+                                            | Some identity ->
+                                                Api.userIdentity <- Some { identity with Avatar = image.Token }
+                                                Image.loadImageForView (App.imageUrl image.Token 100) Image.placeholder this.ProfileImage
+                                            | None -> printfn "identity not set"
+                                        | error -> this.HandleApiFailure error
+                                    )
+                            )
+                        )
+
+                match args.ButtonIndex with
+                | 0 -> pickerMedia.GetPickPhotoUI() |> updateAvatar
+                | 1 -> pickerMedia.GetTakePhotoUI (new StoreCameraMediaOptions(Name = sprintf "%s.jpg" (System.IO.Path.GetTempFileName()), Directory = "Wireclub")) |> updateAvatar
+                | _ -> ()
+            )
         | _, _ -> ()
 
 

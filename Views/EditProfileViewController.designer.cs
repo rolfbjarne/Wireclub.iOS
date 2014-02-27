@@ -13,6 +13,9 @@ namespace Views
 	partial class EditProfileViewController
 	{
 		[Outlet]
+		MonoTouch.UIKit.UITextView About { get; set; }
+
+		[Outlet]
 		MonoTouch.UIKit.UITextField Birthday { get; set; }
 
 		[Outlet]
@@ -22,16 +25,7 @@ namespace Views
 		MonoTouch.UIKit.UITextField Country { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextView Description { get; set; }
-
-		[Outlet]
-		MonoTouch.UIKit.UITextField First { get; set; }
-
-		[Outlet]
 		MonoTouch.UIKit.UISegmentedControl GenderSelect { get; set; }
-
-		[Outlet]
-		MonoTouch.UIKit.UITextField Last { get; set; }
 
 		[Outlet]
 		MonoTouch.UIKit.UIImageView ProfileImage { get; set; }
@@ -62,24 +56,9 @@ namespace Views
 				Country = null;
 			}
 
-			if (Description != null) {
-				Description.Dispose ();
-				Description = null;
-			}
-
-			if (First != null) {
-				First.Dispose ();
-				First = null;
-			}
-
 			if (GenderSelect != null) {
 				GenderSelect.Dispose ();
 				GenderSelect = null;
-			}
-
-			if (Last != null) {
-				Last.Dispose ();
-				Last = null;
 			}
 
 			if (ProfileImage != null) {
@@ -100,6 +79,11 @@ namespace Views
 			if (Username != null) {
 				Username.Dispose ();
 				Username = null;
+			}
+
+			if (About != null) {
+				About.Dispose ();
+				About = null;
 			}
 		}
 	}
