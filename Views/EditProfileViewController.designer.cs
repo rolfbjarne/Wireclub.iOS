@@ -41,6 +41,11 @@ namespace Views
 		
 		void ReleaseDesignerOutlets ()
 		{
+			if (About != null) {
+				About.Dispose ();
+				About = null;
+			}
+
 			if (Birthday != null) {
 				Birthday.Dispose ();
 				Birthday = null;
@@ -79,11 +84,6 @@ namespace Views
 			if (Username != null) {
 				Username.Dispose ();
 				Username = null;
-			}
-
-			if (About != null) {
-				About.Dispose ();
-				About = null;
 			}
 		}
 	}

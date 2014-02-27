@@ -203,7 +203,8 @@ type EditProfileViewController (handle:nativeint) as controller =
                 )
         )
 
-    override this.RowSelected (view, indexPath) =
+    override this.RowSelected (tableView, indexPath) =
+        tableView.DeselectRow (indexPath, false)
         match indexPath.Section, indexPath.Row with
         | 0, 0 -> 
             let alert = new UIAlertView (Title="Send Friend Request?", Message="")
