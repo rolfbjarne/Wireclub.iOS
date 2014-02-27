@@ -112,7 +112,7 @@ type RegionPickerViewController (country:LocationCountry, itemSelected) as contr
             )
 
 [<Register ("EditProfileViewController")>]
-type EditProfileViewController (handle:nativeint) =
+type EditProfileViewController (handle:nativeint) as controller =
     inherit UITableViewController (handle)
 
     let pickerMedia = new MediaPicker()
@@ -125,7 +125,7 @@ type EditProfileViewController (handle:nativeint) =
     member val Birthday:UITextField = null with get, set
 
     [<Outlet>]
-    member val Description:UITextField = null with get, set
+    member val Description:UITextView = null with get, set
 
     [<Outlet>]
     member val First:UITextField  = null with get, set
@@ -157,6 +157,7 @@ type EditProfileViewController (handle:nativeint) =
     [<Outlet>]
     member val City:UITextField  = null with get, set
 
+
     override this.ViewDidLoad () =
         this.NavigationItem.Title <- "Create Profile"
         this.NavigationItem.HidesBackButton <- true
@@ -166,10 +167,30 @@ type EditProfileViewController (handle:nativeint) =
         pickerDate.Mode <- UIDatePickerMode.Date
         this.Birthday.InputView <- pickerDate
 
+        let inputs = [
+            this.Username
+            this.Birthday
+            this.First
+            this.Last
+            this.Country
+            this.Region
+            this.City
+        ]
+
+        for input, next in inputs |> List.pairNext do
+            input.ReturnKeyType <- UIReturnKeyType.Next
+            input.EditingDidEndOnExit.Add (fun _ ->
+                match next with
+                | next when next = this.Country -> this.ChooseCountry()
+                | next when next = this.Region -> this.ChooseRegion()
+                | _ -> next.BecomeFirstResponder() |> ignore
+            )
+
+        this.City.EditingDidEndOnExit.Add (fun _ -> this.Description.BecomeFirstResponder() |> ignore)
+
         match Api.userIdentity with
         | Some identity -> Image.loadImageForView (App.imageUrl identity.Avatar 100) Image.placeholder this.ProfileImage
         | None -> ()
-
 
         pickerDate.ValueChanged.Add(fun _ ->
             let value = NSDate.op_Implicit pickerDate.Date

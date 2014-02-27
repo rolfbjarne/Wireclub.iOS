@@ -15,6 +15,17 @@ module Async =
     let startWithContinuation (computation: Async<'T>) (continuation: 'T -> unit) =
         Async.StartWithContinuations (computation, continuation, (fun ex -> raise ex), (fun _ -> ()))
 
+module List =
+    let rec pairNext list =
+        match list with
+        | [] | [_] -> []
+        | head::tail ->
+            [
+                yield head, tail.Head
+                yield! pairNext tail
+            ]
+
+
 [<AutoOpen>]
 module Utility =
     let showSimpleAlert title message button =
