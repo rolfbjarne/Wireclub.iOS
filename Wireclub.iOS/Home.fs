@@ -31,85 +31,6 @@ type ForgotPasswordViewController (handle:nativeint) =
             this.DismissViewController (true, null)
         )
 
-[<Register("CountryPickerViewController")>]
-type CountryPickerViewController (itemSelected) =
-    inherit UIViewController ("CountryPickerViewController", null)
-
-    let mutable countries:LocationCountry [] = [||]
-    let source = { 
-        new UITableViewSource() with
-        override this.GetCell(tableView, indexPath) =
-            let country = countries.[indexPath.Row]
-            let cell = 
-                match tableView.DequeueReusableCell "country-cell" with
-                | null -> new UITableViewCell (UITableViewCellStyle.Default, "country-cell")
-                | c -> c
-
-            cell.Tag <- indexPath.Row
-            cell.TextLabel.Text <- country.Name
-            cell
-
-        override this.RowsInSection(tableView, section) = countries.Length
-
-        override this.RowSelected(tableView, indexPath) =
-            tableView.DeselectRow (indexPath, false)
-            itemSelected countries.[indexPath.Row]
-    }
-
-    [<Outlet>]
-    member val Table: UITableView = null with get, set
-
-    override this.ViewDidLoad () =
-        this.Table.Source <- source
-
-        Async.startWithContinuation
-            (Places.countries ())
-            (function
-                | Api.ApiOk cs -> 
-                    countries <- cs
-                    this.Table.ReloadData()
-                | error -> this.HandleApiFailure error
-            )
-
-[<Register("RegionPickerViewController")>]
-type RegionPickerViewController (country:LocationCountry, itemSelected) as controller =
-    inherit UIViewController ("RegionPickerViewController", null)
-
-    let mutable regions:LocationRegion [] = [||]
-    let source = { 
-        new UITableViewSource() with
-        override this.GetCell(tableView, indexPath) =
-            let region = regions.[indexPath.Row]
-            let cell = 
-                match tableView.DequeueReusableCell "region-cell" with
-                | null -> new UITableViewCell (UITableViewCellStyle.Default, "region-cell")
-                | c -> c
-
-            cell.Tag <- indexPath.Row
-            cell.TextLabel.Text <- region.Name
-            cell
-
-        override this.RowsInSection(tableView, section) = regions.Length
-
-        override this.RowSelected(tableView, indexPath) =
-            tableView.DeselectRow (indexPath, false)
-            itemSelected regions.[indexPath.Row]
-    }
-
-    [<Outlet>]
-    member val Table: UITableView = null with get, set
-
-    override this.ViewDidLoad () =
-        controller.Table.Source <- source
-
-        Async.startWithContinuation
-            (Places.regions country.Id)
-            (function
-                | Api.ApiOk rs -> 
-                    regions <- rs
-                    this.Table.ReloadData()
-                | error -> this.HandleApiFailure error
-            )
 
 [<Register ("EditProfileViewController")>]
 type EditProfileViewController (handle:nativeint) as controller =
@@ -117,9 +38,14 @@ type EditProfileViewController (handle:nativeint) as controller =
 
     let pickerMedia = new MediaPicker()
     let pickerDate = new UIDatePicker(new RectangleF(0.0f,0.0f,320.0f,216.0f))
+    let pickerCountry = new UIPickerView(new RectangleF(0.0f,0.0f,320.0f,216.0f))
+    let pickerRegion = new UIPickerView(new RectangleF(0.0f,0.0f,320.0f,216.0f))
 
     let mutable country:LocationCountry option = None
+    let mutable countries:LocationCountry [] = [||]
+
     let mutable region:LocationRegion option = None
+    let mutable regions:LocationRegion [] = [||]
 
     [<Outlet>]
     member val Birthday:UITextField = null with get, set
@@ -161,41 +87,93 @@ type EditProfileViewController (handle:nativeint) as controller =
     override this.ViewDidLoad () =
         this.NavigationItem.Title <- "Create Profile"
         this.NavigationItem.HidesBackButton <- true
+
+        // Birthday picker
         pickerDate.MinimumDate <-  NSDate.op_Implicit (DateTime.UtcNow.AddYears(-120))
         pickerDate.MaximumDate <- NSDate.op_Implicit (DateTime.UtcNow.AddYears(-13))
-
         pickerDate.Mode <- UIDatePickerMode.Date
+        pickerDate.ValueChanged.Add(fun _ ->
+            let value = NSDate.op_Implicit pickerDate.Date
+            this.Birthday.Text <- value.ToString("M/d/yyyy")
+        )
         this.Birthday.InputView <- pickerDate
 
-        let inputs = [
-            this.Username
-            this.Birthday
-            this.First
-            this.Last
-            this.Country
-            this.Region
-            this.City
-        ]
+        // Country Picker
+        pickerCountry.Source <- { 
+            new UIPickerViewModel() with
+            override this.GetRowsInComponent(pickerView, comp) = countries.Length
+            override this.GetComponentCount(pickerView) = 1
+            override this.GetTitle(pickerView, row, comp) = countries.[row].Name
+            override this.Selected(pickerView, row, comp) =
+                country <- Some countries.[row]
+                controller.Country.Text <- country.Value.Name
+        }
+        this.Country.InputView <- pickerCountry
+        this.Country.EditingDidBegin.Add(fun _ ->
+            Async.startWithContinuation
+                (Places.countries ())
+                (function
+                    | Api.ApiOk result -> 
+                        countries <- result
+                        regions <- [||]
+                        pickerCountry.ReloadAllComponents()
+                    | error -> this.HandleApiFailure error
+                )         
+        )
 
-        for input, next in inputs |> List.pairNext do
+        // Region Picker
+        pickerRegion.Source <- { 
+            new UIPickerViewModel() with
+            override this.GetRowsInComponent(pickerView, comp) = regions.Length
+            override this.GetComponentCount(pickerView) = 1
+            override this.GetTitle(pickerView, row, comp) = regions.[row].Name
+            override this.Selected(pickerView, row, comp) =
+                region <- Some regions.[row]
+                controller.Region.Text <- region.Value.Name
+        }
+        this.Region.InputView <- pickerRegion
+        this.Region.EditingDidBegin.Add(fun _ ->
+            match country with
+            | Some country ->
+                Async.startWithContinuation
+                    (Places.regions country.Id)
+                    (function
+                        | Api.ApiOk rs -> 
+                            regions <- rs
+                            pickerRegion.ReloadAllComponents()
+                        | error -> this.HandleApiFailure error
+                    )
+            | None ->
+                this.Region.ResignFirstResponder() |> ignore
+                this.Country.BecomeFirstResponder() |> ignore    
+        )
+
+        // Next input
+        for input, next in List.pairNext [ this.Username; this.Birthday; this.First; this.Last; this.Country; this.Region; this.City ] do
             input.ReturnKeyType <- UIReturnKeyType.Next
+            match input with
+            | input when input = this.Birthday || input = this.Country || input = this.Region -> 
+                let accessoryView = new UIView(RectangleF(0.0f,0.0f,320.0f,44.0f))
+                accessoryView.BackgroundColor <- UIColor.White
+                let nextButton = UIButton.FromType(UIButtonType.RoundedRect)
+                nextButton.TouchUpInside.Add(fun _ -> printfn "test" ; next.BecomeFirstResponder() |> ignore)
+                nextButton.SetTitle("Next", UIControlState.Normal)
+                nextButton.Frame <- RectangleF(250.0f,00.0f,60.0f,44.0f)
+                accessoryView.AddSubview nextButton
+                input.InputAccessoryView <- accessoryView
+            | _ -> ()
+
             input.EditingDidEndOnExit.Add (fun _ ->
                 match next with
-                | next when next = this.Country -> this.ChooseCountry()
-                | next when next = this.Region -> this.ChooseRegion()
                 | _ -> next.BecomeFirstResponder() |> ignore
             )
 
         this.City.EditingDidEndOnExit.Add (fun _ -> this.Description.BecomeFirstResponder() |> ignore)
 
+        // Profile image
         match Api.userIdentity with
         | Some identity -> Image.loadImageForView (App.imageUrl identity.Avatar 100) Image.placeholder this.ProfileImage
         | None -> ()
-
-        pickerDate.ValueChanged.Add(fun _ ->
-            let value = NSDate.op_Implicit pickerDate.Date
-            this.Birthday.Text <- value.ToString("M/d/yyyy")
-        )
 
         this.SaveButton.TouchUpInside.Add(fun _ ->
             Async.startWithContinuation
@@ -253,32 +231,9 @@ type EditProfileViewController (handle:nativeint) as controller =
             | _ -> ()
         )
 
-    member this.ChooseCountry () = 
-        let picker = new CountryPickerViewController(fun item ->
-            country <- Some item
-            this.Country.Text <- item.Name
-            this.NavigationController.PopViewControllerAnimated true |> ignore
-        )
-
-        this.NavigationController.PushViewController (picker, true)
-
-
-    member this.ChooseRegion () = 
-        match country with
-        | Some country ->
-            let picker = new RegionPickerViewController(country, fun item ->
-                region <- Some item
-                this.Region.Text <- item.Name
-                this.NavigationController.PopViewControllerAnimated true |> ignore
-            )
-            this.NavigationController.PushViewController (picker, true)
-        | None -> showSimpleAlert "Country" "Please pick a country" "Close"
-
     override this.RowSelected (view, indexPath) =
         match indexPath.Section, indexPath.Row with
         | 0, 0 -> this.ChooseProfileImage () 
-        | 2, 0 -> this.ChooseCountry () 
-        | 2, 1 -> this.ChooseRegion () 
         | _, _ -> ()
 
 
