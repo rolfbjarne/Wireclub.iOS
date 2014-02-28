@@ -2,8 +2,8 @@
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug|iPhone" PreferredExecutionTarget="MonoDevelop.IPhone.IPhoneDeviceTarget.Braden Evans’s iPod" />
   <MonoDevelop.Ide.Workbench ActiveDocument="Wireclub.iOS/Home.fs">
     <Files>
-      <File FileName="Wireclub.iOS/Home.fs" Line="40" Column="15" />
-      <File FileName="Views/AsyncPickerViewController.cs" Line="10" Column="73" />
+      <File FileName="Wireclub.iOS/Home.fs" Line="257" Column="84" />
+      <File FileName="Views/AsyncPickerViewController.cs" Line="8" Column="48" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>

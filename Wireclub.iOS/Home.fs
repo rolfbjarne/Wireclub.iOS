@@ -200,7 +200,7 @@ type EditProfileViewController (handle:nativeint) as controller =
                             pickerRegion.Progress.StopAnimating()
                             this.HandleApiFailure error
                     )
-            | None -> showSimpleAlert "Error" "Please pick a country" "Close" // Can't resign first responder at this point
+            | None -> showSimpleAlert "Error" "Please pick a country" "Close" // Can't resign first responder at this point causes horrible exception
         )
 
         // Next input
@@ -237,9 +237,10 @@ type EditProfileViewController (handle:nativeint) as controller =
             alert.Dismissed.Add(fun args ->
                 let updateAvatar (controller:MediaPickerController) = 
                     this.PresentViewController (controller, true, null)
-                    Async.startWithContinuation
-                        (Async.AwaitTask (controller.GetResultAsync()))
+                    Async.StartWithContinuations (
+                        (Async.AwaitTask (controller.GetResultAsync())),
                         (fun result ->
+                            this.ProfileImageProgress.StartAnimating()
                             controller.DismissViewController (true, fun _ -> 
                                 let imageOriginal = UIImage.FromFile result.Path
                                 let data = 
@@ -255,7 +256,6 @@ type EditProfileViewController (handle:nativeint) as controller =
 
                                 let dataBuffer = Array.zeroCreate (int data.Length)
                                 System.Runtime.InteropServices.Marshal.Copy(data.Bytes, (dataBuffer:byte []), 0, int data.Length)
-                                this.ProfileImageProgress.StartAnimating()
                                 Async.startWithContinuation
                                     (Api.upload<Image> "settings/doAvatar" "avatar" "avatar.jpg" dataBuffer)
                                     (function 
@@ -263,13 +263,18 @@ type EditProfileViewController (handle:nativeint) as controller =
                                             match Api.userIdentity with
                                             | Some identity ->
                                                 Api.userIdentity <- Some { identity with Avatar = image.Token }
-                                                Image.loadImageForView (App.imageUrl image.Token 100) Image.placeholder this.ProfileImage
+                                                Image.loadImageForView (App.imageUrl image.Token 100) this.ProfileImage.Image this.ProfileImage
                                                 this.ProfileImageProgress.StopAnimating()
                                             | None -> printfn "identity not set"
-                                        | error -> this.HandleApiFailure error
+                                        | error ->
+                                            this.ProfileImageProgress.StopAnimating()
+                                            this.HandleApiFailure error
                                     )
                             )
-                        )
+                        ),
+                        (fun ex -> controller.DismissViewController (true, fun _ -> showSimpleAlert "Error" ex.Message "Close")),
+                        (fun exCancel -> controller.DismissViewController (true, fun _ -> ()))
+                    )
 
                 match args.ButtonIndex with
                 | 0 -> pickerMedia.GetPickPhotoUI() |> updateAvatar
