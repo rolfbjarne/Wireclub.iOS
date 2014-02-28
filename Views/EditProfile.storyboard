@@ -33,6 +33,10 @@
                                                     <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
                                                     <nil key="highlightedColor"/>
                                                 </label>
+                                                <activityIndicatorView hidden="YES" opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" hidesWhenStopped="YES" style="whiteLarge" translatesAutoresizingMaskIntoConstraints="NO" id="CzW-wa-CmU">
+                                                    <rect key="frame" x="27" y="18" width="37" height="37"/>
+                                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                                </activityIndicatorView>
                                             </subviews>
                                         </tableViewCellContentView>
                                     </tableViewCell>
@@ -253,6 +257,7 @@
                         <outlet property="Country" destination="83V-DC-4L3" id="nV2-B1-hD8"/>
                         <outlet property="GenderSelect" destination="nHR-g2-vuF" id="kkT-jC-VLw"/>
                         <outlet property="ProfileImage" destination="LAB-gC-vh1" id="B5y-m4-Scd"/>
+                        <outlet property="ProfileImageProgress" destination="CzW-wa-CmU" id="67g-dC-i8v"/>
                         <outlet property="Region" destination="yhs-CS-w7k" id="ESQ-VN-Ku3"/>
                         <outlet property="SaveButton" destination="uzI-Un-pdH" id="QSC-bF-jwv"/>
                         <outlet property="Username" destination="SIU-14-69M" id="zcP-hc-CAq"/>

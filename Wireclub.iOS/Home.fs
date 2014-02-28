@@ -32,6 +32,17 @@ type ForgotPasswordViewController (handle:nativeint) =
         )
             
 
+
+[<Register ("AsyncPickerViewController")>]
+type AsyncPickerViewController () =
+    inherit UIViewController ("AsyncPickerViewController", null)
+
+    [<Outlet>]
+    member val Picker: UIPickerView = null with get, set
+
+    [<Outlet>]
+    member val Progress:UIActivityIndicatorView  = null with get, set
+
 [<Register ("NavigateInputAccessoryViewController")>]
 type NavigateInputAccessoryViewController (next, prev, ``done``) =
     inherit UIViewController ("NavigateInputAccessoryViewController", null)
@@ -63,7 +74,7 @@ type EditProfileViewController (handle:nativeint) as controller =
             (fun _ -> controller.Birthday.ResignFirstResponder() |> ignore)
         )
 
-    let pickerCountry = new UIPickerView(new RectangleF(0.0f,0.0f,320.0f,216.0f))
+    let pickerCountry = new AsyncPickerViewController() //new RectangleF(0.0f,0.0f,320.0f,216.0f)
     let accessoryCountry =
         new NavigateInputAccessoryViewController(
             (fun _ -> controller.Region.BecomeFirstResponder() |> ignore),
@@ -71,7 +82,7 @@ type EditProfileViewController (handle:nativeint) as controller =
             (fun _ -> controller.Country.ResignFirstResponder() |> ignore)
         )
 
-    let pickerRegion = new UIPickerView(new RectangleF(0.0f,0.0f,320.0f,216.0f))
+    let pickerRegion = new AsyncPickerViewController()
     let accessoryRegion =
         new NavigateInputAccessoryViewController(
             (fun _ -> controller.City.BecomeFirstResponder() |> ignore),
@@ -115,6 +126,9 @@ type EditProfileViewController (handle:nativeint) as controller =
     [<Outlet>]
     member val City:UITextField  = null with get, set
 
+    [<Outlet>]
+    member val ProfileImageProgress:UIActivityIndicatorView  = null with get, set
+
 
     override this.ViewDidLoad () =
         this.NavigationItem.Title <- "Create Profile"
@@ -123,6 +137,7 @@ type EditProfileViewController (handle:nativeint) as controller =
         // Birthday picker
         pickerDate.MinimumDate <-  NSDate.op_Implicit (DateTime.UtcNow.AddYears(-120))
         pickerDate.MaximumDate <- NSDate.op_Implicit (DateTime.UtcNow.AddYears(-13))
+        pickerDate.Date <- NSDate.op_Implicit (DateTime.UtcNow.AddYears(-100))
         pickerDate.Mode <- UIDatePickerMode.Date
         pickerDate.ValueChanged.Add(fun _ ->
             let value = NSDate.op_Implicit pickerDate.Date
@@ -132,7 +147,9 @@ type EditProfileViewController (handle:nativeint) as controller =
         this.Birthday.InputAccessoryView <- accessoryBirthday.View
 
         // Country Picker
-        pickerCountry.Source <- { 
+        this.Country.InputView <- pickerCountry.View
+        this.Country.InputAccessoryView <- accessoryCountry.View
+        pickerCountry.Picker.Source <- { 
             new UIPickerViewModel() with
             override this.GetRowsInComponent(pickerView, comp) = countries.Length
             override this.GetComponentCount(pickerView) = 1
@@ -141,8 +158,6 @@ type EditProfileViewController (handle:nativeint) as controller =
                 country <- Some countries.[row]
                 controller.Country.Text <- country.Value.Name
         }
-        this.Country.InputView <- pickerCountry
-        this.Country.InputAccessoryView <- accessoryCountry.View
         this.Country.EditingDidBegin.Add(fun _ ->
             Async.startWithContinuation
                 (Places.countries ())
@@ -150,13 +165,18 @@ type EditProfileViewController (handle:nativeint) as controller =
                     | Api.ApiOk result -> 
                         countries <- result
                         regions <- [||]
-                        pickerCountry.ReloadAllComponents()
-                    | error -> this.HandleApiFailure error
+                        pickerCountry.Progress.StopAnimating()
+                        pickerCountry.Picker.ReloadAllComponents()
+                    | error ->
+                        pickerCountry.Progress.StopAnimating()
+                        this.HandleApiFailure error
                 )         
         )
 
         // Region Picker
-        pickerRegion.Source <- { 
+        this.Region.InputView <- pickerRegion.View
+        this.Region.InputAccessoryView <- accessoryRegion.View
+        pickerRegion.Picker.Source <- { 
             new UIPickerViewModel() with
             override this.GetRowsInComponent(pickerView, comp) = regions.Length
             override this.GetComponentCount(pickerView) = 1
@@ -165,18 +185,20 @@ type EditProfileViewController (handle:nativeint) as controller =
                 region <- Some regions.[row]
                 controller.Region.Text <- region.Value.Name
         }
-        this.Region.InputView <- pickerRegion
-        this.Region.InputAccessoryView <- accessoryRegion.View
         this.Region.EditingDidBegin.Add(fun _ ->
             match country with
             | Some country ->
+                pickerRegion.Progress.StartAnimating()
                 Async.startWithContinuation
                     (Places.regions country.Id)
                     (function
                         | Api.ApiOk rs -> 
                             regions <- rs
-                            pickerRegion.ReloadAllComponents()
-                        | error -> this.HandleApiFailure error
+                            pickerRegion.Progress.StopAnimating()
+                            pickerRegion.Picker.ReloadAllComponents()
+                        | error ->
+                            pickerRegion.Progress.StopAnimating()
+                            this.HandleApiFailure error
                     )
             | None -> showSimpleAlert "Error" "Please pick a country" "Close" // Can't resign first responder at this point
         )
@@ -233,6 +255,7 @@ type EditProfileViewController (handle:nativeint) as controller =
 
                                 let dataBuffer = Array.zeroCreate (int data.Length)
                                 System.Runtime.InteropServices.Marshal.Copy(data.Bytes, (dataBuffer:byte []), 0, int data.Length)
+                                this.ProfileImageProgress.StartAnimating()
                                 Async.startWithContinuation
                                     (Api.upload<Image> "settings/doAvatar" "avatar" "avatar.jpg" dataBuffer)
                                     (function 
@@ -241,6 +264,7 @@ type EditProfileViewController (handle:nativeint) as controller =
                                             | Some identity ->
                                                 Api.userIdentity <- Some { identity with Avatar = image.Token }
                                                 Image.loadImageForView (App.imageUrl image.Token 100) Image.placeholder this.ProfileImage
+                                                this.ProfileImageProgress.StopAnimating()
                                             | None -> printfn "identity not set"
                                         | error -> this.HandleApiFailure error
                                     )

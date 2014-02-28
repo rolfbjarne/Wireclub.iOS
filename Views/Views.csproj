@@ -134,6 +134,10 @@
     <Compile Include="NavigateInputAccessoryViewController.designer.cs">
       <DependentUpon>NavigateInputAccessoryViewController.cs</DependentUpon>
     </Compile>
+    <Compile Include="AsyncPickerViewController.cs" />
+    <Compile Include="AsyncPickerViewController.designer.cs">
+      <DependentUpon>AsyncPickerViewController.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <InterfaceDefinition Include="FriendsViewController.xib" />
@@ -152,6 +156,7 @@
     <InterfaceDefinition Include="User.storyboard" />
     <InterfaceDefinition Include="ChatsViewController.xib" />
     <InterfaceDefinition Include="NavigateInputAccessoryViewController.xib" />
+    <InterfaceDefinition Include="AsyncPickerViewController.xib" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Resources\" />

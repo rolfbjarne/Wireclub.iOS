@@ -31,6 +31,9 @@ namespace Views
 		MonoTouch.UIKit.UIImageView ProfileImage { get; set; }
 
 		[Outlet]
+		MonoTouch.UIKit.UIActivityIndicatorView ProfileImageProgress { get; set; }
+
+		[Outlet]
 		MonoTouch.UIKit.UITextField Region { get; set; }
 
 		[Outlet]
@@ -84,6 +87,11 @@ namespace Views
 			if (Username != null) {
 				Username.Dispose ();
 				Username = null;
+			}
+
+			if (ProfileImageProgress != null) {
+				ProfileImageProgress.Dispose ();
+				ProfileImageProgress = null;
 			}
 		}
 	}

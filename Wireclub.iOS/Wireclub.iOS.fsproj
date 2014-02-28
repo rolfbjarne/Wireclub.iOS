@@ -189,6 +189,9 @@
     <InterfaceDefinition Include="..\Views\NavigateInputAccessoryViewController.xib">
       <Link>Resources\NavigateInputAccessoryViewController.xib</Link>
     </InterfaceDefinition>
+    <InterfaceDefinition Include="..\Views\AsyncPickerViewController.xib">
+      <Link>Resources\AsyncPickerViewController.xib</Link>
+    </InterfaceDefinition>
   </ItemGroup>
   <ItemGroup>
     <BundleResource Include="Resources\Images\PlaceholderChat.png" />
