@@ -3,8 +3,10 @@ namespace Wireclub.iOS
 open System
 open System.Linq
 open System.Drawing
+open System.Globalization
 open MonoTouch.Foundation
 open MonoTouch.UIKit
+open MonoTouch.CoreLocation
 open Wireclub.Models
 open Wireclub.Boundary
 open Wireclub.Boundary.Models
@@ -64,6 +66,8 @@ type NavigateInputAccessoryViewController (next, prev, ``done``) =
 [<Register ("EditProfileViewController")>]
 type EditProfileViewController (handle:nativeint) as controller =
     inherit UITableViewController (handle)
+
+    let location = new CLLocationManager()
 
     let pickerMedia = new MediaPicker()
     let pickerDate = new UIDatePicker(new RectangleF(0.0f,0.0f,320.0f,216.0f))
@@ -130,9 +134,11 @@ type EditProfileViewController (handle:nativeint) as controller =
     member val ProfileImageProgress:UIActivityIndicatorView  = null with get, set
 
 
+
     override this.ViewDidLoad () =
         this.NavigationItem.Title <- "Create Profile"
         this.NavigationItem.HidesBackButton <- true
+
 
         // Birthday picker
         pickerDate.MinimumDate <-  NSDate.op_Implicit (DateTime.UtcNow.AddYears(-120))
@@ -218,9 +224,18 @@ type EditProfileViewController (handle:nativeint) as controller =
 
         this.SaveButton.TouchUpInside.Add(fun _ ->
             Async.startWithContinuation
-                (async { return Api.ApiOk 1 })
+                (Profile.update
+                    (this.Username.Text.Trim())
+                    (match this.GenderSelect.SelectedSegment with | 1 -> GenderType.Male | 2 -> GenderType.Female | _ -> GenderType.Undefined)
+                    (DateTime.ParseExact(this.Birthday.Text, "M/d/yyyy", CultureInfo.CurrentCulture))
+                    3 //default wireclub blue for now
+                    "AAAAAAAAAAAAAAAA0"
+                    this.About.Text
+                    )
                 (function
-                    | Api.ApiOk result ->  showSimpleAlert "Hooray" "An awesome occured submitting your request" "Close"
+                    | Api.ApiOk identity -> 
+                        Api.userIdentity <- Some identity
+                        Navigation.navigate "/home" None
                     | error -> this.HandleApiFailure error
                 )
         )
@@ -257,7 +272,7 @@ type EditProfileViewController (handle:nativeint) as controller =
                                 let dataBuffer = Array.zeroCreate (int data.Length)
                                 System.Runtime.InteropServices.Marshal.Copy(data.Bytes, (dataBuffer:byte []), 0, int data.Length)
                                 Async.startWithContinuation
-                                    (Api.upload<Image> "settings/doAvatar" "avatar" "avatar.jpg" dataBuffer)
+                                    (Profile.avatar dataBuffer)
                                     (function 
                                         | Api.ApiOk image ->
                                             match Api.userIdentity with
@@ -281,6 +296,8 @@ type EditProfileViewController (handle:nativeint) as controller =
                 | 1 -> pickerMedia.GetTakePhotoUI (new StoreCameraMediaOptions(Name = sprintf "%s.jpg" (System.IO.Path.GetTempFileName()), Directory = "Wireclub")) |> updateAvatar
                 | _ -> ()
             )
+        | 2, 2 ->
+            
         | _, _ -> ()
 
 
@@ -609,7 +626,12 @@ type EntryViewController () =
                 this.NavigationController.PopToViewController (rootController, false) |> ignore
                 let controller = ChatRooms.join data
                 this.NavigationController.PushViewController (controller, true)
-
+            | "/home", _ ->
+                if this.NavigationController.ViewControllers.Contains rootController then
+                    this.NavigationController.PopToViewController (rootController, true) |> ignore
+                else
+                    this.NavigationController.PopToViewController (this, false) |> ignore
+                    this.NavigationController.PushViewController(rootController, true)
             | url, _ -> 
                 this.NavigationController.PushViewController (new DialogViewController (url), true)
 
