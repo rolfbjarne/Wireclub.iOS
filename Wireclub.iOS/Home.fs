@@ -166,7 +166,7 @@ type EditProfileViewController (handle:nativeint) as controller =
         }
         this.Country.EditingDidBegin.Add(fun _ ->
             Async.startWithContinuation
-                (Places.countries ())
+                (Settings.countries ())
                 (function
                     | Api.ApiOk result -> 
                         countries <- result
@@ -196,7 +196,7 @@ type EditProfileViewController (handle:nativeint) as controller =
             | Some country ->
                 pickerRegion.Progress.StartAnimating()
                 Async.startWithContinuation
-                    (Places.regions country.Id)
+                    (Settings.regions country.Id)
                     (function
                         | Api.ApiOk rs -> 
                             regions <- rs
@@ -224,12 +224,13 @@ type EditProfileViewController (handle:nativeint) as controller =
 
         this.SaveButton.TouchUpInside.Add(fun _ ->
             Async.startWithContinuation
-                (Profile.update
+                (Settings.profile
                     (this.Username.Text.Trim())
                     (match this.GenderSelect.SelectedSegment with | 1 -> GenderType.Male | 2 -> GenderType.Female | _ -> GenderType.Undefined)
                     (DateTime.ParseExact(this.Birthday.Text, "M/d/yyyy", CultureInfo.CurrentCulture))
-                    3 //default wireclub blue for now
-                    "AAAAAAAAAAAAAAAA0"
+                    (match country with | Some country -> country.Id | None _ -> String.Empty)
+                    (match region with | Some region -> region.Name | None _ -> String.Empty)
+                    (this.City.Text.Trim())
                     this.About.Text
                     )
                 (function
@@ -272,7 +273,7 @@ type EditProfileViewController (handle:nativeint) as controller =
                                 let dataBuffer = Array.zeroCreate (int data.Length)
                                 System.Runtime.InteropServices.Marshal.Copy(data.Bytes, (dataBuffer:byte []), 0, int data.Length)
                                 Async.startWithContinuation
-                                    (Profile.avatar dataBuffer)
+                                    (Settings.avatar dataBuffer)
                                     (function 
                                         | Api.ApiOk image ->
                                             match Api.userIdentity with
@@ -296,8 +297,6 @@ type EditProfileViewController (handle:nativeint) as controller =
                 | 1 -> pickerMedia.GetTakePhotoUI (new StoreCameraMediaOptions(Name = sprintf "%s.jpg" (System.IO.Path.GetTempFileName()), Directory = "Wireclub")) |> updateAvatar
                 | _ -> ()
             )
-        | 2, 2 ->
-            
         | _, _ -> ()
 
 
