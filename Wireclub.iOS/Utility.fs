@@ -1,5 +1,8 @@
 namespace Wireclub.iOS
 
+open System
+open System.Globalization
+
 open MonoTouch.Foundation
 open MonoTouch.UIKit
 
@@ -57,6 +60,31 @@ module Utility =
         | 6 -> "Lucida Sans"
         | 7 -> "Comic Sans MS"
         | _ -> "Arial"
+
+    let cssToColor (color:string) =
+        let color = 
+            match color.ToCharArray() with 
+            | [| '#'; r; g; b; |] -> new String([| r; r; g; g; b; b; |])
+            | _ -> color.Substring(1, 6)
+
+        let color = Int32.Parse(color, NumberStyles.HexNumber)
+            
+        UIColor.FromRGBA(
+            (byte)((color >>> 0x10) &&& 0xff),
+            (byte)((color >>> 8) &&& 0xff),
+            (byte)(color &&& 0xff),
+            (byte)0xff)
+
+    let colorToCss (color:UIColor) = 
+        match color.GetRGBA () with
+        | red, green, blue, _ -> sprintf "#%02x%02x%02x" (int red) (int green) (int blue)
+
+    let grayBackground = cssToColor "#e9eaef"
+    let grayLightAccent = cssToColor "#f0f1f6"
+    let grayDarkAccent = cssToColor "#dcdde1"
+    let wireclubBlue = cssToColor "#3287D6"
+    let lighterText = cssToColor "#999"
+    let dialogBorder = cssToColor "#666"
 
     type UIViewController with
         member this.HandleApiFailure<'A> (result:Api.ApiResult<'A>) =

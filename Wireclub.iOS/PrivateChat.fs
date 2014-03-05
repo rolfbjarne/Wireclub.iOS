@@ -75,7 +75,7 @@ type PrivateChatSessionViewController (user:Entity) as this =
                 (function
                     | Api.ApiOk response -> 
                         this.Text.Text <- ""
-                        addMessage identity.Id "" 0 response.Feedback response.Sequence
+                        addMessage identity.Id response.Color response.Font response.Feedback response.Sequence
                     | error -> this.HandleApiFailure error)
 
     let placeKeyboard (sender:obj) (args:UIKeyboardEventArgs) =
@@ -122,6 +122,8 @@ type PrivateChatSessionViewController (user:Entity) as this =
         ))
         // Prevents a 64px offset on a webviews scrollview
         this.AutomaticallyAdjustsScrollViewInsets <- false
+        this.WebView.BackgroundColor <- Utility.grayLightAccent
+
 
         this.NavigationItem.Title <- user.Label
         this.WebView.LoadRequest(new NSUrlRequest(new NSUrl(Api.baseUrl + "/mobile/privateChat")))
