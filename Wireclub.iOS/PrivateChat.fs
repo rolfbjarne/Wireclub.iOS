@@ -10,19 +10,15 @@ open Wireclub.Boundary.Chat
 open ChannelEvent
 
 type ChatMessage = {
-    Current:string
     Id:string
-    Slug:string
-    Avatar:string
+    UserUrl:string
+    AvatarUrl:string
+    Css:string
     Message: string
     Sequence: int64
     Color: string
-    Font: string
-
-    NavigateUrl:string
-    ContentUrl:string
+    FontFamily: string
 }
-
 
 [<Register("PrivateChatSessionViewController")>]
 type PrivateChatSessionViewController (user:Entity) as this =
@@ -37,17 +33,34 @@ type PrivateChatSessionViewController (user:Entity) as this =
             (sprintf "window.scrollBy(0, %i);" 
                 (int (this.WebView.EvaluateJavascript "document.body.offsetHeight;"))) |> ignore
 
-    let addMessage id slug avatar color font message sequence =
+    let preloadImages urls =
+        this.WebView.EvaluateJavascript 
+            (String.concat ";" [ yield "var preload = new Image()"; for url in urls do yield sprintf "preload.src = '%s'" url ]) |> ignore
+
+    let addMessage id color font message sequence =
         if events.Add sequence then
+            let slug, avatar =
+                if Api.userId = id then
+                    Api.userIdentity.Value.Slug, Api.userIdentity.Value.Avatar
+                else
+                    user.Slug, user.Image
+
+            let userUrl = Api.baseUrl + "/users/" + slug
+            let avatarUrl = App.imageUrl avatar 40
+            let css =
+                String.concat " "
+                    [
+                        if id = Api.userId then
+                            yield "viewer"
+                    ]
+
             this.WebView.EvaluateJavascript(sprintf "wireclub.Mobile.addMessage(%s)" (Newtonsoft.Json.JsonConvert.SerializeObject {
-                Current = Api.userId
-                NavigateUrl = Api.baseUrl
-                ContentUrl = Api.baseUrl
                 Id = id
-                Slug = slug
-                Avatar = avatar
-                Color = color
-                Font = string font
+                UserUrl = userUrl
+                AvatarUrl = avatarUrl
+                Css = css
+                Color = sprintf "#%s" color
+                FontFamily = fontFamily font
                 Message = message
                 Sequence = sequence
             })) |> ignore
@@ -62,7 +75,7 @@ type PrivateChatSessionViewController (user:Entity) as this =
                 (function
                     | Api.ApiOk response -> 
                         this.Text.Text <- ""
-                        addMessage identity.Id identity.Slug identity.Avatar "" 0 response.Feedback response.Sequence
+                        addMessage identity.Id "" 0 response.Feedback response.Sequence
                     | error -> this.HandleApiFailure error)
 
     let placeKeyboard (sender:obj) (args:UIKeyboardEventArgs) =
@@ -78,11 +91,11 @@ type PrivateChatSessionViewController (user:Entity) as this =
             this.InvokeOnMainThread (fun _ ->
                 match event with
                 | { Event = PrivateMessage (color, font, message) } ->
-                    addMessage session.Value.UserId "??SLUG??" session.Value.PartnerAvatarId color font message event.Sequence
+                    addMessage session.Value.UserId color font message event.Sequence
                     Async.Start (DB.createChatHistory user DB.ChatHistoryType.PrivateChat (Some (message, false)))
 
                 | { Event = PrivateMessageSent (color, font, message) } ->
-                    addMessage Api.userId identity.Slug identity.Avatar color font message event.Sequence
+                    addMessage Api.userId color font message event.Sequence
                     Async.Start (DB.createChatHistory user DB.ChatHistoryType.PrivateChat (Some ("You: " + message, false)))
                 
                 | _ -> ()
@@ -107,9 +120,11 @@ type PrivateChatSessionViewController (user:Entity) as this =
         this.NavigationItem.RightBarButtonItem <- new UIBarButtonItem("...", UIBarButtonItemStyle.Bordered, new EventHandler(fun (s:obj) (e:EventArgs) -> 
             Navigation.navigate (sprintf "/users/%s" user.Slug) (Some user)
         ))
+        // Prevents a 64px offset on a webviews scrollview
+        this.AutomaticallyAdjustsScrollViewInsets <- false
 
         this.NavigationItem.Title <- user.Label
-        this.WebView.LoadRequest(new NSUrlRequest(new NSUrl(Api.baseUrl + "/mobile/chat")))
+        this.WebView.LoadRequest(new NSUrlRequest(new NSUrl(Api.baseUrl + "/mobile/privateChat")))
         this.WebView.LoadFinished.Add(fun _ ->
             Async.StartImmediate <| async {
                 let context = System.Threading.SynchronizationContext.Current

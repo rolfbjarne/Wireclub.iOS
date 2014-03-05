@@ -62,14 +62,12 @@ type ChatRoomViewController (room:Entity) as this =
     let addMessage id slug avatar color font message sequence =
         //if events.Add seqce then
         this.WebView.EvaluateJavascript(sprintf "wireclub.Mobile.addMessage(%s)" (Newtonsoft.Json.JsonConvert.SerializeObject {
-            Current = Api.userId
-            NavigateUrl = Api.baseUrl
-            ContentUrl = Api.baseUrl
             Id = id
-            Slug = slug
-            Avatar = avatar
+            UserUrl = slug
+            AvatarUrl = avatar
+            Css = ""
             Color = color
-            Font = string font
+            FontFamily = fontFamily font
             Message = message
             Sequence = sequence
         })) |> ignore

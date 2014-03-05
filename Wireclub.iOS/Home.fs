@@ -642,6 +642,7 @@ type EntryViewController () =
         // When the user is authenticated start the channel client and push the main app controller
         let proceed animated =
             ChannelClient.init handleEvent
+
             match Api.userIdentity.Value.Membership with
             | MembershipTypePublic.Pending -> this.NavigationController.PushViewController (editProfileController.Value, true)
             | _ -> this.NavigationController.PushViewController(rootController, animated)

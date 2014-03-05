@@ -46,6 +46,18 @@ module Utility =
         alert.Show ()
         ()
 
+    //make a custom mapping for each OS based on supported fonts
+    let fontFamily id =
+        match id with
+        | 1 -> "Arial"
+        | 2 -> "Courier New"
+        | 3 -> "Georgia"
+        | 4 -> "Times New Roman"
+        | 5 -> "Trebuchet"
+        | 6 -> "Lucida Sans"
+        | 7 -> "Comic Sans MS"
+        | _ -> "Arial"
+
     type UIViewController with
         member this.HandleApiFailure<'A> (result:Api.ApiResult<'A>) =
             match result with
@@ -87,7 +99,7 @@ module Image =
     let cachePath url =
         let documents = Environment.GetFolderPath (Environment.SpecialFolder.MyDocuments)
         let cache = Path.Combine (documents, "..", "Library", "Caches")
-        Path.Combine (cache, System.Text.RegularExpressions.Regex.Replace(url, "[^\w]", "_"))
+        Path.Combine (cache.Replace("/Documents/..", String.Empty), System.Text.RegularExpressions.Regex.Replace(url, "[^\w]", "_"))
 
     let tryAcquireFromCache url =
         match images.TryGetValue url with

@@ -1,11 +1,8 @@
 ﻿<Properties>
-  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug|iPhone" PreferredExecutionTarget="MonoDevelop.IPhone.IPhoneDeviceTarget.Braden Evans’s iPod" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Wireclub.iOS/Home.fs">
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug|iPhoneSimulator" PreferredExecutionTarget="MonoDevelop.IPhone.IPhoneSimulatorTarget.IPhoneRetina4_64.7.0" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="Wireclub.iOS/PrivateChat.fs">
     <Files>
-      <File FileName="Wireclub.iOS/Home.fs" Line="142" Column="35" />
-      <File FileName="../wireclub.android/Wireclub.AppClient/Routes.fs" Line="9" Column="13" />
-      <File FileName="Wireclub.iOS/PrivateChat.fs" Line="108" Column="13" />
-      <File FileName="Wireclub.iOS/User.fs" Line="44" Column="14" />
+      <File FileName="Wireclub.iOS/PrivateChat.fs" Line="43" Column="40" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
