@@ -9,15 +9,8 @@ open Wireclub.Boundary
 open Wireclub.Boundary.Chat
 open ChannelEvent
 
-type PrivateChatMessage = {
-    Id:string
-    UserUrl:string
-    AvatarUrl:string
-    Css:string
-    Message: string
-    Sequence: int64
-    Color: string
-    FontFamily: string
+type ChatMessage = {
+    Line: string
 }
 
 [<Register("PrivateChatSessionViewController")>]
@@ -27,35 +20,33 @@ type PrivateChatSessionViewController (user:Entity) as this =
     let identity = match Api.userIdentity with | Some id -> id | None -> failwith "User must be logged in"
     let events = System.Collections.Generic.HashSet<int64>()
     let mutable session: SessionResponse option = None
+    let nameplateImageSize = 50
 
-    let addMessage id color font message sequence =
-        if events.Add sequence then
-            let slug, avatar =
-                if Api.userId = id then
-                    identity.Slug, identity.Avatar
-                else
-                    user.Slug, user.Image
+    let nameplate slug image = 
+        let userUrl = sprintf "%s/users/%s" Api.baseUrl slug
+        sprintf
+            "<a class=icon href=%s><img src=%s width=%i height=%i /></a> <a class=name href=%s></a>"
+            userUrl
+            (App.imageUrl image nameplateImageSize)
+            nameplateImageSize
+            nameplateImageSize
+            userUrl
 
-            let userUrl = Api.baseUrl + "/users/" + slug
-            let avatarUrl = App.imageUrl avatar 40
-            let css =
-                String.concat " "
-                    [
-                        if id = Api.userId then
-                            yield "viewer"
-                    ]
+    let message color font payload = sprintf "<span style='color: #%s; font-family: %s;'>%s</span>" color font payload
+    let line css nameplate message = sprintf "<div class='message %s'>%s <div class=body-wrap><div class=body>%s</div></div></div>" css nameplate message 
+    let partnerLine payload color font = line "partner" (nameplate user.Slug user.Image) (message color font payload) 
+    let viewerLine payload color font = line "viewer" (nameplate identity.Slug identity.Avatar) (message color font payload) 
 
-            this.WebView.EvaluateJavascript(sprintf "wireclub.Mobile.addMessage(%s)" (Newtonsoft.Json.JsonConvert.SerializeObject {
-                Id = id
-                UserUrl = userUrl
-                AvatarUrl = avatarUrl
-                Css = css
-                Color = sprintf "#%s" color
-                FontFamily = fontFamily font
-                Message = message
-                Sequence = sequence
-            })) |> ignore
-            this.WebView.ScrollToBottom ()
+    let addLine line =
+        this.WebView.EvaluateJavascript(sprintf "wireclub.Mobile.addLine(%s)" (Newtonsoft.Json.JsonConvert.SerializeObject { Line = line })) |> ignore
+        this.WebView.ScrollToBottom()
+
+    let placeKeyboard (sender:obj) (args:UIKeyboardEventArgs) =
+        this.ResizeViewToKeyboard args
+        this.WebView.ScrollToBottom()
+        
+    let showObserver = UIKeyboard.Notifications.ObserveWillShow(System.EventHandler<UIKeyboardEventArgs>(placeKeyboard))
+    let hideObserver = UIKeyboard.Notifications.ObserveWillHide(System.EventHandler<UIKeyboardEventArgs>(placeKeyboard))
 
     let sendMessage text =
         match text with
@@ -66,31 +57,27 @@ type PrivateChatSessionViewController (user:Entity) as this =
                 (function
                     | Api.ApiOk response -> 
                         this.Text.Text <- ""
-                        addMessage identity.Id response.Color response.Font response.Feedback response.Sequence
+                        if events.Add response.Sequence then
+                            addLine (viewerLine response.Feedback response.Color (fontFamily response.Font))
                     | error -> this.HandleApiFailure error)
 
-    let placeKeyboard (sender:obj) (args:UIKeyboardEventArgs) =
-        this.ResizeViewToKeyboard args
-        this.WebView.ScrollToBottom()
-        
-    let showObserver = UIKeyboard.Notifications.ObserveWillShow(System.EventHandler<UIKeyboardEventArgs>(placeKeyboard))
-    let hideObserver = UIKeyboard.Notifications.ObserveWillHide(System.EventHandler<UIKeyboardEventArgs>(placeKeyboard))
+    let processEvent event addLine = 
+        if events.Add event.Sequence then
+            match event with
+            | { Event = PrivateMessage (color, font, message) } ->
+                addLine (partnerLine message color (fontFamily font))
+                Async.Start (DB.createChatHistory user DB.ChatHistoryType.PrivateChat (Some (message, false)))
+
+            | { Event = PrivateMessageSent (color, font, message) } ->
+                addLine (viewerLine message color (fontFamily font))
+                Async.Start (DB.createChatHistory user DB.ChatHistoryType.PrivateChat (Some ("You: " + message, false)))
+            
+            | _ -> ()
 
     let processor = new MailboxProcessor<ChannelEvent>(fun inbox ->
         let rec loop () = async {
             let! event = inbox.Receive()
-            this.InvokeOnMainThread (fun _ ->
-                match event with
-                | { Event = PrivateMessage (color, font, message) } ->
-                    addMessage session.Value.UserId color font message event.Sequence
-                    Async.Start (DB.createChatHistory user DB.ChatHistoryType.PrivateChat (Some (message, false)))
-
-                | { Event = PrivateMessageSent (color, font, message) } ->
-                    addMessage Api.userId color font message event.Sequence
-                    Async.Start (DB.createChatHistory user DB.ChatHistoryType.PrivateChat (Some ("You: " + message, false)))
-                
-                | _ -> ()
-            )
+            this.InvokeOnMainThread (fun _ -> processEvent event addLine)
             return! loop ()
         }
 
@@ -115,33 +102,25 @@ type PrivateChatSessionViewController (user:Entity) as this =
         this.AutomaticallyAdjustsScrollViewInsets <- false
         this.WebView.BackgroundColor <- Utility.grayLightAccent
 
-
         this.NavigationItem.Title <- user.Label
         this.WebView.LoadRequest(new NSUrlRequest(new NSUrl(Api.baseUrl + "/mobile/privateChat")))
         this.WebView.LoadFinished.Add(fun _ ->
-            Async.StartImmediate <| async {
-                
-                this.WebView.SetBodyBackgroundColor (colorToCss Utility.grayLightAccent)
-                let context = System.Threading.SynchronizationContext.Current
-                let! sessionResponse = PrivateChat.session user.Id
+            this.WebView.SetBodyBackgroundColor (colorToCss Utility.grayLightAccent)
+            Async.startWithContinuation
+                (PrivateChat.session user.Id)
+                (function
+                    | Api.ApiOk newSession ->
+                        session <- Some newSession
+                        processor.Start ()
 
-                match sessionResponse with
-                | Api.ApiOk newSession ->
-                    session <- Some newSession
-                    processor.Start ()
+                        // Send message
+                        this.Text.ShouldReturn <- (fun _ -> sendMessage this.Text.Text; false)
+                        this.SendButton.TouchUpInside.Add(fun args -> sendMessage this.Text.Text )
 
-                    // Send message
-                    this.Text.ShouldReturn <- (fun _ ->
-                        sendMessage this.Text.Text
-                        false
-                    )
-                    this.SendButton.TouchUpInside.Add(fun args ->
-                        sendMessage this.Text.Text
-                    )
-
-                | error -> this.HandleApiFailure error // TODO: In case of an error kill the controller?
-            }
-        )
+                    | error -> this.HandleApiFailure error
+                )
+        )   
+            
 
     override this.ViewDidDisappear (animated) =
         if this.IsMovingToParentViewController then

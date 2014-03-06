@@ -10,9 +10,6 @@ open Wireclub.Boundary
 open Wireclub.Boundary.Chat
 open ChannelEvent
 
-type ChatRoomMessage = {
-    Line: string
-}
 
 [<Register ("ChatRoomUsersViewController")>]
 type ChatRoomUsersViewController (users:ChatUser[]) =
@@ -98,8 +95,7 @@ type ChatRoomViewController (room:Entity) as this =
         | _ ->
             Async.startWithContinuation
                 (Chat.send room.Slug text)
-                (fun response -> 
-                    match this.HandleApiResult response with
+                (this.HandleApiResult >> function
                     | Api.ApiOk response -> 
                         this.Text.Text <- ""
                         match users.TryGetValue identity.Id with
@@ -110,7 +106,7 @@ type ChatRoomViewController (room:Entity) as this =
 
     let addUser = (fun (user:ChatUser) -> users.AddOrUpdate (user.Id, user, System.Func<string,ChatUser,ChatUser>(fun _ _ -> user)) |> ignore)
 
-    let addEventLine event addLine =
+    let processEvent event addLine =
         let historic = event.Sequence < startSequence
         if events.Add event.Sequence then
             match event with
@@ -147,7 +143,7 @@ type ChatRoomViewController (room:Entity) as this =
     let processor = new MailboxProcessor<ChannelEvent>(fun inbox ->
         let rec loop () = async {
             let! event = inbox.Receive()
-            this.InvokeOnMainThread(fun _ -> addEventLine event addLine)
+            this.InvokeOnMainThread(fun _ -> processEvent event addLine)
             return! loop ()
         }
 
@@ -189,13 +185,13 @@ type ChatRoomViewController (room:Entity) as this =
             this.WebView.SetBodyBackgroundColor (colorToCss UIColor.White)
             Async.startWithContinuation
                 (Chat.join room.Slug)
-                (fun result ->
-                    match result with
+                (function
                     | Api.ApiOk (result, events) ->
                         startSequence <- result.Sequence
+
                         this.WebView.PreloadImages [ for user in users.Values do yield App.imageUrl user.Avatar nameplateImageSize ]
                         let lines = new List<string>()
-                        for event in events do addEventLine event lines.Add
+                        for event in events do processEvent event lines.Add
                         addLines (lines.ToArray())
                         processor.Start()
                         result.Members |> Array.iter addUser
