@@ -9,6 +9,9 @@ open Wireclub.Boundary
 open Wireclub.Boundary.Chat
 open ChannelEvent
 
+type ChatRoomMessage = {
+    Line: string
+}
 
 [<Register ("ChatRoomUsersViewController")>]
 type ChatRoomUsersViewController (users:ChatUser[]) =
@@ -51,27 +54,61 @@ type ChatRoomViewController (room:Entity) as this =
     inherit UIViewController ("PrivateChatSessionViewController", null)
 
     let identity = match Api.userIdentity with | Some id -> id | None -> failwith "User must be logged in"
+    let events = System.Collections.Generic.HashSet<int64>()
+    let users = ConcurrentDictionary<string, ChatUser>()
+    let mutable startSequence = 0L
 
     // ## FACTOR
     let scrollToBottom () =
         this.WebView.EvaluateJavascript 
-            (sprintf "window.scrollBy(0, %i);" 
-                (int (this.WebView.EvaluateJavascript "document.body.offsetHeight;"))) |> ignore
+            (sprintf "window.scrollBy(0, %i);" (int (this.WebView.EvaluateJavascript "document.body.offsetHeight;"))) |> ignore
+        
+    let addLine line =
+        this.WebView.EvaluateJavascript(sprintf "wireclub.Mobile.addLine(%s)" (Newtonsoft.Json.JsonConvert.SerializeObject { Line = line })) |> ignore
 
-    
-    let addMessage id slug avatar color font message sequence =
-        //if events.Add seqce then
-        this.WebView.EvaluateJavascript(sprintf "wireclub.Mobile.addMessage(%s)" (Newtonsoft.Json.JsonConvert.SerializeObject {
-            Id = id
-            UserUrl = slug
-            AvatarUrl = avatar
-            Css = ""
-            Color = color
-            FontFamily = fontFamily font
-            Message = message
-            Sequence = sequence
-        })) |> ignore
-        scrollToBottom ()
+    let nameplate (user:ChatUser) =     
+        sprintf
+            "<a class=icon href=%s/users/%s><img src=%s width=%i height=%i />%s</a>"
+            Api.baseUrl
+            user.Slug
+            (App.imageUrl user.Avatar 21)
+            21
+            21
+            user.Name
+
+    let addUserMessage sequence user color font payload =
+        let line =
+            sprintf
+                "<div class=message>%s <div class=body-wrap><div class=body><span style='color: #%s; font-family: %s;'>%s</span></div></div></div>" 
+                (nameplate user)
+                color
+                font
+                payload 
+
+        if events.Add sequence then
+            addLine line
+            scrollToBottom()
+
+    let addNotification sequence payload =
+        let line =
+            sprintf
+                "<div class=message><div class=body-wrap><div class=body>%s</div></div></div>" 
+                payload 
+
+        if events.Add sequence then
+            addLine line
+            scrollToBottom()
+
+    let addUserFeedback user payload =
+        let line =
+            sprintf
+                "<div class=message>%s <div class=body-wrap><div class=body>%s</div></div></div>" 
+                (nameplate user)
+                payload 
+
+        addLine line
+        scrollToBottom()
+
 
     let placeKeyboard (sender:obj) (args:UIKeyboardEventArgs) =
         this.ResizeViewToKeyboard args
@@ -90,13 +127,13 @@ type ChatRoomViewController (room:Entity) as this =
                     match this.HandleApiResult response with
                     | Api.ApiOk response -> 
                         this.Text.Text <- ""
-                        addMessage identity.Id identity.Slug identity.Avatar "" 0 response.Payload 0L
+                        match users.TryGetValue identity.Id with
+                        | true, user -> addUserFeedback user response.Payload 
+                        | _ -> ()
                     | error -> this.HandleApiFailure error
                 )
 
-    let users = ConcurrentDictionary<string, ChatUser>()
     let addUser = (fun (user:ChatUser) -> users.AddOrUpdate (user.Id, user, System.Func<string,ChatUser,ChatUser>(fun _ _ -> user)) |> ignore)
-    let mutable startSequence = 0L
 
     let processor = new MailboxProcessor<ChannelEvent>(fun inbox ->
         let rec loop () = async {
@@ -106,30 +143,27 @@ type ChatRoomViewController (room:Entity) as this =
             this.InvokeOnMainThread(fun _ ->
                 match event with
                 | { Event = Notification message } -> 
-                    addMessage "id" "slug" "avatar" "#000" 0 message event.Sequence
+                    addNotification event.Sequence message
 
                 | { Event = Message (color, font, message); User = user } when (user <> identity.Id || historic) -> 
-                    let nameplate = 
-                        match users.TryGetValue event.User with
-                        | true, user -> user.Name
-                        | _ -> sprintf "[%s]" event.User
-
-                    addMessage "id" "slug" "avatar" color font (sprintf "%s: %s" nameplate message) event.Sequence
+                    match users.TryGetValue event.User with
+                    | true, user -> addUserMessage event.Sequence user color (fontFamily font) message
+                    | _ -> ()
 
                 | { Event = Join user } -> 
                     if historic = false then
                         addUser user
-                    addMessage "id" "slug" "avatar" "#000" 0 (sprintf "%s joined the room" user.Name) event.Sequence
+                    addUserMessage event.Sequence user "#000" (fontFamily 0) (sprintf "%s joined the room" user.Name)
 
                 | { Event = Leave user } -> 
                     match users.TryGetValue event.User with
                     | true, user -> 
-                        addMessage "id" "slug" "avatar" "#000" 0 (sprintf "%s left the room" user.Name) event.Sequence
+                        addUserMessage event.Sequence user "#000" (fontFamily 0) (sprintf "%s left the room" user.Name)
                         if historic = false then
                             users.TryRemove user.Id |> ignore
                     | _ -> ()
                 
-                | { Event = DisposableMessage } -> () // Does the app even need to handle this?
+                | { Event = DisposableMessage } -> () //messages from anon chat rooms
                 | { Event = AddedModerator; User = user } when historic = false -> ()
                 | { Event = RemovedModerator; User = user } when historic = false -> ()
                 | { Event = Drink } -> ()
@@ -154,6 +188,11 @@ type ChatRoomViewController (room:Entity) as this =
 
     override this.ViewDidLoad () =
         this.NavigationItem.Title <- room.Label
+
+
+        // Prevents a 64px offset on a webviews scrollview
+        this.AutomaticallyAdjustsScrollViewInsets <- false
+        this.WebView.BackgroundColor <- Utility.grayLightAccent
 
         this.NavigationItem.RightBarButtonItem <- new UIBarButtonItem("...", UIBarButtonItemStyle.Bordered, new EventHandler(fun (s:obj) (e:EventArgs) -> 
             this.NavigationController.PushViewController(new ChatRoomUsersViewController(users.Values |> Seq.toArray), true)

@@ -9,7 +9,7 @@ open Wireclub.Boundary
 open Wireclub.Boundary.Chat
 open ChannelEvent
 
-type ChatMessage = {
+type PrivateChatMessage = {
     Id:string
     UserUrl:string
     AvatarUrl:string
@@ -30,8 +30,7 @@ type PrivateChatSessionViewController (user:Entity) as this =
 
     let scrollToBottom () =
         this.WebView.EvaluateJavascript 
-            (sprintf "window.scrollBy(0, %i);" 
-                (int (this.WebView.EvaluateJavascript "document.body.offsetHeight;"))) |> ignore
+            (sprintf "window.scrollBy(0, %i);" (int (this.WebView.EvaluateJavascript "document.body.offsetHeight;"))) |> ignore
 
     let preloadImages urls =
         this.WebView.EvaluateJavascript 
@@ -41,7 +40,7 @@ type PrivateChatSessionViewController (user:Entity) as this =
         if events.Add sequence then
             let slug, avatar =
                 if Api.userId = id then
-                    Api.userIdentity.Value.Slug, Api.userIdentity.Value.Avatar
+                    identity.Slug, identity.Avatar
                 else
                     user.Slug, user.Image
 
