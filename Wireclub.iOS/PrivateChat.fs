@@ -73,7 +73,6 @@ type PrivateChatSessionViewController (user:Entity) as this =
                 Async.Start (DB.createChatHistory user DB.ChatHistoryType.PrivateChat (Some ("You: " + message, false)))
             
             | _ -> ()
-
     let processor = new MailboxProcessor<ChannelEvent>(fun inbox ->
         let rec loop () = async {
             let! event = inbox.Receive()
@@ -83,6 +82,15 @@ type PrivateChatSessionViewController (user:Entity) as this =
 
         loop ()
     )
+
+    let webViewDelegate = {
+        new UIWebViewDelegate() with
+        override this.ShouldStartLoad (view, request, navigationType) =
+            printfn "%s" request.Url.AbsoluteString
+            printfn "%s" (navigationType.ToString())
+
+            false
+    }
 
     [<Outlet>]
     member val WebView: UIWebView = null with get, set
@@ -105,7 +113,9 @@ type PrivateChatSessionViewController (user:Entity) as this =
         this.NavigationItem.Title <- user.Label
         this.WebView.LoadRequest(new NSUrlRequest(new NSUrl(Api.baseUrl + "/mobile/privateChat")))
         this.WebView.LoadFinished.Add(fun _ ->
+            this.WebView.Delegate <- webViewDelegate
             this.WebView.SetBodyBackgroundColor (colorToCss Utility.grayLightAccent)
+
             Async.startWithContinuation
                 (PrivateChat.session user.Id)
                 (function
@@ -119,7 +129,7 @@ type PrivateChatSessionViewController (user:Entity) as this =
 
                     | error -> this.HandleApiFailure error
                 )
-        )   
+        )
             
 
     override this.ViewDidDisappear (animated) =
