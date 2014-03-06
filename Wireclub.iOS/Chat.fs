@@ -2,6 +2,7 @@ namespace Wireclub.iOS
 
 open System
 open System.Collections.Concurrent
+open System.Collections.Generic
 open MonoTouch.Foundation
 open MonoTouch.UIKit
 open Wireclub.Models
@@ -57,39 +58,32 @@ type ChatRoomViewController (room:Entity) as this =
     let events = System.Collections.Generic.HashSet<int64>()
     let users = ConcurrentDictionary<string, ChatUser>()
     let mutable startSequence = 0L
+    let nameplateImageSize = 32
         
-    let addLine line =
-        this.WebView.EvaluateJavascript(sprintf "wireclub.Mobile.addLine(%s)" (Newtonsoft.Json.JsonConvert.SerializeObject { Line = line })) |> ignore
-
     let nameplate (user:ChatUser) =     
         sprintf
             "<a class=icon href=%s/users/%s><img src=%s width=%i height=%i /></a> <a class=name href=%s/users/%s>%s</a>"
             Api.baseUrl
             user.Slug
-            (App.imageUrl user.Avatar 32)
-            32
-            32
+            (App.imageUrl user.Avatar nameplateImageSize)
+            nameplateImageSize
+            nameplateImageSize
             Api.baseUrl
             user.Slug
             user.Name
 
     let line = sprintf "<div class=message>%s <div class=body>%s</div></div>" 
+    let userMessageLine payload user color font = line (nameplate user) (sprintf "<span style='color: #%s; font-family: %s;'>%s</span>" color font payload)
+    let notificationLine payload = line String.Empty payload
+    let userFeedbackLine payload user  = line (nameplate user) payload
 
-    let addUserMessage sequence user color font payload =
-        if events.Add sequence then
-            let line = line (nameplate user) (sprintf "<span style='color: #%s; font-family: %s;'>%s</span>" color font payload)
-            addLine line
-            this.WebView.ScrollToBottom()
-
-    let addNotification sequence payload =
-        if events.Add sequence then
-            addLine (line String.Empty payload)
-            this.WebView.ScrollToBottom()
-
-    let addUserFeedback user payload =
-        addLine (line (nameplate user) payload)
+    let addLine line =
+        this.WebView.EvaluateJavascript(sprintf "wireclub.Mobile.addLine(%s)" (Newtonsoft.Json.JsonConvert.SerializeObject { Line = line })) |> ignore
         this.WebView.ScrollToBottom()
 
+    let addLines lines =
+        this.WebView.EvaluateJavascript(sprintf "wireclub.Mobile.addLines(%s)" (Newtonsoft.Json.JsonConvert.SerializeObject (lines |> Array.map (fun e -> { Line = e })))) |> ignore
+        this.WebView.ScrollToBottom()
 
     let placeKeyboard (sender:obj) (args:UIKeyboardEventArgs) =
         this.ResizeViewToKeyboard args
@@ -109,49 +103,51 @@ type ChatRoomViewController (room:Entity) as this =
                     | Api.ApiOk response -> 
                         this.Text.Text <- ""
                         match users.TryGetValue identity.Id with
-                        | true, user -> addUserFeedback user response.Payload 
+                        | true, user -> addLine (userFeedbackLine response.Payload user)
                         | _ -> ()
                     | error -> this.HandleApiFailure error
                 )
 
     let addUser = (fun (user:ChatUser) -> users.AddOrUpdate (user.Id, user, System.Func<string,ChatUser,ChatUser>(fun _ _ -> user)) |> ignore)
 
+    let addEventLine event addLine =
+        let historic = event.Sequence < startSequence
+        if events.Add event.Sequence then
+            match event with
+            | { Event = Notification message } -> 
+                addLine (notificationLine message)
+
+            | { Event = Message (color, font, message); User = user } when (user <> identity.Id || historic) -> 
+                match users.TryGetValue event.User with
+                | true, user -> addLine (userMessageLine message user color (fontFamily font))
+                | _ -> ()
+
+            | { Event = Join user } -> 
+                if historic = false then
+                    addUser user
+                addLine (userMessageLine "joined the room" user "#000" (fontFamily 0))
+
+            | { Event = Leave user } -> 
+                match users.TryGetValue event.User with
+                | true, user -> 
+                    addLine (userMessageLine "left the room" user "#000" (fontFamily 0))
+                    if historic = false then
+                        users.TryRemove user.Id |> ignore
+                | _ -> ()
+            
+            | { Event = DisposableMessage } -> () //messages from anon chat rooms
+            | { Event = AddedModerator; User = user } when historic = false -> ()
+            | { Event = RemovedModerator; User = user } when historic = false -> ()
+            | { Event = Drink } -> ()
+            | { Event = AcceptDrink } -> ()
+            | { Event = Modifier } -> ()
+            | _ -> ()
+
+
     let processor = new MailboxProcessor<ChannelEvent>(fun inbox ->
         let rec loop () = async {
             let! event = inbox.Receive()
-            let historic = event.Sequence < startSequence
-
-            this.InvokeOnMainThread(fun _ ->
-                match event with
-                | { Event = Notification message } -> 
-                    addNotification event.Sequence message
-
-                | { Event = Message (color, font, message); User = user } when (user <> identity.Id || historic) -> 
-                    match users.TryGetValue event.User with
-                    | true, user -> addUserMessage event.Sequence user color (fontFamily font) message
-                    | _ -> ()
-
-                | { Event = Join user } -> 
-                    if historic = false then
-                        addUser user
-                    addUserMessage event.Sequence user "#000" (fontFamily 0) "joined the room"
-
-                | { Event = Leave user } -> 
-                    match users.TryGetValue event.User with
-                    | true, user -> 
-                        addUserMessage event.Sequence user "#000" (fontFamily 0) "left the room"
-                        if historic = false then
-                            users.TryRemove user.Id |> ignore
-                    | _ -> ()
-                
-                | { Event = DisposableMessage } -> () //messages from anon chat rooms
-                | { Event = AddedModerator; User = user } when historic = false -> ()
-                | { Event = RemovedModerator; User = user } when historic = false -> ()
-                | { Event = Drink } -> ()
-                | { Event = AcceptDrink } -> ()
-                | { Event = Modifier } -> ()
-                | _ -> ()
-            )
+            this.InvokeOnMainThread(fun _ -> addEventLine event addLine)
             return! loop ()
         }
 
@@ -197,8 +193,11 @@ type ChatRoomViewController (room:Entity) as this =
                     match result with
                     | Api.ApiOk (result, events) ->
                         startSequence <- result.Sequence
+                        this.WebView.PreloadImages [ for user in users.Values do yield App.imageUrl user.Avatar nameplateImageSize ]
+                        let lines = new List<string>()
+                        for event in events do addEventLine event lines.Add
+                        addLines (lines.ToArray())
                         processor.Start()
-                        events |> Array.iter processor.Post
                         result.Members |> Array.iter addUser
                         result.HistoricMembers |> Array.iter addUser
                     | Api.BadRequest errors -> ()
