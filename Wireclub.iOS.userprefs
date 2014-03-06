@@ -2,11 +2,27 @@
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug|iPhoneSimulator" PreferredExecutionTarget="MonoDevelop.IPhone.IPhoneSimulatorTarget.IPhoneRetina4_64.7.0" />
   <MonoDevelop.Ide.Workbench ActiveDocument="Wireclub.iOS/Chat.fs">
     <Files>
-      <File FileName="Wireclub.iOS/Utility.fs" Line="67" Column="73" />
-      <File FileName="Wireclub.iOS/Chat.fs" Line="136" Column="34" />
+      <File FileName="Wireclub.iOS/Utility.fs" Line="54" Column="22" />
+      <File FileName="Wireclub.iOS/Chat.fs" Line="73" Column="22" />
       <File FileName="../NEXT/Wireclub.Boundary/Enumerations.fs" Line="52" Column="5" />
       <File FileName="../wireclub.android/Wireclub.AppClient/Channel.fs" Line="28" Column="39" />
     </Files>
+    <Pads>
+      <Pad Id="ProjectPad">
+        <State expanded="True">
+          <Node name="Wireclub.AppClient.iOS" expanded="True" />
+          <Node name="Wireclub.Boundary.iOS" expanded="True" />
+          <Node name="Wireclub.iOS" expanded="True">
+            <Node name="Chat.fs" selected="True" />
+          </Node>
+        </State>
+      </Pad>
+      <Pad Id="MonoDevelop.Debugger.WatchPad">
+        <State>
+          <Value>line</Value>
+        </State>
+      </Pad>
+    </Pads>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
     <BreakpointStore>

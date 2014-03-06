@@ -68,45 +68,31 @@ type ChatRoomViewController (room:Entity) as this =
 
     let nameplate (user:ChatUser) =     
         sprintf
-            "<a class=icon href=%s/users/%s><img src=%s width=%i height=%i />%s</a>"
+            "<a class=icon href=%s/users/%s><img src=%s width=%i height=%i /></a> <a class=name href=%s/users/%s>%s</a>"
             Api.baseUrl
             user.Slug
-            (App.imageUrl user.Avatar 21)
-            21
-            21
+            (App.imageUrl user.Avatar 32)
+            32
+            32
+            Api.baseUrl
+            user.Slug
             user.Name
 
-    let addUserMessage sequence user color font payload =
-        let line =
-            sprintf
-                "<div class=message>%s <div class=body-wrap><div class=body><span style='color: #%s; font-family: %s;'>%s</span></div></div></div>" 
-                (nameplate user)
-                color
-                font
-                payload 
+    let line = sprintf "<div class=message>%s <div class=body>%s</div></div>" 
 
+    let addUserMessage sequence user color font payload =
         if events.Add sequence then
+            let line = line (nameplate user) (sprintf "<span style='color: #%s; font-family: %s;'>%s</span>" color font payload)
             addLine line
             scrollToBottom()
 
     let addNotification sequence payload =
-        let line =
-            sprintf
-                "<div class=message><div class=body-wrap><div class=body>%s</div></div></div>" 
-                payload 
-
         if events.Add sequence then
-            addLine line
+            addLine (line String.Empty payload)
             scrollToBottom()
 
     let addUserFeedback user payload =
-        let line =
-            sprintf
-                "<div class=message>%s <div class=body-wrap><div class=body>%s</div></div></div>" 
-                (nameplate user)
-                payload 
-
-        addLine line
+        addLine (line (nameplate user) payload)
         scrollToBottom()
 
 
@@ -153,12 +139,12 @@ type ChatRoomViewController (room:Entity) as this =
                 | { Event = Join user } -> 
                     if historic = false then
                         addUser user
-                    addUserMessage event.Sequence user "#000" (fontFamily 0) (sprintf "%s joined the room" user.Name)
+                    addUserMessage event.Sequence user "#000" (fontFamily 0) "joined the room"
 
                 | { Event = Leave user } -> 
                     match users.TryGetValue event.User with
                     | true, user -> 
-                        addUserMessage event.Sequence user "#000" (fontFamily 0) (sprintf "%s left the room" user.Name)
+                        addUserMessage event.Sequence user "#000" (fontFamily 0) "left the room"
                         if historic = false then
                             users.TryRemove user.Id |> ignore
                     | _ -> ()
