@@ -28,14 +28,6 @@ type PrivateChatSessionViewController (user:Entity) as this =
     let events = System.Collections.Generic.HashSet<int64>()
     let mutable session: SessionResponse option = None
 
-    let scrollToBottom () =
-        this.WebView.EvaluateJavascript 
-            (sprintf "window.scrollBy(0, %i);" (int (this.WebView.EvaluateJavascript "document.body.offsetHeight;"))) |> ignore
-
-    let preloadImages urls =
-        this.WebView.EvaluateJavascript 
-            (String.concat ";" [ yield "var preload = new Image()"; for url in urls do yield sprintf "preload.src = '%s'" url ]) |> ignore
-
     let addMessage id color font message sequence =
         if events.Add sequence then
             let slug, avatar =
@@ -63,7 +55,7 @@ type PrivateChatSessionViewController (user:Entity) as this =
                 Message = message
                 Sequence = sequence
             })) |> ignore
-            scrollToBottom ()
+            this.WebView.ScrollToBottom ()
 
     let sendMessage text =
         match text with
@@ -79,7 +71,7 @@ type PrivateChatSessionViewController (user:Entity) as this =
 
     let placeKeyboard (sender:obj) (args:UIKeyboardEventArgs) =
         this.ResizeViewToKeyboard args
-        scrollToBottom()
+        this.WebView.ScrollToBottom()
         
     let showObserver = UIKeyboard.Notifications.ObserveWillShow(System.EventHandler<UIKeyboardEventArgs>(placeKeyboard))
     let hideObserver = UIKeyboard.Notifications.ObserveWillHide(System.EventHandler<UIKeyboardEventArgs>(placeKeyboard))
@@ -128,8 +120,9 @@ type PrivateChatSessionViewController (user:Entity) as this =
         this.WebView.LoadRequest(new NSUrlRequest(new NSUrl(Api.baseUrl + "/mobile/privateChat")))
         this.WebView.LoadFinished.Add(fun _ ->
             Async.StartImmediate <| async {
+                
+                this.WebView.SetBodyBackgroundColor (colorToCss Utility.grayLightAccent)
                 let context = System.Threading.SynchronizationContext.Current
-
                 let! sessionResponse = PrivateChat.session user.Id
 
                 match sessionResponse with

@@ -57,11 +57,6 @@ type ChatRoomViewController (room:Entity) as this =
     let events = System.Collections.Generic.HashSet<int64>()
     let users = ConcurrentDictionary<string, ChatUser>()
     let mutable startSequence = 0L
-
-    // ## FACTOR
-    let scrollToBottom () =
-        this.WebView.EvaluateJavascript 
-            (sprintf "window.scrollBy(0, %i);" (int (this.WebView.EvaluateJavascript "document.body.offsetHeight;"))) |> ignore
         
     let addLine line =
         this.WebView.EvaluateJavascript(sprintf "wireclub.Mobile.addLine(%s)" (Newtonsoft.Json.JsonConvert.SerializeObject { Line = line })) |> ignore
@@ -84,21 +79,21 @@ type ChatRoomViewController (room:Entity) as this =
         if events.Add sequence then
             let line = line (nameplate user) (sprintf "<span style='color: #%s; font-family: %s;'>%s</span>" color font payload)
             addLine line
-            scrollToBottom()
+            this.WebView.ScrollToBottom()
 
     let addNotification sequence payload =
         if events.Add sequence then
             addLine (line String.Empty payload)
-            scrollToBottom()
+            this.WebView.ScrollToBottom()
 
     let addUserFeedback user payload =
         addLine (line (nameplate user) payload)
-        scrollToBottom()
+        this.WebView.ScrollToBottom()
 
 
     let placeKeyboard (sender:obj) (args:UIKeyboardEventArgs) =
         this.ResizeViewToKeyboard args
-        scrollToBottom()
+        this.WebView.ScrollToBottom()
         
     let showObserver = UIKeyboard.Notifications.ObserveWillShow(System.EventHandler<UIKeyboardEventArgs>(placeKeyboard))
     let hideObserver = UIKeyboard.Notifications.ObserveWillHide(System.EventHandler<UIKeyboardEventArgs>(placeKeyboard))
@@ -178,7 +173,7 @@ type ChatRoomViewController (room:Entity) as this =
 
         // Prevents a 64px offset on a webviews scrollview
         this.AutomaticallyAdjustsScrollViewInsets <- false
-        this.WebView.BackgroundColor <- Utility.grayLightAccent
+        this.WebView.BackgroundColor <- UIColor.White
 
         this.NavigationItem.RightBarButtonItem <- new UIBarButtonItem("...", UIBarButtonItemStyle.Bordered, new EventHandler(fun (s:obj) (e:EventArgs) -> 
             this.NavigationController.PushViewController(new ChatRoomUsersViewController(users.Values |> Seq.toArray), true)
@@ -195,6 +190,7 @@ type ChatRoomViewController (room:Entity) as this =
 
         this.WebView.LoadRequest(new NSUrlRequest(new NSUrl(Api.baseUrl + "/mobile/chat")))
         this.WebView.LoadFinished.Add(fun _ ->
+            this.WebView.SetBodyBackgroundColor (colorToCss UIColor.White)
             Async.startWithContinuation
                 (Chat.join room.Slug)
                 (fun result ->

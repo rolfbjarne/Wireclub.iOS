@@ -77,7 +77,7 @@ module Utility =
 
     let colorToCss (color:UIColor) = 
         match color.GetRGBA () with
-        | red, green, blue, _ -> sprintf "#%02x%02x%02x" (int red) (int green) (int blue)
+        | red, green, blue, _ -> sprintf "#%02x%02x%02x" (int (red * 255.0f)) (int (green * 255.0f)) (int (blue * 255.0f))
 
     let grayBackground = cssToColor "#e9eaef"
     let grayLightAccent = cssToColor "#f0f1f6"
@@ -109,6 +109,19 @@ module Utility =
             viewFrame.Height <- endRelative.Y;
             this.View.Frame <- viewFrame;
             UIView.CommitAnimations ()
+
+    type UIWebView with
+        member this.ScrollToBottom () =
+            this.EvaluateJavascript 
+                (sprintf "window.scrollBy(0, %i);" (int (this.EvaluateJavascript "document.body.offsetHeight;"))) |> ignore
+
+        member this.SetBodyBackgroundColor (color:string) =
+            this.EvaluateJavascript 
+                (sprintf "document.body.style.backgroundColor = '%s';" color) |> ignore
+
+        member this.PreloadImages urls =
+            this.EvaluateJavascript 
+                (String.concat ";" [ yield "var preload = new Image()"; for url in urls do yield sprintf "preload.src = '%s'" url ]) |> ignore
 
 
 module Image =
@@ -196,3 +209,5 @@ module Image =
                 | Some cell -> cell.ImageView.Image <- image
                 | None -> ()
         )
+
+
