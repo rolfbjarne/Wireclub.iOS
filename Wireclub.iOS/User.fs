@@ -34,7 +34,7 @@ type UserViewController (handle:nativeint) =
 
     override this.ViewDidLoad () =
         base.ViewDidLoad ()
-
+    
         match this.User with
         | Some user -> 
             Image.loadImageForView (App.imageUrl user.Image 200) Image.placeholder this.Avatar
@@ -58,4 +58,6 @@ type UserViewController (handle:nativeint) =
                 )
             )
 
-        | _ -> failwith "No user"
+        | _ ->
+            //TODO make this async load a user
+            failwith "No user"

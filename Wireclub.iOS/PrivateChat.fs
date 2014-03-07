@@ -1,6 +1,7 @@
 namespace Wireclub.iOS
 
 open System
+open System.Linq
 open System.Collections.Concurrent
 open MonoTouch.Foundation
 open MonoTouch.UIKit
@@ -86,9 +87,11 @@ type PrivateChatSessionViewController (user:Entity) as this =
     let webViewDelegate = {
         new UIWebViewDelegate() with
         override this.ShouldStartLoad (view, request, navigationType) =
-            printfn "%s" request.Url.AbsoluteString
-            printfn "%s" (navigationType.ToString())
-
+            let uri = new Uri(request.Url.AbsoluteString)
+            match uri.Segments with
+            | [| _; "users/"; slug |] when slug = user.Slug -> Navigation.navigate (sprintf "/users/%s" slug) (Some user)
+            | [| _; "users/"; slug |] when slug = identity.Slug -> Navigation.navigate (sprintf "/users/%s" slug) (Some { Id = identity.Id; Label = identity.Name; Slug = identity.Slug; Image = identity.Avatar })
+            | segments -> printfn "%A" segments
             false
     }
 
