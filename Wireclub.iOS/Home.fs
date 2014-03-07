@@ -533,9 +533,25 @@ type HomeViewController () =
     let chatsController = new ChatsViewController ()
     let friendsController = new FriendsViewController ()
     let directoryController = new ChatDirectoryViewController ()
+
+    let changeFilter index =
+        chatsController.View.Hidden <- true
+        friendsController.View.Hidden <- true
+        directoryController.View.Hidden <- true
+        match index with
+        | 0 -> chatsController.View.Hidden <- false
+        | 1 -> friendsController.View.Hidden <- false
+        | _ -> directoryController.View.Hidden <- false
+
+    let tabBarDelegate =
+        {
+            new UITabBarDelegate() with
+            override this.ItemSelected (bar, item) = changeFilter (item.Tag)
+        }
+
     
     [<Outlet>]
-    member val Filter: UISegmentedControl = null with get, set
+    member val TabBar: UITabBar = null with get, set
 
     [<Outlet>]
     member val ContentView: UIView = null with get, set
@@ -551,6 +567,8 @@ type HomeViewController () =
         this.NavigationItem.LeftBarButtonItem <- new UIBarButtonItem("...", UIBarButtonItemStyle.Bordered, new EventHandler(fun (s:obj) (e:EventArgs) -> 
             this.NavigationController.PushViewController (Resources.menuStoryboard.Value.InstantiateInitialViewController() :?> UIViewController, true)
         ))
+            
+        this.AutomaticallyAdjustsScrollViewInsets <- false
 
         // Set up the child controllers
         this.AddChildViewController chatsController
@@ -564,21 +582,10 @@ type HomeViewController () =
         friendsController.View.Frame <- frame
         directoryController.View.Frame <- frame
 
-        let changeFilter index =
-            chatsController.View.Hidden <- true
-            friendsController.View.Hidden <- true
-            directoryController.View.Hidden <- true
-            match index with
-            | 0 -> chatsController.View.Hidden <- false
-            | 1 -> friendsController.View.Hidden <- false
-            | _ -> directoryController.View.Hidden <- false
-
         changeFilter 0
         
-        this.Filter.ValueChanged.Add (fun _ ->
-            changeFilter (this.Filter.SelectedSegment)
-        )
-
+        this.TabBar.Delegate <- tabBarDelegate
+        this.TabBar.SelectedItem <- this.TabBar.Items.First()
 
 [<Register ("EntryViewController")>]
 type EntryViewController () =

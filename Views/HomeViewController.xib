@@ -7,7 +7,7 @@
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="HomeViewController">
             <connections>
                 <outlet property="ContentView" destination="1hk-4s-ynp" id="Lps-WY-aG7"/>
-                <outlet property="Filter" destination="9x5-cq-PGP" id="mSA-LI-Vly"/>
+                <outlet property="TabBar" destination="Kv6-RT-OXl" id="vQN-E0-NFU"/>
                 <outlet property="view" destination="1" id="3"/>
             </connections>
         </placeholder>
@@ -16,24 +16,30 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="480"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
-                <segmentedControl opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="top" segmentControlStyle="plain" selectedSegmentIndex="0" id="9x5-cq-PGP">
-                    <rect key="frame" x="20" y="76" width="280" height="29"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                    <segments>
-                        <segment title="Chats"/>
-                        <segment title="Friends"/>
-                        <segment title="Chat Rooms"/>
-                    </segments>
-                </segmentedControl>
                 <view contentMode="scaleToFill" id="1hk-4s-ynp">
-                    <rect key="frame" x="0.0" y="112" width="320" height="368"/>
+                    <rect key="frame" x="0.0" y="63" width="320" height="368"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                     <color key="backgroundColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
                 </view>
+                <tabBar contentMode="scaleToFill" id="Kv6-RT-OXl">
+                    <rect key="frame" x="0.0" y="431" width="320" height="49"/>
+                    <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
+                    <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+                    <items>
+                        <tabBarItem title="Recent Chats" image="UITabBarRecent.png" id="PND-yc-bSU"/>
+                        <tabBarItem tag="1" title="Friends" image="UITabBarFriends.png" id="lo0-ck-trg"/>
+                        <tabBarItem tag="2" title="Chat Rooms" image="UITabBarChat.png" id="yGf-mL-f2r"/>
+                    </items>
+                </tabBar>
             </subviews>
             <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
             <simulatedStatusBarMetrics key="simulatedStatusBarMetrics"/>
             <simulatedNavigationBarMetrics key="simulatedTopBarMetrics" prompted="NO"/>
         </view>
     </objects>
+    <resources>
+        <image name="UITabBarChat.png" width="20" height="19"/>
+        <image name="UITabBarFriends.png" width="41" height="23"/>
+        <image name="UITabBarRecent.png" width="22" height="22"/>
+    </resources>
 </document>

@@ -16,18 +16,18 @@ namespace Views
 		MonoTouch.UIKit.UIView ContentView { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UISegmentedControl Filter { get; set; }
+		MonoTouch.UIKit.UITabBar TabBar { get; set; }
 		
 		void ReleaseDesignerOutlets ()
 		{
-			if (Filter != null) {
-				Filter.Dispose ();
-				Filter = null;
-			}
-
 			if (ContentView != null) {
 				ContentView.Dispose ();
 				ContentView = null;
+			}
+
+			if (TabBar != null) {
+				TabBar.Dispose ();
+				TabBar = null;
 			}
 		}
 	}
