@@ -16,29 +16,29 @@ open ChannelEvent
 type ChatRoomUsersViewController (users:ChatUser[]) =
     inherit UIViewController ("ChatRoomUsersViewController", null)
 
-    let source = { new UITableViewSource() with
-                override this.GetCell(tableView, indexPath) =
-                    let user = users.[indexPath.Row]
-                    let cell = 
-                        match tableView.DequeueReusableCell "room-user-cell" with
-                        | null -> new UITableViewCell (UITableViewCellStyle.Subtitle, "room-user-cell")
-                        | c -> c
-                    
-                    cell.Tag <- indexPath.Row
-                    cell.TextLabel.Text <- user.Name
-                    Image.loadImageForCell (App.imageUrl user.Avatar 100) Image.placeholder cell tableView
-                    cell
+    let source = {
+        new UITableViewSource() with
+            override this.GetCell(tableView, indexPath) =
+                let user = users.[indexPath.Row]
+                let cell = 
+                    match tableView.DequeueReusableCell "room-user-cell" with
+                    | null -> new UITableViewCell (UITableViewCellStyle.Subtitle, "room-user-cell")
+                    | c -> c
+                
+                cell.Tag <- indexPath.Row
+                cell.TextLabel.Text <- user.Name
+                Image.loadImageForCell (App.imageUrl user.Avatar 100) Image.placeholder cell tableView
+                cell
 
-                override this.RowsInSection(tableView, section) =
-                    users.Length
+            override this.RowsInSection(tableView, section) =
+                users.Length
 
-                override this.RowSelected(tableView, indexPath) =
-                    tableView.DeselectRow (indexPath, false)
-                    let user = users.[indexPath.Row]
-                    Navigation.navigate ("/users/" + user.Slug) (Some { Id = user.Id; Label = user.Name; Slug = user.Slug; Image = user.Avatar })
-                    ()
-
-            }
+            override this.RowSelected(tableView, indexPath) =
+                tableView.DeselectRow (indexPath, false)
+                let user = users.[indexPath.Row]
+                Navigation.navigate ("/users/" + user.Slug) (Some { Id = user.Id; Label = user.Name; Slug = user.Slug; Image = user.Avatar })
+                ()
+        }
 
     [<Outlet>]
     member val Table: UITableView = null with get, set
