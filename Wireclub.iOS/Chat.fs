@@ -1,6 +1,7 @@
 namespace Wireclub.iOS
 
 open System
+open System.Linq
 open System.Collections.Concurrent
 open System.Collections.Generic
 open MonoTouch.Foundation
@@ -88,6 +89,18 @@ type ChatRoomViewController (room:Entity) as this =
         
     let showObserver = UIKeyboard.Notifications.ObserveWillShow(System.EventHandler<UIKeyboardEventArgs>(placeKeyboard))
     let hideObserver = UIKeyboard.Notifications.ObserveWillHide(System.EventHandler<UIKeyboardEventArgs>(placeKeyboard))
+
+    let webViewDelegate = {
+        new UIWebViewDelegate() with
+        override this.ShouldStartLoad (view, request, navigationType) =
+            let uri = new Uri(request.Url.AbsoluteString)
+            match uri.Segments with
+            | [| _; "users/"; slug |] ->
+                let user = users.Values.Single(fun e -> e.Slug = slug)
+                Navigation.navigate (sprintf "/users/%s" slug) (Some { Id = user.Id; Label = user.Name; Slug = user.Slug; Image = user.Avatar })
+            | segments -> printfn "%A" segments
+            false
+    }
 
     let sendMessage (identity:Models.User) text =
         match text with
@@ -182,7 +195,9 @@ type ChatRoomViewController (room:Entity) as this =
 
         this.WebView.LoadRequest(new NSUrlRequest(new NSUrl(Api.baseUrl + "/mobile/chat")))
         this.WebView.LoadFinished.Add(fun _ ->
+            this.WebView.Delegate <- webViewDelegate
             this.WebView.SetBodyBackgroundColor (colorToCss UIColor.White)
+
             Async.startWithContinuation
                 (Chat.join room.Slug)
                 (function
