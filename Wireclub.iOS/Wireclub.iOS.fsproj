@@ -139,6 +139,7 @@
     <Compile Include="PrivateChat.fs" />
     <Compile Include="Chat.fs" />
     <Compile Include="Directory.fs" />
+    <Compile Include="Account.fs" />
     <Compile Include="Home.fs" />
     <Compile Include="AppDelegate.fs" />
   </ItemGroup>
