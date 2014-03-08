@@ -74,8 +74,8 @@ type ChatsViewController () as controller =
     member val Table: UITableView = null with get, set
 
     override controller.ViewDidLoad () =
-        controller.Table.Source <- tableSource
         base.ViewDidLoad ()
+        controller.Table.Source <- tableSource
 
     override this.ViewDidAppear (animated) =
         base.ViewDidAppear (animated)
@@ -157,28 +157,36 @@ type MegaMenuViewController (handle:nativeint) =
 
     override this.ViewDidLoad () =
         base.ViewDidLoad ()
+        this.NavigationItem.Title <- "More"
 
 [<Register ("HomeViewController")>]
-type HomeViewController () =
+type HomeViewController () as controller =
     inherit UIViewController ()
 
-    let chatsController = new ChatsViewController ()
-    let friendsController = new FriendsViewController ()
-    let directoryController = new ChatDirectoryViewController ()
+    let controllers =
+        lazy
+            ([|
+                new ChatsViewController () :> UIViewController
+                new FriendsViewController () :> UIViewController
+                new ChatDirectoryViewController () :> UIViewController
+                Resources.menuStoryboard.Value.InstantiateInitialViewController() :?> UIViewController
+            |])
 
-    let changeFilter index =
-        chatsController.View.Hidden <- true
-        friendsController.View.Hidden <- true
-        directoryController.View.Hidden <- true
-        match index with
-        | 0 -> chatsController.View.Hidden <- false
-        | 1 -> friendsController.View.Hidden <- false
-        | _ -> directoryController.View.Hidden <- false
+    let changeTab index =
+        for controller in controllers.Value do
+            controller.View.Hidden <- true
+
+        controllers.Value.[index].View.Hidden <- false
+        controller.NavigationItem.Title <-
+            match index with
+            | 3 -> "More"
+            | item -> controller.TabBar.Items.[index].Title 
+
 
     let tabBarDelegate =
-        {
+        { 
             new UITabBarDelegate() with
-            override this.ItemSelected (bar, item) = changeFilter (item.Tag)
+            override this.ItemSelected (bar, item) = changeTab (item.Tag)
         }
 
     
@@ -188,36 +196,26 @@ type HomeViewController () =
     [<Outlet>]
     member val ContentView: UIView = null with get, set
 
-    member val ChatsController = chatsController
+    member val ChatsController = controllers.Value.[0] :?> ChatsViewController
 
     override this.ViewDidLoad () =
         base.ViewDidLoad ()
         printfn "[Home:Load]" 
         this.NavigationItem.HidesBackButton <- true
-        this.NavigationItem.Title <- "Wireclub"
-
-        this.NavigationItem.LeftBarButtonItem <- new UIBarButtonItem("...", UIBarButtonItemStyle.Bordered, new EventHandler(fun (s:obj) (e:EventArgs) -> 
-            this.NavigationController.PushViewController (Resources.menuStoryboard.Value.InstantiateInitialViewController() :?> UIViewController, true)
-        ))
             
         this.AutomaticallyAdjustsScrollViewInsets <- false
 
         // Set up the child controllers
-        this.AddChildViewController chatsController
-        this.AddChildViewController friendsController
-        this.AddChildViewController directoryController
-        this.ContentView.AddSubview chatsController.View
-        this.ContentView.AddSubview friendsController.View
-        this.ContentView.AddSubview directoryController.View
-        let frame = System.Drawing.RectangleF(0.0f, 0.0f, this.ContentView.Bounds.Width, this.ContentView.Bounds.Height)            
-        chatsController.View.Frame <- frame
-        friendsController.View.Frame <- frame
-        directoryController.View.Frame <- frame
+        let frame = System.Drawing.RectangleF(0.0f, 0.0f, this.ContentView.Bounds.Width, this.ContentView.Bounds.Height)       
+        for controller in controllers.Value do
+            this.AddChildViewController controller
+            this.ContentView.AddSubview controller.View
+            controller.View.Frame <- frame
 
-        changeFilter 0
         
         this.TabBar.Delegate <- tabBarDelegate
         this.TabBar.SelectedItem <- this.TabBar.Items.First()
+        changeTab 0
 
 [<Register ("EntryViewController")>]
 type EntryViewController () =

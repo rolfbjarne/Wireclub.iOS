@@ -29,6 +29,7 @@
                         <tabBarItem title="Recent Chats" image="UITabBarRecent.png" id="PND-yc-bSU"/>
                         <tabBarItem tag="1" title="Friends" image="UITabBarFriends.png" id="lo0-ck-trg"/>
                         <tabBarItem tag="2" title="Chat Rooms" image="UITabBarChat.png" id="yGf-mL-f2r"/>
+                        <tabBarItem tag="3" systemItem="more" id="vFK-oL-wVq"/>
                     </items>
                 </tabBar>
             </subviews>
