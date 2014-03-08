@@ -260,11 +260,8 @@ type EditProfileViewController (handle:nativeint) as controller =
                                     | UIImageOrientation.Up | UIImageOrientation.UpMirrored -> imageOriginal.AsJPEG()
                                     | _ ->
                                         //redraw the raw image without the orientation
-                                        UIGraphics.BeginImageContext(imageOriginal.Size)
-                                        imageOriginal.Draw(new RectangleF(0.0f, 0.0f, imageOriginal.Size.Width, imageOriginal.Size.Height))
-                                        let data = UIGraphics.GetImageFromCurrentImageContext().AsJPEG()
-                                        UIGraphics.EndImageContext()
-                                        data
+                                        let image = imageOriginal |> Image.resize imageOriginal.Size
+                                        image.AsJPEG()
 
                                 let dataBuffer = Array.zeroCreate (int data.Length)
                                 System.Runtime.InteropServices.Marshal.Copy(data.Bytes, (dataBuffer:byte []), 0, int data.Length)

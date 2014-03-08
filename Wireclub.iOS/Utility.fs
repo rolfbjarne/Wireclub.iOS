@@ -1,6 +1,7 @@
 namespace Wireclub.iOS
 
 open System
+open System.Drawing
 open System.Globalization
 
 open MonoTouch.Foundation
@@ -136,6 +137,13 @@ module Image =
     let placeholderFemale = UIImage.FromFile "Images/PlaceholderFemale.png"
 
     let images = ConcurrentDictionary<string, UIImage>()
+
+    let resize size (image:UIImage) =
+        UIGraphics.BeginImageContext(size)
+        image.Draw(new RectangleF(0.0f, 0.0f, size.Width, size.Height))
+        let image = UIGraphics.GetImageFromCurrentImageContext()
+        UIGraphics.EndImageContext()
+        image
 
     let cachePath url =
         let documents = Environment.GetFolderPath (Environment.SpecialFolder.MyDocuments)
