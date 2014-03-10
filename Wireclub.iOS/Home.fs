@@ -157,7 +157,6 @@ type MegaMenuViewController (handle:nativeint) =
 
     override this.ViewDidLoad () =
         base.ViewDidLoad ()
-        this.NavigationItem.Title <- "More"
 
 [<Register ("HomeViewController")>]
 type HomeViewController () as controller =
