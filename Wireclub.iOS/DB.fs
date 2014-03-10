@@ -24,8 +24,33 @@ type ChatHistory() =
     member val Read = true with get, set
     member val Type = ChatHistoryType.PrivateChat with get, set
 
+[<AllowNullLiteral>]
+type ChatEventHistory() =
+    [<PrimaryKey; AutoIncrement>]
+    member val Id = 0 with get, set
+    member val EntityId = "" with get, set
+    member val LastStamp = DateTime.UtcNow with get, set
+    member val Type = ChatHistoryType.PrivateChat with get, set
+    [<MaxLength(Int32.MaxValue)>]
+    member val EventJson = "" with get, set
+
 let db = new SQLiteAsyncConnection(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "db"))
 let dbChatHistory = db.CreateTableAsync<ChatHistory> () |> Async.AwaitTask |> Async.RunSynchronously
+let dbChatEventHistory = db.CreateTableAsync<ChatEventHistory> () |> Async.AwaitTask |> Async.RunSynchronously
+
+
+let createChatEventHistory (entity:Entity) historyType eventJson = async {
+    do!
+        db.InsertAsync 
+            (ChatEventHistory(
+                EntityId = entity.Id,
+                Type = historyType,
+                EventJson = eventJson
+            )) 
+        |> Async.AwaitTask 
+        |> Async.Ignore
+}
+
 
 let createChatHistory (entity:Entity) historyType (last:(string * bool) option) = async {
     let! existing = db.Table<ChatHistory>().Where(fun x -> x.EntityId = entity.Id).FirstOrDefaultAsync() |> Async.AwaitTask
@@ -62,4 +87,8 @@ let createChatHistory (entity:Entity) historyType (last:(string * bool) option) 
 
 let fetchChatHistory () =
     db.Table<ChatHistory>().Where(fun _ -> true).OrderByDescending(fun s -> s.LastStamp).Take(100).ToListAsync() 
+    |> Async.AwaitTask
+
+let fetchChatEventHistoryByEntity entityId =
+    db.Table<ChatEventHistory>().Where(fun e -> e.EntityId = entityId).OrderBy(fun s -> s.LastStamp).Take(100).ToListAsync() 
     |> Async.AwaitTask

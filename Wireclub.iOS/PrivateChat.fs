@@ -3,12 +3,14 @@ namespace Wireclub.iOS
 open System
 open System.Linq
 open System.Collections.Concurrent
+open System.Collections.Generic
 open MonoTouch.Foundation
 open MonoTouch.UIKit
 open Wireclub.Models
 open Wireclub.Boundary
 open Wireclub.Boundary.Chat
 open ChannelEvent
+open Newtonsoft.Json
 
 type ChatMessage = {
     Line: string
@@ -42,6 +44,10 @@ type PrivateChatSessionViewController (user:Entity) as this =
         this.WebView.EvaluateJavascript(sprintf "wireclub.Mobile.addLine(%s)" (Newtonsoft.Json.JsonConvert.SerializeObject { Line = line })) |> ignore
         this.WebView.ScrollToBottom()
 
+    let addLines lines =
+        this.WebView.EvaluateJavascript(sprintf "wireclub.Mobile.addLines(%s)" (Newtonsoft.Json.JsonConvert.SerializeObject (lines |> Array.map (fun e -> { Line = e })))) |> ignore
+        this.WebView.ScrollToBottom()
+
     let placeKeyboard (sender:obj) (args:UIKeyboardEventArgs) =
         this.ResizeViewToKeyboard args
         this.WebView.ScrollToBottom()
@@ -63,17 +69,17 @@ type PrivateChatSessionViewController (user:Entity) as this =
                     | error -> this.HandleApiFailure error)
 
     let processEvent event addLine = 
-        if events.Add event.Sequence then
-            match event with
-            | { Event = PrivateMessage (color, font, message) } ->
-                addLine (partnerLine message color (fontFamily font))
-                Async.Start (DB.createChatHistory user DB.ChatHistoryType.PrivateChat (Some (message, false)))
+        let processEvent event generateLine color font message =
+            if events.Add event.Sequence then
+                addLine (generateLine message color (fontFamily font))
+            Async.Start (DB.createChatHistory user DB.ChatHistoryType.PrivateChat (Some (message, false)))
+            Async.Start (DB.createChatEventHistory user DB.ChatHistoryType.PrivateChat (JsonConvert.SerializeObject(event)))
 
-            | { Event = PrivateMessageSent (color, font, message) } ->
-                addLine (viewerLine message color (fontFamily font))
-                Async.Start (DB.createChatHistory user DB.ChatHistoryType.PrivateChat (Some ("You: " + message, false)))
-            
-            | _ -> ()
+        match event with
+        | { Event = PrivateMessage (color, font, message) } -> processEvent event partnerLine color font message
+        | { Event = PrivateMessageSent (color, font, message) } -> processEvent event viewerLine color font message
+        | _ -> ()
+
     let processor = new MailboxProcessor<ChannelEvent>(fun inbox ->
         let rec loop () = async {
             let! event = inbox.Receive()
@@ -120,17 +126,32 @@ type PrivateChatSessionViewController (user:Entity) as this =
             this.WebView.SetBodyBackgroundColor (colorToCss Utility.grayLightAccent)
 
             Async.startWithContinuation
-                (PrivateChat.session user.Id)
+                (async {
+                    let! session = PrivateChat.session user.Id
+                    let! history = DB.fetchChatEventHistoryByEntity user.Id
+                    return session, history
+                })
                 (function
-                    | Api.ApiOk newSession ->
+                    | Api.ApiOk newSession, history ->
                         session <- Some newSession
-                        processor.Start ()
+
+                        let lines = new List<string>()
+                        for event in history do
+                            if String.IsNullOrEmpty event.EventJson = false then
+                                try
+                                    let event = JsonConvert.DeserializeObject<ChannelEvent>(event.EventJson)
+                                    processEvent event lines.Add
+                                with
+                                | ex -> printfn "%A %s" event ex.Message 
+
+                        addLines (lines.ToArray())
+                        processor.Start()
 
                         // Send message
                         this.Text.ShouldReturn <- (fun _ -> sendMessage this.Text.Text; false)
                         this.SendButton.TouchUpInside.Add(fun args -> sendMessage this.Text.Text )
 
-                    | error -> this.HandleApiFailure error
+                    | error, _ -> this.HandleApiFailure error
                 )
         )
             
