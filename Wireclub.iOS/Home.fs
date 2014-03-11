@@ -10,6 +10,9 @@ open Wireclub.Models
 open Wireclub.Boundary
 open Wireclub.Boundary.Models
 open Wireclub.Boundary.Chat
+open Newtonsoft.Json
+
+open ChannelEvent
 
 [<RequireQualifiedAccess>]
 type ChatSession =
@@ -227,13 +230,30 @@ type EntryViewController () =
 
     let handleEvent channel (event:ChannelEvent.ChannelEvent) =        
         if channel = Api.userId then
+            let saveHistory user event = 
+                match event with
+                | { Event = PrivateMessage (color, font, message) }
+                | { Event = PrivateMessageSent (color, font, message) } -> 
+                    Async.startWithContinuation
+                        (async {
+                            do! DB.createChatHistory user DB.ChatHistoryType.PrivateChat (Some (message, false))
+                            do! DB.createChatEventHistory user DB.ChatHistoryType.PrivateChat (JsonConvert.SerializeObject(event))
+                         })
+                        (fun _ ->
+                            if rootController.ChatsController.IsViewLoaded then
+                                rootController.ChatsController.Table.ReloadData ()
+                        )
+                | _ -> ()
+
             match ChatSessions.sessions.TryGetValue event.User with
-            | true, (_, controller) -> controller.HandleChannelEvent event
-            | _ -> ChatSessions.startById event.User (fun controller -> 
-                    controller.HandleChannelEvent event
-                    if rootController.ChatsController.IsViewLoaded then
-                        rootController.ChatsController.Table.ReloadData ()
-                )
+            | true, (user, controller) ->
+                controller.HandleChannelEvent event
+                saveHistory user event
+            | _ -> ChatSessions.startById event.User (fun user controller -> 
+                controller.HandleChannelEvent event
+                saveHistory user event
+            )
+
         else
             match ChatRooms.rooms.TryGetValue channel with
             | true, (_, controller) -> controller.HandleChannelEvent event

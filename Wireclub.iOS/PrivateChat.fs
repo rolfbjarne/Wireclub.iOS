@@ -69,16 +69,13 @@ type PrivateChatSessionViewController (user:Entity) as this =
                     | error -> this.HandleApiFailure error)
 
     let processEvent event addLine = 
-        let processEvent event generateLine color font message =
-            if events.Add event.Sequence then
-                addLine (generateLine message color (fontFamily font))
-            Async.Start (DB.createChatHistory user DB.ChatHistoryType.PrivateChat (Some (message, false)))
-            Async.Start (DB.createChatEventHistory user DB.ChatHistoryType.PrivateChat (JsonConvert.SerializeObject(event)))
-
-        match event with
-        | { Event = PrivateMessage (color, font, message) } -> processEvent event partnerLine color font message
-        | { Event = PrivateMessageSent (color, font, message) } -> processEvent event viewerLine color font message
-        | _ -> ()
+        if events.Add event.Sequence then
+            match event with
+            | { Event = PrivateMessage (color, font, message) } -> 
+                addLine (partnerLine message color (fontFamily font))
+            | { Event = PrivateMessageSent (color, font, message) } -> 
+                addLine (viewerLine message color (fontFamily font))
+            | _ -> ()
 
     let processor = new MailboxProcessor<ChannelEvent>(fun inbox ->
         let rec loop () = async {
@@ -163,6 +160,8 @@ type PrivateChatSessionViewController (user:Entity) as this =
 
     member this.HandleChannelEvent = processor.Post
 
+    member this.Notify total = showSimpleAlert total
+
 module ChatSessions =
     open SQLite
     open System.Linq
@@ -187,14 +186,14 @@ module ChatSessions =
             (PrivateChat.session id)
             (function
                 | Api.ApiOk newSession ->
-                    start
+                    let user =
                         {
                             Id = newSession.UserId
                             Slug = newSession.Url // FIXME
                             Label = newSession.DisplayName
                             Image = newSession.PartnerAvatar
                         } 
-                    |> continuation
+                    continuation user (start user)
                     
                 | error -> printfn "Failed to start PM session: %A" error
             )
