@@ -76,21 +76,22 @@ type ChatsViewController () as controller =
     [<Outlet>]
     member val Table: UITableView = null with get, set
 
+    member this.Reload () =
+        Async.startWithContinuation
+            (DB.fetchChatHistory ())
+            (fun sessions ->
+                chats <- Seq.toArray sessions 
+                this.Table.ReloadData()
+            )
+
     override controller.ViewDidLoad () =
         base.ViewDidLoad ()
         controller.Table.Source <- tableSource
 
     override this.ViewDidAppear (animated) =
         base.ViewDidAppear (animated)
+        this.Reload()
 
-        Async.startWithContinuation
-            (async {
-                return! DB.fetchChatHistory ()
-            })
-            (fun sessions ->
-                chats <- sessions |> Seq.toArray
-                this.Table.ReloadData()
-            )
 
 [<Register("FriendsViewController")>]
 type FriendsViewController () as controller =
@@ -220,7 +221,7 @@ type HomeViewController () as controller =
         changeTab 0
 
 [<Register ("EntryViewController")>]
-type EntryViewController () =
+type EntryViewController () as controller =
     inherit UIViewController ()
 
     let rootController = new HomeViewController()
@@ -240,8 +241,9 @@ type EntryViewController () =
                             do! DB.createChatEventHistory user DB.ChatHistoryType.PrivateChat (JsonConvert.SerializeObject(event))
                          })
                         (fun _ ->
-                            if rootController.ChatsController.IsViewLoaded then
-                                rootController.ChatsController.Table.ReloadData ()
+                            controller.InvokeOnMainThread (fun _ ->  
+                                rootController.ChatsController.Reload ()
+                            )
                         )
                 | _ -> ()
 
