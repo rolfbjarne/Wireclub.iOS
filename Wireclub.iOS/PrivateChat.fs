@@ -24,6 +24,7 @@ type PrivateChatSessionViewController (user:Entity) as this =
     let events = System.Collections.Generic.HashSet<int64>()
     let mutable session: SessionResponse option = None
     let nameplateImageSize = 50
+    let mutable pending = true
 
     let nameplate slug image = 
         let userUrl = sprintf "%s/users/%s" Api.baseUrl slug
@@ -151,16 +152,18 @@ type PrivateChatSessionViewController (user:Entity) as this =
                     | error, _ -> this.HandleApiFailure error
                 )
         )
-            
+    
+    override this.ViewDidAppear animated =
+        pending <- false
 
-    override this.ViewDidDisappear (animated) =
+    override this.ViewDidDisappear animated =
         if this.IsMovingToParentViewController then
             showObserver.Dispose ()
             hideObserver.Dispose ()
 
     member this.HandleChannelEvent = processor.Post
 
-    member this.Notify total = showSimpleAlert total
+    member this.User = user
 
 module ChatSessions =
     open SQLite

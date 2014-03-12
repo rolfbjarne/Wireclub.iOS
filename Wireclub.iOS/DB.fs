@@ -25,7 +25,7 @@ type ChatHistory() =
     member val Type = ChatHistoryType.PrivateChat with get, set
 
 [<AllowNullLiteral>]
-type ChatEventHistory() =
+type ChatHistoryEvent() =
     [<PrimaryKey; AutoIncrement>]
     member val Id = 0 with get, set
     member val EntityId = "" with get, set
@@ -36,13 +36,13 @@ type ChatEventHistory() =
 
 let db = new SQLiteAsyncConnection(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "db"))
 let dbChatHistory = db.CreateTableAsync<ChatHistory> () |> Async.AwaitTask |> Async.RunSynchronously
-let dbChatEventHistory = db.CreateTableAsync<ChatEventHistory> () |> Async.AwaitTask |> Async.RunSynchronously
+let dbChatEventHistory = db.CreateTableAsync<ChatHistoryEvent> () |> Async.AwaitTask |> Async.RunSynchronously
 
 
-let createChatEventHistory (entity:Entity) historyType eventJson = async {
+let createChatHistoryEvent (entity:Entity) historyType eventJson = async {
     do!
         db.InsertAsync 
-            (ChatEventHistory(
+            (ChatHistoryEvent(
                 EntityId = entity.Id,
                 Type = historyType,
                 EventJson = eventJson
@@ -90,5 +90,5 @@ let fetchChatHistory () =
     |> Async.AwaitTask
 
 let fetchChatEventHistoryByEntity entityId =
-    db.Table<ChatEventHistory>().Where(fun e -> e.EntityId = entityId).OrderBy(fun s -> s.LastStamp).Take(100).ToListAsync() 
+    db.Table<ChatHistoryEvent>().Where(fun e -> e.EntityId = entityId).OrderBy(fun s -> s.LastStamp).Take(100).ToListAsync() 
     |> Async.AwaitTask
