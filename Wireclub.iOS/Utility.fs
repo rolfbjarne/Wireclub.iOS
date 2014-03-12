@@ -102,13 +102,14 @@ module Utility =
             result
 
         member this.ResizeViewToKeyboard (args:UIKeyboardEventArgs) =
+            let view = this.View.Subviews.[0]
             UIView.BeginAnimations ("")
             UIView.SetAnimationCurve (args.AnimationCurve);
             UIView.SetAnimationDuration (args.AnimationDuration);
-            let mutable viewFrame = this.View.Frame;
-            let endRelative = this.View.ConvertRectFromView (args.FrameEnd, null);
+            let mutable viewFrame = view.Frame;
+            let endRelative = view.ConvertRectFromView (args.FrameEnd, null);
             viewFrame.Height <- endRelative.Y;
-            this.View.Frame <- viewFrame;
+            view.Frame <- viewFrame;
             UIView.CommitAnimations ()
 
     type UIWebView with
