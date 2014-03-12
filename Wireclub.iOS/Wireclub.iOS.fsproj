@@ -218,9 +218,6 @@
     <BundleResource Include="..\Views\Resources\UITabBarChat%402x.png">
       <Link>Resources\UITabBarChat%402x.png</Link>
     </BundleResource>
-    <BundleResource Include="..\Views\Resources\UITabBarContactsTemplate%402x.png">
-      <Link>Resources\UITabBarContactsTemplate%402x.png</Link>
-    </BundleResource>
     <BundleResource Include="..\Views\Resources\UITabBarFriends%402x.png">
       <Link>Resources\UITabBarFriends%402x.png</Link>
     </BundleResource>
@@ -229,6 +226,12 @@
     </BundleResource>
     <BundleResource Include="..\Views\Resources\UITabBarRecent%402x.png">
       <Link>Resources\UITabBarRecent%402x.png</Link>
+    </BundleResource>
+    <BundleResource Include="..\Views\Resources\UITabBarContact%402x.png">
+      <Link>Resources\UITabBarContact%402x.png</Link>
+    </BundleResource>
+    <BundleResource Include="..\Views\Resources\UIButtonBarProfile%402x.png">
+      <Link>Resources\UIButtonBarProfile%402x.png</Link>
     </BundleResource>
   </ItemGroup>
   <ItemGroup>

@@ -166,10 +166,11 @@
     <BundleResource Include="Resources\UIButtonBarArrowLeftLandscape%402x.png" />
     <BundleResource Include="Resources\UIButtonBarArrowRight%402x.png" />
     <BundleResource Include="Resources\UIButtonBarArrowRightLandscape%402x.png" />
-    <BundleResource Include="Resources\UITabBarContactsTemplate%402x.png" />
     <BundleResource Include="Resources\UITabBarMessage%402x.png" />
     <BundleResource Include="Resources\UITabBarChat%402x.png" />
     <BundleResource Include="Resources\UITabBarFriends%402x.png" />
     <BundleResource Include="Resources\UITabBarRecent%402x.png" />
+    <BundleResource Include="Resources\UITabBarContact%402x.png" />
+    <BundleResource Include="Resources\UIButtonBarProfile%402x.png" />
   </ItemGroup>
 </Project>

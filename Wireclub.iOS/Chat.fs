@@ -1,6 +1,7 @@
 namespace Wireclub.iOS
 
 open System
+open System.Drawing
 open System.Linq
 open System.Collections.Concurrent
 open System.Collections.Generic
@@ -163,6 +164,8 @@ type ChatRoomViewController (room:Entity) as this =
         loop ()
     ) 
 
+    static member val buttonImage = Image.resize (new SizeF(22.0f, 22.0f)) (UIImage.FromFile "UIButtonBarProfile.png") with get
+
     [<Outlet>]
     member val WebView: UIWebView = null with get, set
 
@@ -180,7 +183,7 @@ type ChatRoomViewController (room:Entity) as this =
         this.AutomaticallyAdjustsScrollViewInsets <- false
         this.WebView.BackgroundColor <- UIColor.White
 
-        this.NavigationItem.RightBarButtonItem <- new UIBarButtonItem("...", UIBarButtonItemStyle.Bordered, new EventHandler(fun (s:obj) (e:EventArgs) -> 
+        this.NavigationItem.RightBarButtonItem <- new UIBarButtonItem(ChatRoomViewController.buttonImage, UIBarButtonItemStyle.Bordered, new EventHandler(fun (s:obj) (e:EventArgs) -> 
             this.NavigationController.PushViewController(new ChatRoomUsersViewController(users.Values |> Seq.toArray), true)
         ))
 

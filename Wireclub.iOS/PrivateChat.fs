@@ -1,13 +1,14 @@
 namespace Wireclub.iOS
 
 open System
+open System.Drawing
 open System.Linq
 open System.Collections.Concurrent
 open System.Collections.Generic
 open MonoTouch.Foundation
 open MonoTouch.UIKit
 open Wireclub.Models
-open Wireclub.Boundary
+open Wireclub.Boundary 
 open Wireclub.Boundary.Chat
 open ChannelEvent
 open Newtonsoft.Json
@@ -99,6 +100,8 @@ type PrivateChatSessionViewController (user:Entity) as this =
             false
     }
 
+    static member val buttonImage = Image.resize (new SizeF(22.0f, 22.0f)) (UIImage.FromFile "UIButtonBarProfile.png") with get
+
     [<Outlet>]
     member val WebView: UIWebView = null with get, set
 
@@ -110,7 +113,7 @@ type PrivateChatSessionViewController (user:Entity) as this =
 
     override this.ViewDidLoad () =
         
-        this.NavigationItem.RightBarButtonItem <- new UIBarButtonItem("...", UIBarButtonItemStyle.Bordered, new EventHandler(fun (s:obj) (e:EventArgs) -> 
+        this.NavigationItem.RightBarButtonItem <- new UIBarButtonItem(PrivateChatSessionViewController.buttonImage, UIBarButtonItemStyle.Bordered, new EventHandler(fun (s:obj) (e:EventArgs) -> 
             Navigation.navigate (sprintf "/users/%s" user.Slug) (Some user)
         ))
         // Prevents a 64px offset on a webviews scrollview
