@@ -252,10 +252,10 @@ type EntryViewController () as controller =
             match ChatSessions.sessions.TryGetValue event.User with
             | true, (user, controller) ->
                 controller.HandleChannelEvent event
-                handleChannelEvent user event
+                handleUserChannelEvent user event
             | _ -> ChatSessions.startById event.User (fun user controller -> 
                 controller.HandleChannelEvent event
-                handleChannelEvent user event
+                handleUserChannelEvent user event
             )
 
         else
@@ -263,8 +263,6 @@ type EntryViewController () as controller =
             | true, (_, controller) ->
                 controller.HandleChannelEvent event
             | _ -> ChatRooms.joinById channel
-                
-        )
 
     override this.ViewDidLoad () =
         base.ViewDidLoad ()
