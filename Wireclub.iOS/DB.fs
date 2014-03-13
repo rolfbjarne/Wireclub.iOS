@@ -49,6 +49,14 @@ let createChatHistoryEvent (entity:Entity) historyType eventJson = async {
             )) 
         |> Async.AwaitTask 
         |> Async.Ignore
+
+    let! count = db.Table<ChatHistoryEvent>().CountAsync() |> Async.AwaitTask
+    if count > 500 then
+        let! toClear = db.Table<ChatHistoryEvent>().OrderBy(fun s -> s.LastStamp).Take(100).ToListAsync() |> Async.AwaitTask 
+
+        //TODO batch this
+        for event in toClear do
+            do! db.DeleteAsync(event) |> Async.AwaitTask |> Async.Ignore
 }
 
 
@@ -86,7 +94,7 @@ let createChatHistory (entity:Entity) historyType (last:(string * bool) option) 
 }
 
 let fetchChatHistory () =
-    db.Table<ChatHistory>().Where(fun _ -> true).OrderByDescending(fun s -> s.LastStamp).Take(100).ToListAsync() 
+    db.Table<ChatHistory>().OrderByDescending(fun s -> s.LastStamp).Take(100).ToListAsync() 
     |> Async.AwaitTask
 
 let fetchChatEventHistoryByEntity entityId =
