@@ -15,10 +15,6 @@ type AlertDelegate (action: int -> unit) =
 module Navigation =
     let mutable navigate: (string -> (Entity option) -> unit) = (fun _ _ -> failwith "No navigation handler attached")
 
-module Async =
-    let startWithContinuation (computation: Async<'T>) (continuation: 'T -> unit) =
-        Async.StartWithContinuations (computation, continuation, (fun ex -> raise ex), (fun _ -> ()))
-
 module List =
     let rec nextTuple list =
         match list with
@@ -49,6 +45,16 @@ module Utility =
         alert.AddButton button |> ignore
         alert.Show ()
         ()
+
+    let mutable networkIndicators = 0
+    let showNetworkIndicator (computation: Async<'T>)  = async {
+        UIApplication.SharedApplication.NetworkActivityIndicatorVisible <- true
+        networkIndicators <- networkIndicators + 1
+        let! result = computation
+        networkIndicators <- networkIndicators - 1
+        UIApplication.SharedApplication.NetworkActivityIndicatorVisible <- (networkIndicators <> 0)
+        return result
+    } 
 
     //make a custom mapping for each OS based on supported fonts
     let fontFamily id =
@@ -125,6 +131,16 @@ module Utility =
             this.EvaluateJavascript 
                 (String.concat ";" [ yield "var preload = new Image()"; for url in urls do yield sprintf "preload.src = '%s'" url ]) |> ignore
 
+
+module Async =
+    //TODO factor this into appClient
+    let startWithContinuation (computation: Async<'T>) (continuation: 'T -> unit) =
+        Async.StartWithContinuations (computation, continuation, (fun ex -> raise ex), (fun _ -> ()))
+
+    let startNetworkWithContinuation (computation: Async<'T>) (continuation: 'T -> unit) =
+        startWithContinuation
+            (showNetworkIndicator computation)
+            (continuation)
 
 module Image =
     open System

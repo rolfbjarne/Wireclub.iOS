@@ -107,7 +107,7 @@ type ChatRoomViewController (room:Entity) as this =
         match text with
         | "" -> ()
         | _ ->
-            Async.startWithContinuation
+            Async.startNetworkWithContinuation
                 (Chat.send room.Slug text)
                 (this.HandleApiResult >> function
                     | Api.ApiOk response -> 
@@ -201,7 +201,7 @@ type ChatRoomViewController (room:Entity) as this =
             this.WebView.Delegate <- webViewDelegate
             this.WebView.SetBodyBackgroundColor (colorToCss UIColor.White)
 
-            Async.startWithContinuation
+            Async.startNetworkWithContinuation
                 (Chat.join room.Slug)
                 (function
                     | Api.ApiOk (result, events) ->

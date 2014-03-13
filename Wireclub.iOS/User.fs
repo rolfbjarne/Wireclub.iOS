@@ -52,7 +52,7 @@ type UserViewController (handle:nativeint) =
                     match args.ButtonIndex with
                     | 0 -> ()
                     | _ -> 
-                        Async.startWithContinuation
+                        Async.startNetworkWithContinuation
                             (User.addFriend user.Slug)
                             (this.HandleApiResult >> ignore)
                 )

@@ -60,7 +60,7 @@ type PrivateChatSessionViewController (user:Entity) as this =
         match text with
         | "" -> ()
         | _ ->
-            Async.startWithContinuation
+            Async.startNetworkWithContinuation
                 (PrivateChat.send session.Value.UserId text)
                 (function
                     | Api.ApiOk response -> 
@@ -125,7 +125,7 @@ type PrivateChatSessionViewController (user:Entity) as this =
             this.WebView.Delegate <- webViewDelegate
             this.WebView.SetBodyBackgroundColor (colorToCss Utility.grayLightAccent)
 
-            Async.startWithContinuation
+            Async.startNetworkWithContinuation
                 (async {
                     let! session = PrivateChat.session user.Id
                     let! history = DB.fetchChatEventHistoryByEntity user.Id
@@ -186,7 +186,7 @@ module ChatSessions =
     let startById id continuation =
         if id = Api.userId then failwith "Can't chat with yourself"
 
-        Async.startWithContinuation
+        Async.startNetworkWithContinuation
             (PrivateChat.session id)
             (function
                 | Api.ApiOk newSession ->

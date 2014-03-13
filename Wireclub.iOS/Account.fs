@@ -161,7 +161,7 @@ type EditProfileViewController (handle:nativeint) as controller =
                 controller.Country.Text <- country.Value.Name
         }
         this.Country.EditingDidBegin.Add(fun _ ->
-            Async.startWithContinuation
+            Async.startNetworkWithContinuation
                 (Settings.countries ())
                 (function
                     | Api.ApiOk result -> 
@@ -191,7 +191,7 @@ type EditProfileViewController (handle:nativeint) as controller =
             match country with
             | Some country ->
                 pickerRegion.Progress.StartAnimating()
-                Async.startWithContinuation
+                Async.startNetworkWithContinuation
                     (Settings.regions country.Id)
                     (function
                         | Api.ApiOk rs -> 
@@ -219,7 +219,7 @@ type EditProfileViewController (handle:nativeint) as controller =
         | None -> ()
 
         this.SaveButton.TouchUpInside.Add(fun _ ->
-            Async.startWithContinuation
+            Async.startNetworkWithContinuation
                 (Settings.profile
                     (this.Username.Text.Trim())
                     (match this.GenderSelect.SelectedSegment with | 1 -> GenderType.Male | 2 -> GenderType.Female | _ -> GenderType.Undefined)
@@ -265,7 +265,7 @@ type EditProfileViewController (handle:nativeint) as controller =
 
                                 let dataBuffer = Array.zeroCreate (int data.Length)
                                 System.Runtime.InteropServices.Marshal.Copy(data.Bytes, (dataBuffer:byte []), 0, int data.Length)
-                                Async.startWithContinuation
+                                Async.startNetworkWithContinuation
                                     (Settings.avatar dataBuffer)
                                     (function 
                                         | Api.ApiOk image ->
@@ -313,7 +313,7 @@ type SignupViewController (handle:nativeint) =
         ))
 
         this.SignupButton.TouchUpInside.Add(fun _ ->
-            Async.startWithContinuation
+            Async.startNetworkWithContinuation
                 (Account.signup this.Email.Text this.Password.Text)
                 (function
                     | Api.ApiOk result ->
@@ -353,7 +353,7 @@ type LoginViewController (handle:nativeint) =
             
             // ## Disable UI
             // ## Progress
-            Async.startWithContinuation
+            Async.startNetworkWithContinuation
                 (Account.login this.Email.Text this.Password.Text)
                 (function
                     | Api.ApiOk result ->

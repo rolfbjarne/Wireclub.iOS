@@ -40,7 +40,7 @@ type ChatDirectoryViewController() as controller =
     }
 
     let updateDirectory () = 
-        Async.startWithContinuation
+        Async.startNetworkWithContinuation
             (Chat.directory ())
             (function
                 | Api.ApiOk directory ->

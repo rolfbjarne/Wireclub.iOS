@@ -135,7 +135,7 @@ type FriendsViewController () as controller =
 
     override controller.ViewDidLoad () =
         controller.Table.Source <- tableSource
-        Async.startWithContinuation
+        Async.startNetworkWithContinuation
             (PrivateChat.online())
             (function
                 | Api.ApiOk response ->
@@ -320,7 +320,7 @@ type EntryViewController () as controller =
 
         // User has an account but has not authenticated with the api
         | token, true -> 
-            Async.startWithContinuation
+            Async.startNetworkWithContinuation
                 (Account.loginToken token)
                 (function
                     | Api.ApiOk identity -> proceed true
