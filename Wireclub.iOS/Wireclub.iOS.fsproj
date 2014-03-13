@@ -233,12 +233,15 @@
     <BundleResource Include="..\Views\Resources\UIButtonBarProfile%402x.png">
       <Link>Resources\UIButtonBarProfile%402x.png</Link>
     </BundleResource>
+    <BundleResource Include="..\Views\Resources\UILogo%402x.png">
+      <Link>Resources\UILogo%402x.png</Link>
+    </BundleResource>
   </ItemGroup>
   <ItemGroup>
     <ImageAsset Include="Resources\Images.xcassets\AppIcons.appiconset\Contents.json" />
     <ImageAsset Include="Resources\Images.xcassets\AppIcons.appiconset\Icon-60%402x.png" />
     <ImageAsset Include="Resources\Images.xcassets\LaunchImage.launchimage\Contents.json" />
-    <ImageAsset Include="Resources\Images.xcassets\LaunchImage.launchimage\iOS Simulator Screen shot Feb 13, 2014, 5.48.02 PM.png" />
+    <ImageAsset Include="Resources\Images.xcassets\LaunchImage.launchimage\UILauncher%402x.png" />
   </ItemGroup>
   <ItemGroup>
     <XamarinComponentReference Include="sqlite-net">

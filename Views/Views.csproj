@@ -172,5 +172,6 @@
     <BundleResource Include="Resources\UITabBarRecent%402x.png" />
     <BundleResource Include="Resources\UITabBarContact%402x.png" />
     <BundleResource Include="Resources\UIButtonBarProfile%402x.png" />
+    <BundleResource Include="Resources\UILogo%402x.png" />
   </ItemGroup>
 </Project>

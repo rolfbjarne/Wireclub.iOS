@@ -12,6 +12,7 @@
       "minimum-system-version": "7.0",
       "orientation": "portrait",
       "extent": "full-screen",
+      "filename": "UILauncher@2x.png",
       "size": "640x1136",
       "subtype": "retina4",
       "scale": "2x",
@@ -66,7 +67,7 @@
     {
       "orientation": "portrait",
       "extent": "full-screen",
-      "filename": "iOS Simulator Screen shot Feb 13, 2014, 5.48.02 PM.png",
+      "filename": "UILauncher@2x.png",
       "size": "640x1136",
       "subtype": "retina4",
       "scale": "2x",
