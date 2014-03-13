@@ -1,6 +1,7 @@
 namespace Wireclub.iOS
 
 open System
+open System.Text.RegularExpressions
 open System.Drawing
 open System.Globalization
 
@@ -14,6 +15,12 @@ type AlertDelegate (action: int -> unit) =
 
 module Navigation =
     let mutable navigate: (string -> (Entity option) -> unit) = (fun _ _ -> failwith "No navigation handler attached")
+
+module String =
+    let stripHtml html =
+        // Replace all tags with a space, otherwise words either side of a tag might be concatenated 
+        let regex = new Regex("<(.|\n)+?>");
+        regex.Replace(html, " ");
 
 module List =
     let rec nextTuple list =

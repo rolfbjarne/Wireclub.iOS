@@ -288,11 +288,12 @@ type EntryViewController () as controller =
             //Private chat event
             | { Event = PrivateMessage (color, font, message) }
             | { Event = PrivateMessageSent (color, font, message) } ->
-                let handlePrivateMessageEvent (user:Entity) event =
+                let handlePrivateMessageEvent (user:Entity) =
                     let read =
                         match controller.NavigationController.VisibleViewController with
                         | :? PrivateChatSessionViewController as controller when controller.User.Id = user.Id -> true
                         | _ -> false
+                    let message = String.stripHtml message
 
                     Async.startWithContinuation
                         (async {
@@ -304,10 +305,10 @@ type EntryViewController () as controller =
                 match ChatSessions.sessions.TryGetValue event.User with
                 | true, (user, controller) ->
                     controller.HandleChannelEvent event
-                    handlePrivateMessageEvent user event
+                    handlePrivateMessageEvent user
                 | _ -> ChatSessions.startById event.User (fun user controller -> 
                     controller.HandleChannelEvent event
-                    handlePrivateMessageEvent user event
+                    handlePrivateMessageEvent user
                 )
             | _ ->
                 match ChatRooms.rooms.TryGetValue channel with
