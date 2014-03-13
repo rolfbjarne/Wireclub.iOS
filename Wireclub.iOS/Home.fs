@@ -282,44 +282,39 @@ type EntryViewController () as controller =
     
     let updateNavigationNotification = ()
 
-    let handleEvent channel (event:ChannelEvent.ChannelEvent) =        
-        controller.InvokeOnMainThread (fun _ ->
-            if channel = Api.userId then
-                let handleUserChannelEvent (user:Entity) event = 
-                    match event with
-                    | { Event = PrivateMessage (color, font, message) }
-                    | { Event = PrivateMessageSent (color, font, message) } -> 
-                        let read =
-                            match controller.NavigationController.VisibleViewController with
-                            | :? PrivateChatSessionViewController as controller when controller.User.Id = user.Id -> true
-                            | _ -> false
+    let handleEvent channel (event:ChannelEvent.ChannelEvent) =
+        controller.InvokeOnMainThread (fun _ -> 
+            match event with
+            //Private chat event
+            | { Event = PrivateMessage (color, font, message) }
+            | { Event = PrivateMessageSent (color, font, message) } ->
+                let handlePrivateMessageEvent (user:Entity) event =
+                    let read =
+                        match controller.NavigationController.VisibleViewController with
+                        | :? PrivateChatSessionViewController as controller when controller.User.Id = user.Id -> true
+                        | _ -> false
 
-                        Async.startWithContinuation
-                            (async {
-                                do! DB.createChatHistory user DB.ChatHistoryType.PrivateChat (Some (message, read))
-                                do! DB.createChatHistoryEvent user DB.ChatHistoryType.PrivateChat (JsonConvert.SerializeObject(event))
-                             })
-                            (fun _ -> rootController.ChatsController.Reload ())
-                    | _ -> ()
+                    Async.startWithContinuation
+                        (async {
+                            do! DB.createChatHistory user DB.ChatHistoryType.PrivateChat (Some (message, read))
+                            do! DB.createChatHistoryEvent user DB.ChatHistoryType.PrivateChat (JsonConvert.SerializeObject(event))
+                         })
+                        (fun _ -> rootController.ChatsController.Reload ())
 
                 match ChatSessions.sessions.TryGetValue event.User with
                 | true, (user, controller) ->
                     controller.HandleChannelEvent event
-                    handleUserChannelEvent user event
+                    handlePrivateMessageEvent user event
                 | _ -> ChatSessions.startById event.User (fun user controller -> 
                     controller.HandleChannelEvent event
-                    handleUserChannelEvent user event
+                    handlePrivateMessageEvent user event
                 )
-
-            else
+            | _ ->
                 match ChatRooms.rooms.TryGetValue channel with
                 | true, (_, controller) ->
                     controller.HandleChannelEvent event
                 | _ -> ChatRooms.joinById channel
-
         )
-
-
 
     override this.ViewDidLoad () =
         base.ViewDidLoad ()
