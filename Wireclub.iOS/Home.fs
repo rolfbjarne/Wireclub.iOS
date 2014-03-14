@@ -317,35 +317,61 @@ type EntryViewController () as controller =
                 | _ -> ChatRooms.joinById channel
         )
 
+    let resolvableHosts =
+        [
+            "www.wireclub.com"
+            "dev.wireclub.com"
+            (new Uri(Api.baseUrl)).Host
+        ]
+
+    let openExternal (uri:Uri) = 
+        let supportsChrome = UIApplication.SharedApplication.CanOpenUrl (NSUrl.FromString "googlechrome://")
+        let openExternal (builder:UriBuilder) =
+            let uri = builder.Uri
+            UIApplication.SharedApplication.OpenUrl (new NSUrl (uri.GetComponents (UriComponents.HttpRequestUrl, UriFormat.UriEscaped))) |> ignore
+
+        match uri.Scheme with
+        | "http" when supportsChrome -> openExternal (new UriBuilder(uri, Scheme = "googlechrome"))
+        | "https" when supportsChrome -> openExternal (new UriBuilder(uri, Scheme = "googlechromes"))
+        | _ -> openExternal (new UriBuilder(uri))
+
     override this.ViewDidLoad () =
         base.ViewDidLoad ()
 
         let objOrFail = function | Some o -> o | _ -> failwith "Expected Some"
-  
         let navigate url (data:Entity option) =
-            match url, data with
-            | Routes.User id, _ -> 
-                let controller = Resources.userStoryboard.Value.InstantiateInitialViewController () :?> UITabBarController
-                (controller.ChildViewControllers.[0] :?> UserViewController).User <- data
-                this.NavigationController.PushViewController (controller, true)
+            let uri = new Uri(url)
 
-            | Routes.ChatSession id, Some data ->
-                this.NavigationController.PopToViewController (rootController, false) |> ignore // Straight yolo
-                let controller = ChatSessions.start data
-                this.NavigationController.PushViewController (controller, true)
+            printfn "[Navigate] %s" (uri.ToString())
+            if url.StartsWith("/") || resolvableHosts.Contains(uri.Host) then
+                match url, data with
+                | Routes.User id, _ -> 
+                    let controller = Resources.userStoryboard.Value.InstantiateInitialViewController () :?> UITabBarController
+                    (controller.ChildViewControllers.[0] :?> UserViewController).User <- data
+                    this.NavigationController.PushViewController (controller, true)
 
-            | Routes.ChatRoom id, Some data ->
-                this.NavigationController.PopToViewController (rootController, false) |> ignore
-                let controller = ChatRooms.join data
-                this.NavigationController.PushViewController (controller, true)
-            | "/home", _ ->
-                if this.NavigationController.ViewControllers.Contains rootController then
-                    this.NavigationController.PopToViewController (rootController, true) |> ignore
-                else
-                    this.NavigationController.PopToViewController (this, false) |> ignore
-                    this.NavigationController.PushViewController(rootController, true)
-            | url, _ -> 
-                this.NavigationController.PushViewController (new DialogViewController (url), true)
+                | Routes.ChatSession id, Some data ->
+                    this.NavigationController.PopToViewController (rootController, false) |> ignore // Straight yolo
+                    let controller = ChatSessions.start data
+                    this.NavigationController.PushViewController (controller, true)
+
+                | Routes.ChatRoom id, Some data ->
+                    this.NavigationController.PopToViewController (rootController, false) |> ignore
+                    let controller = ChatRooms.join data
+                    this.NavigationController.PushViewController (controller, true)
+                | Routes.YouTube video, _ ->
+                    new Uri (sprintf "https://www.youtube.com/watch?v=%s" video) |> openExternal
+                | Routes.ExternalRedirect _, _ -> uri |> openExternal
+                | "/home", _ ->
+                    if this.NavigationController.ViewControllers.Contains rootController then
+                        this.NavigationController.PopToViewController (rootController, true) |> ignore
+                    else
+                        this.NavigationController.PopToViewController (this, false) |> ignore
+                        this.NavigationController.PushViewController(rootController, true)
+                | url, _ -> 
+                    this.NavigationController.PushViewController (new DialogViewController (url), true)
+            else
+                uri |> openExternal
 
         Navigation.navigate <- navigate
 

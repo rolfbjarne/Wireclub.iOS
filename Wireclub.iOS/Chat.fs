@@ -96,10 +96,10 @@ type ChatRoomViewController (room:Entity) as this =
         override this.ShouldStartLoad (view, request, navigationType) =
             let uri = new Uri(request.Url.AbsoluteString)
             match uri.Segments with
-            | [| _; "users/"; slug |] ->
+            | [|_; "users/"; slug |] ->
                 let user = users.Values.Single(fun e -> e.Slug = slug)
                 Navigation.navigate (sprintf "/users/%s" slug) (Some { Id = user.Id; Label = user.Name; Slug = user.Slug; Image = user.Avatar })
-            | segments -> printfn "%A" segments
+            | segments ->  Navigation.navigate (uri.ToString()) None
             false
     }
 

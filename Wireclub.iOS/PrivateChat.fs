@@ -95,7 +95,7 @@ type PrivateChatSessionViewController (user:Entity) as this =
             match uri.Segments with
             | [| _; "users/"; slug |] when slug = user.Slug -> Navigation.navigate (sprintf "/users/%s" slug) (Some user)
             | [| _; "users/"; slug |] when slug = identity.Slug -> Navigation.navigate (sprintf "/users/%s" slug) (Some { Id = identity.Id; Label = identity.Name; Slug = identity.Slug; Image = identity.Avatar })
-            | segments -> printfn "%A" segments
+            | segments -> Navigation.navigate (uri.ToString()) None
             false
     }
 
