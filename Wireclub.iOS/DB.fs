@@ -6,6 +6,7 @@ open SQLite
 open Wireclub.Models
 open Wireclub.Boundary
 open Wireclub.Boundary.Chat
+open Wireclub.Boundary.Models
 
 type ChatHistoryType =
 | PrivateChat = 0

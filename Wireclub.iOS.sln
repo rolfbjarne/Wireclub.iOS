@@ -12,9 +12,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{590EEF39-8
 EndProject
 Project("{4925A630-B079-445d-BCD4-3A9C94FE9307}") = "Wireclub.Boundary.iOS", "..\NEXT\Wireclub.Boundary\Wireclub.Boundary.iOS.fsproj", "{F83837F7-71B9-4EEB-85B8-276B8767DA2B}"
 EndProject
-Project("{4925A630-B079-445d-BCD4-3A9C94FE9307}") = "Wireclub.AppClient.iOS", "..\wireclub.android\Wireclub.AppClient\Wireclub.AppClient.iOS.fsproj", "{0AA0452B-6D60-4FA3-A54C-0BAF2A672111}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "websocket-sharp-ios", "..\websocket-sharp\websocket-sharp\websocket-sharp-ios.csproj", "{D476C912-8459-4A6B-AA01-CE3EFDD89CFF}"
+EndProject
+Project("{4925A630-B079-445d-BCD4-3A9C94FE9307}") = "Wireclub.AppClient.iOS", "..\wireclub.appclient\Wireclub.AppClient\Wireclub.AppClient.iOS.fsproj", "{0AA0452B-6D60-4FA3-A54C-0BAF2A672111}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

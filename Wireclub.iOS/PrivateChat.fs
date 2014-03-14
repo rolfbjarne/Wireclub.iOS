@@ -10,6 +10,7 @@ open MonoTouch.UIKit
 open Wireclub.Models
 open Wireclub.Boundary 
 open Wireclub.Boundary.Chat
+open Wireclub.Boundary.Models
 open ChannelEvent
 open Newtonsoft.Json
 

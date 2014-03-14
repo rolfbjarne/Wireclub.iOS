@@ -129,7 +129,6 @@
     <None Include="Entitlements.plist" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Models.fs" />
     <Compile Include="Utility.fs" />
     <Compile Include="Reachability.fs" />
     <Compile Include="Resources.fs" />
@@ -262,7 +261,7 @@
       <Project>{F83837F7-71B9-4EEB-85B8-276B8767DA2B}</Project>
       <Name>Wireclub.Boundary.iOS</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\wireclub.android\Wireclub.AppClient\Wireclub.AppClient.iOS.fsproj">
+    <ProjectReference Include="..\..\wireclub.appclient\Wireclub.AppClient\Wireclub.AppClient.iOS.fsproj">
       <Project>{0AA0452B-6D60-4FA3-A54C-0BAF2A672111}</Project>
       <Name>Wireclub.AppClient.iOS</Name>
     </ProjectReference>

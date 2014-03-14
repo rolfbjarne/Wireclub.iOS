@@ -8,8 +8,8 @@ open MonoTouch.Foundation
 open MonoTouch.UIKit
 open Wireclub.Models
 open Wireclub.Boundary
-open Wireclub.Boundary.Models
 open Wireclub.Boundary.Chat
+open Wireclub.Boundary.Models
 open Newtonsoft.Json
 
 open ChannelEvent

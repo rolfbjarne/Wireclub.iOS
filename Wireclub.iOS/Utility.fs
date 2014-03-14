@@ -8,6 +8,8 @@ open System.Globalization
 open MonoTouch.Foundation
 open MonoTouch.UIKit
 
+open Wireclub.Boundary.Models
+
 type AlertDelegate (action: int -> unit) =
     inherit UIAlertViewDelegate ()
     override this.Dismissed (view, index) = 

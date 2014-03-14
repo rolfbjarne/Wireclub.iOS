@@ -8,6 +8,7 @@ open MonoTouch.Foundation
 open MonoTouch.UIKit
 open Wireclub.Boundary
 open Wireclub.Boundary.Chat
+open Wireclub.Boundary.Models
 open Routes
         
 [<Register ("UserFeedViewController")>]
