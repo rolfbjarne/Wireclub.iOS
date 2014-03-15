@@ -137,7 +137,7 @@ type PrivateChatSessionViewController (user:Entity) as this =
                         session <- Some newSession
 
                         let lines = new List<string>()
-                        for event in history do
+                        for event in history.OrderBy(fun e -> e.LastStamp) do
                             if String.IsNullOrEmpty event.EventJson = false then
                                 try
                                     let event = JsonConvert.DeserializeObject<ChannelEvent>(event.EventJson)

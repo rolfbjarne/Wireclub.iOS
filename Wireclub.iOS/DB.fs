@@ -99,5 +99,5 @@ let fetchChatHistory () =
     |> Async.AwaitTask
 
 let fetchChatEventHistoryByEntity entityId =
-    db.Table<ChatHistoryEvent>().Where(fun e -> e.EntityId = entityId).OrderBy(fun s -> s.LastStamp).Take(100).ToListAsync() 
+    db.Table<ChatHistoryEvent>().Where(fun e -> e.EntityId = entityId).OrderByDescending(fun s -> s.LastStamp).Take(100).ToListAsync() 
     |> Async.AwaitTask

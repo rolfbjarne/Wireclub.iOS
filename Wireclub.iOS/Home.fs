@@ -194,7 +194,7 @@ type FriendsViewController () as controller =
                     loaded <- true
                     controller.Table.ReloadData ()
 
-                | er -> printfn "Api Error: %A" er
+                | error -> controller.HandleApiFailure error
             )
 
         base.ViewDidLoad ()
@@ -343,35 +343,55 @@ type EntryViewController () as controller =
             let uri = new Uri(url)
 
             printfn "[Navigate] %s" (uri.ToString())
-            if url.StartsWith("/") || resolvableHosts.Contains(uri.Host) then
-                match url, data with
-                | Routes.User id, _ -> 
+            match url, data with
+            | Routes.User id, data -> 
+                let pushUser user =
                     let controller = Resources.userStoryboard.Value.InstantiateInitialViewController () :?> UITabBarController
-                    (controller.ChildViewControllers.[0] :?> UserViewController).User <- data
+                    (controller.ChildViewControllers.[0] :?> UserViewController).User <- Some user
                     this.NavigationController.PushViewController (controller, true)
 
-                | Routes.ChatSession id, Some data ->
-                    this.NavigationController.PopToViewController (rootController, false) |> ignore // Straight yolo
-                    let controller = ChatSessions.start data
-                    this.NavigationController.PushViewController (controller, true)
+                match data with
+                | Some data -> pushUser data
+                | None ->
+                     Async.startNetworkWithContinuation
+                        (User.entityBySlug id)
+                        (this.HandleApiResult >> function
+                            | Api.ApiOk data -> pushUser data
+                            | error -> this.HandleApiFailure error
+                        )
 
-                | Routes.ChatRoom id, Some data ->
+            | Routes.ChatRoom id, data ->
+                let pushRoom room =
                     this.NavigationController.PopToViewController (rootController, false) |> ignore
-                    let controller = ChatRooms.join data
+                    let controller = ChatRooms.join room
                     this.NavigationController.PushViewController (controller, true)
-                | Routes.YouTube video, _ ->
-                    new Uri (sprintf "https://www.youtube.com/watch?v=%s" video) |> openExternal
-                | Routes.ExternalRedirect _, _ -> uri |> openExternal
-                | "/home", _ ->
-                    if this.NavigationController.ViewControllers.Contains rootController then
-                        this.NavigationController.PopToViewController (rootController, true) |> ignore
-                    else
-                        this.NavigationController.PopToViewController (this, false) |> ignore
-                        this.NavigationController.PushViewController(rootController, true)
-                | url, _ -> 
-                    this.NavigationController.PushViewController (new DialogViewController (url), true)
-            else
-                uri |> openExternal
+
+                match data with
+                | Some data -> pushRoom data
+                | None ->
+                     Async.startNetworkWithContinuation
+                        (Chat.entityBySlug id)
+                        (this.HandleApiResult >> function
+                            | Api.ApiOk data -> pushRoom data
+                            | error -> this.HandleApiFailure error
+                        )
+
+            | Routes.ChatSession id, Some data ->
+                this.NavigationController.PopToViewController (rootController, false) |> ignore // Straight yolo
+                let controller = ChatSessions.start data
+                this.NavigationController.PushViewController (controller, true)
+
+            | Routes.YouTube video, _ ->
+                new Uri (sprintf "https://www.youtube.com/watch?v=%s" video) |> openExternal
+            | Routes.ExternalRedirect _, _ -> uri |> openExternal
+            | "/home", _ ->
+                if this.NavigationController.ViewControllers.Contains rootController then
+                    this.NavigationController.PopToViewController (rootController, true) |> ignore
+                else
+                    this.NavigationController.PopToViewController (this, false) |> ignore
+                    this.NavigationController.PushViewController(rootController, true)
+            | url, _ -> 
+                this.NavigationController.PushViewController (new DialogViewController (url), true)
 
         Navigation.navigate <- navigate
 
