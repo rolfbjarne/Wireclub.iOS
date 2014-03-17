@@ -15,6 +15,7 @@ type DialogViewController (url:string) =
     override this.ViewDidLoad () =
 
         this.WebView.LoadRequest(new NSUrlRequest(new NSUrl(url)))
+        this.AutomaticallyAdjustsScrollViewInsets <- false
         
         this.WebView.ShouldStartLoad <- UIWebLoaderControl(fun webView request navigationType ->
             if 
