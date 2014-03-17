@@ -112,7 +112,7 @@ type PrivateChatSessionViewController (user:Entity) as this =
     member val Text: UITextField = null with get, set
 
     override this.ViewDidLoad () =
-        
+        this.NavigationItem.LeftItemsSupplementBackButton <- true
         this.NavigationItem.RightBarButtonItem <- new UIBarButtonItem(PrivateChatSessionViewController.buttonImage, UIBarButtonItemStyle.Bordered, new EventHandler(fun (s:obj) (e:EventArgs) -> 
             Navigation.navigate (sprintf "/users/%s" user.Slug) (Some user)
         ))
@@ -137,7 +137,6 @@ type PrivateChatSessionViewController (user:Entity) as this =
                     | Api.ApiOk newSession, history, unread ->
                         session <- Some newSession
 
-                        this.NavigationItem.LeftItemsSupplementBackButton <- true
                         this.NavigationItem.LeftBarButtonItem <- new UIBarButtonItem((sprintf "(%i)" unread), UIBarButtonItemStyle.Plain, new EventHandler(fun _ _ -> 
                             this.NavigationController.PopViewControllerAnimated true |> ignore
                         ))

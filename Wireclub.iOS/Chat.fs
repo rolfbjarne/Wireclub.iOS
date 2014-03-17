@@ -178,7 +178,7 @@ type ChatRoomViewController (room:Entity) as this =
 
     override this.ViewDidLoad () =
         this.NavigationItem.Title <- room.Label
-
+        this.NavigationItem.LeftItemsSupplementBackButton <- true
 
         // Prevents a 64px offset on a webviews scrollview
         this.AutomaticallyAdjustsScrollViewInsets <- false
@@ -212,7 +212,6 @@ type ChatRoomViewController (room:Entity) as this =
                     | Api.ApiOk (result, events), unread ->
                         startSequence <- result.Sequence
 
-                        this.NavigationItem.LeftItemsSupplementBackButton <- true
                         this.NavigationItem.LeftBarButtonItem <- new UIBarButtonItem((sprintf "(%i)" unread), UIBarButtonItemStyle.Plain, new EventHandler(fun _ _ -> 
                             this.NavigationController.PopViewControllerAnimated true |> ignore
                         ))

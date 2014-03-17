@@ -38,7 +38,7 @@ type UserViewController (handle:nativeint) =
     
         match this.User with
         | Some user -> 
-            Image.loadImageForView (App.imageUrl user.Image 200) Image.placeholder this.Avatar
+            Image.loadImageForView (App.imageUrl user.Image 640) Image.placeholder this.Avatar
 
             this.ChatButton.TouchUpInside.Add(fun _ ->            
                 Navigation.navigate ("/privateChat/session/" + user.Slug) this.User

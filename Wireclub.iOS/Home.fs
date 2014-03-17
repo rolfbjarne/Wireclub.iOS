@@ -292,7 +292,6 @@ type EntryViewController () as controller =
                         let button = new UIBarButtonItem((sprintf "(%i)" unread), UIBarButtonItemStyle.Plain, new EventHandler(fun _ _ -> 
                             controller.NavigationController.PopViewControllerAnimated true |> ignore
                         ))
-                        controller.NavigationItem.LeftItemsSupplementBackButton <- true
                         controller.NavigationItem.LeftBarButtonItem <- button
                     )
 
@@ -366,8 +365,8 @@ type EntryViewController () as controller =
             match url, data with
             | Routes.User id, data -> 
                 let pushUser user =
-                    let controller = Resources.userStoryboard.Value.InstantiateInitialViewController () :?> UITabBarController
-                    (controller.ChildViewControllers.[0] :?> UserViewController).User <- Some user
+                    let controller = Resources.userStoryboard.Value.InstantiateInitialViewController () :?> UserViewController
+                    controller.User <- Some user
                     this.NavigationController.PushViewController (controller, true)
 
                 match data with
