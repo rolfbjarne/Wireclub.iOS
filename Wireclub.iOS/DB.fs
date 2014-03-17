@@ -94,6 +94,10 @@ let createChatHistory (entity:Entity) historyType (last:(string * bool) option) 
         )
 }
 
+let unreadChatHistory () =
+    db.Table<ChatHistory>().Where(fun s -> s.Read = false).CountAsync() 
+    |> Async.AwaitTask
+
 let fetchChatHistory () =
     db.Table<ChatHistory>().OrderByDescending(fun s -> s.LastStamp).Take(100).ToListAsync() 
     |> Async.AwaitTask

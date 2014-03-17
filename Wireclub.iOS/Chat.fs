@@ -203,10 +203,19 @@ type ChatRoomViewController (room:Entity) as this =
             this.WebView.SetBodyBackgroundColor (colorToCss UIColor.White)
 
             Async.startNetworkWithContinuation
-                (Chat.join room.Slug)
+                (async {
+                    let! result = Chat.join room.Slug
+                    let! unread = DB.unreadChatHistory ()
+                    return result, unread
+                })
                 (function
-                    | Api.ApiOk (result, events) ->
+                    | Api.ApiOk (result, events), unread ->
                         startSequence <- result.Sequence
+
+                        this.NavigationItem.LeftItemsSupplementBackButton <- true
+                        this.NavigationItem.LeftBarButtonItem <- new UIBarButtonItem((sprintf "(%i)" unread), UIBarButtonItemStyle.Plain, new EventHandler(fun _ _ -> 
+                            this.NavigationController.PopViewControllerAnimated true |> ignore
+                        ))
 
                         this.WebView.PreloadImages [ for user in users.Values do yield App.imageUrl user.Avatar nameplateImageSize ]
                         let lines = new List<string>()
@@ -215,8 +224,7 @@ type ChatRoomViewController (room:Entity) as this =
                         processor.Start()
                         result.Members |> Array.iter addUser
                         result.HistoricMembers |> Array.iter addUser
-                    | Api.BadRequest errors -> ()
-                    | error -> this.HandleApiFailure error 
+                    | error, _ -> this.HandleApiFailure error 
             )
         )
 
@@ -242,6 +250,21 @@ module ChatRooms =
         controller
 
     let joinById id =
+//        Async.startNetworkWithContinuation
+//            (Chat.join id)
+//            (function
+//                | Api.ApiOk newSession ->
+//                    let user =
+//                        {
+//                            Id = newSession.UserId
+//                            Slug = newSession.Url // FIXME
+//                            Label = newSession.DisplayName
+//                            Image = newSession.PartnerAvatar
+//                        } 
+//                    continuation user (start user)
+//                    
+//                | error -> printfn "Failed to start PM session: %A" error
+//            )
         ()
 
     let leave slug =

@@ -1,6 +1,7 @@
 namespace Wireclub.iOS
 
 open System
+open System.Text.RegularExpressions
 open System.Linq
 open System.Drawing
 open System.Globalization
@@ -283,6 +284,25 @@ type EntryViewController () as controller =
     let updateNavigationNotification = ()
 
     let handleEvent channel (event:ChannelEvent.ChannelEvent) =
+        let reloadChats () =
+            let reloadNavigationItem (controller:UIViewController) =
+                Async.startWithContinuation 
+                    (DB.unreadChatHistory())
+                    (fun unread ->
+                        let button = new UIBarButtonItem((sprintf "(%i)" unread), UIBarButtonItemStyle.Plain, new EventHandler(fun _ _ -> 
+                            controller.NavigationController.PopViewControllerAnimated true |> ignore
+                        ))
+                        controller.NavigationItem.LeftItemsSupplementBackButton <- true
+                        controller.NavigationItem.LeftBarButtonItem <- button
+                    )
+
+            rootController.ChatsController.Reload ()
+            match controller.NavigationController.VisibleViewController with
+                | :? PrivateChatSessionViewController as controller -> reloadNavigationItem (controller :> UIViewController)
+                | :? ChatRoomViewController as controller -> reloadNavigationItem (controller :> UIViewController)
+                | _ -> ()
+
+
         controller.InvokeOnMainThread (fun _ -> 
             match event with
             //Private chat event
@@ -300,7 +320,7 @@ type EntryViewController () as controller =
                             do! DB.createChatHistory user DB.ChatHistoryType.PrivateChat (Some (message, read))
                             do! DB.createChatHistoryEvent user DB.ChatHistoryType.PrivateChat (JsonConvert.SerializeObject(event))
                          })
-                        (fun _ -> rootController.ChatsController.Reload ())
+                        (fun _ -> reloadChats () )
 
                 match ChatSessions.sessions.TryGetValue event.User with
                 | true, (user, controller) ->

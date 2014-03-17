@@ -130,11 +130,17 @@ type PrivateChatSessionViewController (user:Entity) as this =
                 (async {
                     let! session = PrivateChat.session user.Id
                     let! history = DB.fetchChatEventHistoryByEntity user.Id
-                    return session, history
+                    let! unread = DB.unreadChatHistory ()
+                    return session, history, unread
                 })
                 (function
-                    | Api.ApiOk newSession, history ->
+                    | Api.ApiOk newSession, history, unread ->
                         session <- Some newSession
+
+                        this.NavigationItem.LeftItemsSupplementBackButton <- true
+                        this.NavigationItem.LeftBarButtonItem <- new UIBarButtonItem((sprintf "(%i)" unread), UIBarButtonItemStyle.Plain, new EventHandler(fun _ _ -> 
+                            this.NavigationController.PopViewControllerAnimated true |> ignore
+                        ))
 
                         let lines = new List<string>()
                         for event in history.OrderBy(fun e -> e.LastStamp) do
@@ -152,7 +158,7 @@ type PrivateChatSessionViewController (user:Entity) as this =
                         this.Text.ShouldReturn <- (fun _ -> sendMessage this.Text.Text; false)
                         this.SendButton.TouchUpInside.Add(fun args -> sendMessage this.Text.Text )
 
-                    | error, _ -> this.HandleApiFailure error
+                    | error, _, _ -> this.HandleApiFailure error
                 )
         )
 
@@ -204,8 +210,6 @@ module ChatSessions =
             )
         ()
 
-    let touch (user:Wireclub.Boundary.Chat.PrivateChatFriend) =
-        ()
 
     let leave slug =
         match sessions.TryRemove slug with
