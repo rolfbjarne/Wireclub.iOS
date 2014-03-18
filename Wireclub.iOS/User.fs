@@ -44,6 +44,9 @@ type UserViewController (handle:nativeint) =
                 Navigation.navigate ("/privateChat/session/" + user.Slug) this.User
             )
 
+            this.NavigationItem.Title <- String.Empty
+            this.NavigationItem.RightBarButtonItem <- null
+
             this.FriendButton.TouchUpInside.Add(fun _ ->
                 let alert = new UIAlertView (Title="Send Friend Request?", Message="")
                 alert.AddButton "Cancel" |> ignore
@@ -51,11 +54,11 @@ type UserViewController (handle:nativeint) =
                 alert.Show ()
                 alert.Dismissed.Add(fun args ->
                     match args.ButtonIndex with
-                    | 0 -> ()
-                    | _ -> 
+                    | 1 -> 
                         Async.startNetworkWithContinuation
                             (User.addFriend user.Slug)
                             (this.HandleApiResult >> ignore)
+                    | _ -> ()
                 )
             )
 
