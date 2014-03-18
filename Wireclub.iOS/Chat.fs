@@ -208,13 +208,13 @@ type ChatRoomViewController (room:Entity) as this =
                     | Api.ApiOk (result, events) ->
                         startSequence <- result.Sequence
 
+                        result.Members |> Array.iter addUser
+                        result.HistoricMembers |> Array.iter addUser
                         this.WebView.PreloadImages [ for user in users.Values do yield App.imageUrl user.Avatar nameplateImageSize ]
                         let lines = new List<string>()
                         for event in events do processEvent event lines.Add
                         addLines (lines.ToArray())
                         processor.Start()
-                        result.Members |> Array.iter addUser
-                        result.HistoricMembers |> Array.iter addUser
                     | error -> this.HandleApiFailure error 
             )
         )
