@@ -241,6 +241,7 @@ type ChatRoomViewController (room:Entity) as this =
 
     member this.HandleChannelEvent = processor.Post
 
+    member this.Room = room
 
 module ChatRooms =
     let rooms = ConcurrentDictionary<string, Entity * ChatRoomViewController>()
