@@ -94,7 +94,20 @@ let createChatHistory (entity:Entity) historyType (last:(string * bool) option) 
         )
 }
 
-let unreadChatHistory () =
+let fetchChatHistoryById (id) =
+    db.Table<ChatHistory>().Where(fun x -> x.EntityId = id).FirstOrDefaultAsync()
+    |> Async.AwaitTask
+
+let updateChatHistoryReadById (id) = async {
+    let! history = fetchChatHistoryById id
+    match history with
+    | null -> ()
+    | history ->
+        history.Read <- true
+        do! db.UpdateAsync history |> Async.AwaitTask |> Async.Ignore
+}
+
+let fetchChatHistoryUnreadCount () =
     db.Table<ChatHistory>().Where(fun s -> s.Read = false).CountAsync() 
     |> Async.AwaitTask
 
@@ -102,9 +115,6 @@ let fetchChatHistory () =
     db.Table<ChatHistory>().OrderByDescending(fun s -> s.LastStamp).Take(100).ToListAsync() 
     |> Async.AwaitTask
 
-let fetchChatHistoryById (id) =
-    db.Table<ChatHistory>().Where(fun x -> x.EntityId = id).FirstOrDefaultAsync()
-    |> Async.AwaitTask
 
 let fetchChatEventHistoryByEntity entityId =
     db.Table<ChatHistoryEvent>().Where(fun e -> e.EntityId = entityId).OrderByDescending(fun s -> s.LastStamp).Take(100).ToListAsync() 

@@ -130,16 +130,11 @@ type PrivateChatSessionViewController (user:Entity) as this =
                 (async {
                     let! session = PrivateChat.session user.Id
                     let! history = DB.fetchChatEventHistoryByEntity user.Id
-                    let! unread = DB.unreadChatHistory ()
-                    return session, history, unread
+                    return session, history
                 })
                 (function
-                    | Api.ApiOk newSession, history, unread ->
+                    | Api.ApiOk newSession, history ->
                         session <- Some newSession
-
-                        this.NavigationItem.LeftBarButtonItem <- new UIBarButtonItem((sprintf "(%i)" unread), UIBarButtonItemStyle.Plain, new EventHandler(fun _ _ -> 
-                            this.NavigationController.PopViewControllerAnimated true |> ignore
-                        ))
 
                         let lines = new List<string>()
                         for event in history.OrderBy(fun e -> e.LastStamp) do
@@ -157,13 +152,26 @@ type PrivateChatSessionViewController (user:Entity) as this =
                         this.Text.ShouldReturn <- (fun _ -> sendMessage this.Text.Text; false)
                         this.SendButton.TouchUpInside.Add(fun args -> sendMessage this.Text.Text )
 
-                    | error, _, _ -> this.HandleApiFailure error
+                    | error, _ -> this.HandleApiFailure error
                 )
         )
-
+    
+    override this.ViewDidAppear animated = 
+        Async.startWithContinuation 
+            (async {
+                do! DB.updateChatHistoryReadById user.Id
+                let! unread = DB.fetchChatHistoryUnreadCount ()
+                return unread
+            })
+            (function
+                | 0 -> this.NavigationItem.LeftBarButtonItem <- null
+                | unread ->
+                    this.NavigationItem.LeftBarButtonItem <- new UIBarButtonItem((sprintf "(%i)" unread), UIBarButtonItemStyle.Plain, new EventHandler(fun _ _ -> 
+                        this.NavigationController.PopViewControllerAnimated true |> ignore
+                    ))
+            )
     
     override this.ViewDidDisappear animated =
-
         if this.IsMovingToParentViewController then
             showObserver.Dispose ()
             hideObserver.Dispose ()

@@ -203,18 +203,10 @@ type ChatRoomViewController (room:Entity) as this =
             this.WebView.SetBodyBackgroundColor (colorToCss UIColor.White)
 
             Async.startNetworkWithContinuation
-                (async {
-                    let! result = Chat.join room.Slug
-                    let! unread = DB.unreadChatHistory ()
-                    return result, unread
-                })
+                (Chat.join room.Slug)
                 (function
-                    | Api.ApiOk (result, events), unread ->
+                    | Api.ApiOk (result, events) ->
                         startSequence <- result.Sequence
-
-                        this.NavigationItem.LeftBarButtonItem <- new UIBarButtonItem((sprintf "(%i)" unread), UIBarButtonItemStyle.Plain, new EventHandler(fun _ _ -> 
-                            this.NavigationController.PopViewControllerAnimated true |> ignore
-                        ))
 
                         this.WebView.PreloadImages [ for user in users.Values do yield App.imageUrl user.Avatar nameplateImageSize ]
                         let lines = new List<string>()
@@ -223,11 +215,26 @@ type ChatRoomViewController (room:Entity) as this =
                         processor.Start()
                         result.Members |> Array.iter addUser
                         result.HistoricMembers |> Array.iter addUser
-                    | error, _ -> this.HandleApiFailure error 
+                    | error -> this.HandleApiFailure error 
             )
         )
 
-    override this.ViewDidDisappear (animated) =
+    override this.ViewDidAppear animated = 
+        Async.startWithContinuation 
+            (async {
+                do! DB.updateChatHistoryReadById room.Id
+                let! unread = DB.fetchChatHistoryUnreadCount ()
+                return unread
+            })
+            (function
+                | 0 -> this.NavigationItem.LeftBarButtonItem <- null
+                | unread ->
+                    this.NavigationItem.LeftBarButtonItem <- new UIBarButtonItem((sprintf "(%i)" unread), UIBarButtonItemStyle.Plain, new EventHandler(fun _ _ -> 
+                        this.NavigationController.PopViewControllerAnimated true |> ignore
+                    ))
+            )
+    
+    override this.ViewDidDisappear animated =
         if this.IsMovingToParentViewController then
             showObserver.Dispose ()
             hideObserver.Dispose ()

@@ -287,7 +287,7 @@ type EntryViewController () as controller =
         let reloadChats () =
             let reloadNavigationItem (controller:UIViewController) =
                 Async.startWithContinuation 
-                    (DB.unreadChatHistory())
+                    (DB.fetchChatHistoryUnreadCount())
                     (fun unread ->
                         let button = new UIBarButtonItem((sprintf "(%i)" unread), UIBarButtonItemStyle.Plain, new EventHandler(fun _ _ -> 
                             controller.NavigationController.PopViewControllerAnimated true |> ignore
