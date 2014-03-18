@@ -333,7 +333,9 @@ type EntryViewController () as controller =
                 match ChatRooms.rooms.TryGetValue channel with
                 | true, (_, controller) ->
                     controller.HandleChannelEvent event
-                | _ -> ChatRooms.joinById channel
+                | _ -> ChatRooms.joinById channel (fun room controller ->
+                    controller.HandleChannelEvent event
+                )
         )
 
     let resolvableHosts =

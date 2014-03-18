@@ -248,22 +248,21 @@ module ChatRooms =
         Async.Start (DB.createChatHistory room DB.ChatHistoryType.ChatRoom None)
         controller
 
-    let joinById id =
-//        Async.startNetworkWithContinuation
-//            (Chat.join id)
-//            (function
-//                | Api.ApiOk newSession ->
-//                    let user =
-//                        {
-//                            Id = newSession.UserId
-//                            Slug = newSession.Url // FIXME
-//                            Label = newSession.DisplayName
-//                            Image = newSession.PartnerAvatar
-//                        } 
-//                    continuation user (start user)
-//                    
-//                | error -> printfn "Failed to start PM session: %A" error
-//            )
+    let joinById id continuation =
+        Async.startWithContinuation
+            (DB.fetchChatHistoryById id)
+            (function
+                | null -> ()
+                | room ->
+                    let room = {
+                        Id = room.EntityId
+                        Label = room.Label
+                        Slug = room.Slug
+                        Image = room.Image
+                    }
+                    continuation room (join room)
+
+            )
         ()
 
     let leave slug =
