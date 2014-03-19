@@ -18,6 +18,8 @@ open ChannelEvent
 type ChatRoomUsersViewController (users:ChatUser[]) =
     inherit UIViewController ("ChatRoomUsersViewController", null)
 
+    let users = users.OrderBy(fun e -> e.Name).ToArray()
+
     let source = {
         new UITableViewSource() with
             override this.GetCell(tableView, indexPath) =
