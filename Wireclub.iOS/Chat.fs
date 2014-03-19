@@ -58,7 +58,7 @@ type ChatRoomViewController (room:Entity) as this =
     let events = System.Collections.Generic.HashSet<int64>()
     let users = ConcurrentDictionary<string, ChatUser>()
     let mutable startSequence = 0L
-    let nameplateImageSize = 32
+    let nameplateImageSize = 21
         
     let nameplate (user:ChatUser) =     
         sprintf
@@ -136,12 +136,14 @@ type ChatRoomViewController (room:Entity) as this =
             | { Event = Join user } -> 
                 if historic = false then
                     addUser user
-                addLine (userMessageLine "joined the room" user "#000" (fontFamily 0))
+                if users.Count < 25 then
+                    addLine (userMessageLine "joined the room" user "#000" (fontFamily 0))
 
             | { Event = Leave user } -> 
                 match users.TryGetValue event.User with
                 | true, user -> 
-                    addLine (userMessageLine "left the room" user "#000" (fontFamily 0))
+                    if users.Count < 25 then
+                        addLine (userMessageLine "left the room" user "#000" (fontFamily 0))
                     if historic = false then
                         users.TryRemove user.Id |> ignore
                 | _ -> ()
