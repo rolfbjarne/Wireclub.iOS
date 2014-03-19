@@ -167,6 +167,8 @@ type ChatRoomViewController (room:Entity) as this =
         loop ()
     ) 
 
+    let memberTypes = [  MembershipTypePublic.Member; MembershipTypePublic.Moderator; MembershipTypePublic.Admin ]
+
     static member val buttonImage = Image.resize (new SizeF(22.0f, 22.0f)) (UIImage.FromFile "UIButtonBarProfile.png") with get
 
     [<Outlet>]
@@ -210,8 +212,8 @@ type ChatRoomViewController (room:Entity) as this =
                     | Api.ApiOk (result, events) ->
                         startSequence <- result.Sequence
 
-                        result.Members |> Array.iter addUser
-                        result.HistoricMembers |> Array.iter addUser
+                        result.Members |> Array.filter (fun e -> memberTypes.Contains e.Membership) |> Array.iter addUser
+                        result.HistoricMembers |> Array.filter (fun e -> memberTypes.Contains e.Membership) |> Array.iter addUser
                         this.WebView.PreloadImages [ for user in users.Values do yield App.imageUrl user.Avatar nameplateImageSize ]
                         let lines = new List<string>()
                         for event in events do processEvent event lines.Add
