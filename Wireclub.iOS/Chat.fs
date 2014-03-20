@@ -89,7 +89,7 @@ type ChatRoomViewController (room:Entity) as this =
 
     let placeKeyboard (sender:obj) (args:UIKeyboardEventArgs) =
         this.ResizeViewToKeyboard args
-        this.WebView.EvaluateJavascript "wireclub.Mobile.scrollToEnd();" |> ignore
+        this.WebView.EvaluateJavascript "wireclub.Mobile.scrollToEnd(true);" |> ignore
         
     let showObserver = UIKeyboard.Notifications.ObserveWillShow(System.EventHandler<UIKeyboardEventArgs>(placeKeyboard))
     let hideObserver = UIKeyboard.Notifications.ObserveWillHide(System.EventHandler<UIKeyboardEventArgs>(placeKeyboard))
