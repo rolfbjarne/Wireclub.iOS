@@ -128,10 +128,6 @@ module Utility =
             UIView.CommitAnimations ()
 
     type UIWebView with
-        member this.ScrollToBottom () =
-            this.EvaluateJavascript 
-                (sprintf "window.scrollBy(0, %i);" (int (this.EvaluateJavascript "document.body.offsetHeight;"))) |> ignore
-
         member this.SetBodyBackgroundColor (color:string) =
             this.EvaluateJavascript 
                 (sprintf "document.body.style.backgroundColor = '%s';" color) |> ignore

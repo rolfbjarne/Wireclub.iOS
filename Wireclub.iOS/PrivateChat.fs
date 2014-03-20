@@ -44,15 +44,15 @@ type PrivateChatSessionViewController (user:Entity) as this =
 
     let addLine line =
         this.WebView.EvaluateJavascript(sprintf "wireclub.Mobile.addLine(%s)" (Newtonsoft.Json.JsonConvert.SerializeObject { Line = line })) |> ignore
-        this.WebView.ScrollToBottom()
+        this.WebView.EvaluateJavascript "wireclub.Mobile.scrollToEnd();" |> ignore
 
     let addLines lines =
         this.WebView.EvaluateJavascript(sprintf "wireclub.Mobile.addLines(%s)" (Newtonsoft.Json.JsonConvert.SerializeObject (lines |> Array.map (fun e -> { Line = e })))) |> ignore
-        this.WebView.ScrollToBottom()
+        this.WebView.EvaluateJavascript "wireclub.Mobile.scrollToEnd(true);" |> ignore
 
     let placeKeyboard (sender:obj) (args:UIKeyboardEventArgs) =
         this.ResizeViewToKeyboard args
-        this.WebView.ScrollToBottom()
+        this.WebView.EvaluateJavascript "wireclub.Mobile.scrollToEnd();" |> ignore
         
     let showObserver = UIKeyboard.Notifications.ObserveWillShow(System.EventHandler<UIKeyboardEventArgs>(placeKeyboard))
     let hideObserver = UIKeyboard.Notifications.ObserveWillHide(System.EventHandler<UIKeyboardEventArgs>(placeKeyboard))
