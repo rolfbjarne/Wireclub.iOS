@@ -9,8 +9,9 @@ open Wireclub.Boundary.Chat
 open Wireclub.Boundary.Models
 
 type ChatHistoryType =
-| PrivateChat = 0
-| ChatRoom = 1
+| None = 0
+| PrivateChat = 1
+| ChatRoom = 2
 
 [<AllowNullLiteral>]
 type ChatHistory() =
@@ -82,11 +83,12 @@ let createChatHistory (entity:Entity) historyType (last:(string * bool) option) 
 
         | existing -> 
             match last with
+            | Some (_, read) when existing.Type = ChatHistoryType.ChatRoom && existing.Read = false && read = false -> () //if it's a chatoom and unread leave it on the first unread
             | Some (last, read) ->
                 existing.Last <- last
                 existing.LastStamp <- DateTime.UtcNow
                 existing.Read <- read
-            | None -> ()
+            | _ -> ()
 
             db.UpdateAsync existing
             |> Async.AwaitTask

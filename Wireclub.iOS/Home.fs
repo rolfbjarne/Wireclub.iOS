@@ -5,12 +5,16 @@ open System.Text.RegularExpressions
 open System.Linq
 open System.Drawing
 open System.Globalization
+open System.Web
+
 open MonoTouch.Foundation
 open MonoTouch.UIKit
+
 open Wireclub.Models
 open Wireclub.Boundary
 open Wireclub.Boundary.Chat
 open Wireclub.Boundary.Models
+
 open Newtonsoft.Json
 
 open ChannelEvent
@@ -284,16 +288,19 @@ type EntryViewController () as controller =
     let handleEvent channel (event:ChannelEvent.ChannelEvent) =
         controller.InvokeOnMainThread (fun _ -> 
             let handleNotifications (entity:Entity) preview =
-                let read =
+                let read, historyType =
                     match controller.NavigationController.VisibleViewController with
-                    | :? PrivateChatSessionViewController as controller when controller.User.Id = entity.Id -> true
-                    | :? ChatRoomViewController as controller when controller.Room.Id = entity.Id -> true
-                    | _ -> false
+                    | :? PrivateChatSessionViewController as controller ->
+                        controller.User.Id = entity.Id, DB.ChatHistoryType.PrivateChat
+                    | :? ChatRoomViewController as controller ->
+                        controller.Room.Id = entity.Id, DB.ChatHistoryType.ChatRoom
+                    | _ -> false, DB.ChatHistoryType.None
                 
                 Async.startWithContinuation
                     (async {
-                        do! DB.createChatHistory entity DB.ChatHistoryType.PrivateChat (Some (preview, read))
-                        do! DB.createChatHistoryEvent entity DB.ChatHistoryType.PrivateChat (JsonConvert.SerializeObject(event))
+                        do! DB.createChatHistory entity historyType (Some (preview, read))
+                        if historyType = DB.ChatHistoryType.PrivateChat then
+                            do! DB.createChatHistoryEvent entity historyType (JsonConvert.SerializeObject(event))
                      })
                     (fun _ -> 
                         rootController.ChatsController.Reload ()
@@ -316,6 +323,10 @@ type EntryViewController () as controller =
                             | _ -> ()
                     )
 
+            let stripHtml html = 
+                html |> String.stripHtml |> HttpUtility.HtmlDecode
+    
+
             match event with
             //Private chat event
             | { Event = PrivateMessage (color, font, message) }
@@ -323,10 +334,10 @@ type EntryViewController () as controller =
                 match ChatSessions.sessions.TryGetValue event.User with
                 | true, (user, controller) ->
                     controller.HandleChannelEvent event
-                    handleNotifications user (String.stripHtml message)
+                    handleNotifications user (stripHtml message)
                 | _ -> ChatSessions.startById event.User (fun user controller -> 
                     controller.HandleChannelEvent event
-                    handleNotifications user (String.stripHtml message)
+                    handleNotifications user (stripHtml message)
                 )
 
             | { Event = Notification message }
@@ -334,10 +345,10 @@ type EntryViewController () as controller =
                 match ChatRooms.rooms.TryGetValue channel with
                 | true, (room, controller) ->
                     controller.HandleChannelEvent event
-                    handleNotifications room (String.stripHtml message)
+                    handleNotifications room (stripHtml message)
                 | _ -> ChatRooms.joinById channel (fun room controller ->
                     controller.HandleChannelEvent event
-                    handleNotifications room (String.stripHtml message)
+                    handleNotifications room (stripHtml message)
                 )
             | _ ->
                 match ChatRooms.rooms.TryGetValue channel with
