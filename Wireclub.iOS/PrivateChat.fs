@@ -42,9 +42,9 @@ type PrivateChatSessionViewController (user:Entity) as this =
     let partnerLine payload color font = line "partner" (nameplate user.Slug user.Image) (message color font payload) 
     let viewerLine payload color font = line "viewer" (nameplate identity.Slug identity.Avatar) (message color font payload) 
 
-    let addLine line =
+    let addLine line forceScroll =
         this.WebView.EvaluateJavascript(sprintf "wireclub.Mobile.addLine(%s)" (Newtonsoft.Json.JsonConvert.SerializeObject { Line = line })) |> ignore
-        this.WebView.EvaluateJavascript "wireclub.Mobile.scrollToEnd();" |> ignore
+        this.WebView.EvaluateJavascript (sprintf "wireclub.Mobile.scrollToEnd(%b);" forceScroll) |> ignore
 
     let addLines lines =
         this.WebView.EvaluateJavascript(sprintf "wireclub.Mobile.addLines(%s)" (Newtonsoft.Json.JsonConvert.SerializeObject (lines |> Array.map (fun e -> { Line = e })))) |> ignore
@@ -67,16 +67,16 @@ type PrivateChatSessionViewController (user:Entity) as this =
                     | Api.ApiOk response -> 
                         this.Text.Text <- ""
                         if events.Add response.Sequence then
-                            addLine (viewerLine response.Feedback response.Color (fontFamily response.Font))
+                            addLine (viewerLine response.Feedback response.Color (fontFamily response.Font)) true
                     | error -> this.HandleApiFailure error)
 
     let processEvent event addLine = 
         if events.Add event.Sequence then
             match event with
             | { Event = PrivateMessage (color, font, message) } -> 
-                addLine (partnerLine message color (fontFamily font))
+                addLine (partnerLine message color (fontFamily font)) false
             | { Event = PrivateMessageSent (color, font, message) } -> 
-                addLine (viewerLine message color (fontFamily font))
+                addLine (viewerLine message color (fontFamily font)) true
             | _ -> ()
 
     let processor = new MailboxProcessor<ChannelEvent>(fun inbox ->
@@ -141,7 +141,7 @@ type PrivateChatSessionViewController (user:Entity) as this =
                             if String.IsNullOrEmpty event.EventJson = false then
                                 try
                                     let event = JsonConvert.DeserializeObject<ChannelEvent>(event.EventJson)
-                                    processEvent event lines.Add
+                                    processEvent event (fun l _ -> lines.Add l)
                                 with
                                 | ex -> printfn "%A %s" event ex.Message 
 

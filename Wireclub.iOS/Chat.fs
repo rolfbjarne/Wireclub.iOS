@@ -79,9 +79,9 @@ type ChatRoomViewController (room:Entity) as this =
     let notificationLine payload = line String.Empty payload
     let userFeedbackLine payload user  = line (nameplate user) payload
 
-    let addLine line =
+    let addLine line forceScroll =
         this.WebView.EvaluateJavascript(sprintf "wireclub.Mobile.addLine(%s)" (Newtonsoft.Json.JsonConvert.SerializeObject { Line = line })) |> ignore
-        this.WebView.EvaluateJavascript "wireclub.Mobile.scrollToEnd();" |> ignore
+        this.WebView.EvaluateJavascript (sprintf "wireclub.Mobile.scrollToEnd(%b);" forceScroll) |> ignore
 
     let addLines lines =
         this.WebView.EvaluateJavascript(sprintf "wireclub.Mobile.addLines(%s)" (Newtonsoft.Json.JsonConvert.SerializeObject (lines |> Array.map (fun e -> { Line = e })))) |> ignore
@@ -116,7 +116,7 @@ type ChatRoomViewController (room:Entity) as this =
                     | Api.ApiOk response -> 
                         this.Text.Text <- ""
                         match users.TryGetValue identity.Id with
-                        | true, user -> addLine (userFeedbackLine response.Payload user)
+                        | true, user -> addLine (userFeedbackLine response.Payload user) true
                         | _ -> ()
                     | error -> this.HandleApiFailure error
                 )
@@ -128,24 +128,24 @@ type ChatRoomViewController (room:Entity) as this =
         if events.Add event.Sequence then
             match event with
             | { Event = Notification message } -> 
-                addLine (notificationLine message)
+                addLine (notificationLine message) false
 
             | { Event = Message (color, font, message); User = user } when (user <> identity.Id || historic) -> 
                 match users.TryGetValue event.User with
-                | true, user -> addLine (userMessageLine message user color (fontFamily font))
+                | true, user -> addLine (userMessageLine message user color (fontFamily font)) false
                 | _ -> ()
 
             | { Event = Join user } -> 
                 if historic = false then
                     addUser user
                 if users.Count < 25 then
-                    addLine (userMessageLine "joined the room" user "#000" (fontFamily 0))
+                    addLine (userMessageLine "joined the room" user "#000" (fontFamily 0)) false
 
             | { Event = Leave user } -> 
                 match users.TryGetValue event.User with
                 | true, user -> 
                     if users.Count < 25 then
-                        addLine (userMessageLine "left the room" user "#000" (fontFamily 0))
+                        addLine (userMessageLine "left the room" user "#000" (fontFamily 0)) false
                     if historic = false then
                         users.TryRemove user.Id |> ignore
                 | _ -> ()
@@ -218,7 +218,7 @@ type ChatRoomViewController (room:Entity) as this =
                         result.HistoricMembers |> Array.filter (fun e -> memberTypes.Contains e.Membership) |> Array.iter addUser
                         this.WebView.PreloadImages [ for user in users.Values do yield App.imageUrl user.Avatar nameplateImageSize ]
                         let lines = new List<string>()
-                        for event in events do processEvent event lines.Add
+                        for event in events do processEvent event (fun l _ -> lines.Add l)
                         addLines (lines.ToArray())
                         processor.Start()
                     | error -> this.HandleApiFailure error 
