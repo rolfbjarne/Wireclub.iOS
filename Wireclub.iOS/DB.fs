@@ -41,6 +41,7 @@ let dbChatHistory = db.CreateTableAsync<ChatHistory> () |> Async.AwaitTask |> As
 let dbChatEventHistory = db.CreateTableAsync<ChatHistoryEvent> () |> Async.AwaitTask |> Async.RunSynchronously
 
 
+
 let createChatHistoryEvent (entity:Entity) historyType eventJson = async {
     do!
         db.InsertAsync 
@@ -61,40 +62,52 @@ let createChatHistoryEvent (entity:Entity) historyType eventJson = async {
             do! db.DeleteAsync(event) |> Async.AwaitTask |> Async.Ignore
 }
 
+let createChatHistory = 
+    let processor = MailboxProcessor<(Entity * ChatHistoryType * (string * bool) option) * AsyncReplyChannel<unit>>.Start(fun inbox ->
+        let rec loop () = async {
+            let! (entity, historyType, last), channel = inbox.Receive()
+            let! existing = db.Table<ChatHistory>().Where(fun x -> x.EntityId = entity.Id).FirstOrDefaultAsync() |> Async.AwaitTask
 
-let createChatHistory (entity:Entity) historyType (last:(string * bool) option) = async {
-    let! existing = db.Table<ChatHistory>().Where(fun x -> x.EntityId = entity.Id).FirstOrDefaultAsync() |> Async.AwaitTask
+            do!
+                (match existing with
+                | null -> 
+                    db.InsertAsync 
+                        (ChatHistory(
+                            EntityId = entity.Id,
+                            Label = entity.Label,
 
-    do!
-        (match existing with
-        | null -> 
-            db.InsertAsync 
-                (ChatHistory(
-                    EntityId = entity.Id,
-                    Label = entity.Label,
-                    Slug = entity.Slug,
-                    Image = entity.Image,
-                    Last = "",
-                    Read = true,
-                    Type = historyType
-                )) 
-            |> Async.AwaitTask 
-            |> Async.Ignore
+                            Slug = entity.Slug,
+                            Image = entity.Image,
+                            Last = "",
+                            Read = true,
+                            Type = historyType
+                        )) 
+                    |> Async.AwaitTask 
+                    |> Async.Ignore
 
-        | existing -> 
-            match last with
-            | Some (_, read) when existing.Type = ChatHistoryType.ChatRoom && existing.Read = false && read = false -> () //if it's a chatoom and unread leave it on the first unread
-            | Some (last, read) ->
-                existing.Last <- last
-                existing.LastStamp <- DateTime.UtcNow
-                existing.Read <- read
-            | _ -> ()
+                | existing -> 
+                    match last with
+                    | Some (_, read) when existing.Type = ChatHistoryType.ChatRoom && existing.Read = false && read = false -> () //if it's a chatoom and unread leave it on the first unread
+                    | Some (last, read) ->
+                        existing.Last <- last
+                        existing.LastStamp <- DateTime.UtcNow
+                        existing.Read <- read
+                    | _ -> ()
 
-            db.UpdateAsync existing
-            |> Async.AwaitTask
-            |> Async.Ignore
-        )
-}
+                    db.UpdateAsync existing
+                    |> Async.AwaitTask
+                    |> Async.Ignore
+                )
+
+            channel.Reply(())
+
+            return! loop ()
+        }
+
+        loop ()
+    )
+
+    fun message -> processor.PostAndAsyncReply(fun replyChannel -> message, replyChannel)
 
 let fetchChatHistoryById (id) =
     db.Table<ChatHistory>().Where(fun x -> x.EntityId = id).FirstOrDefaultAsync()

@@ -259,7 +259,7 @@ module ChatRooms =
                     (fun _ -> room, new ChatRoomViewController (room)),
                     (fun _ room -> room)
                 )
-        Async.Start (DB.createChatHistory room DB.ChatHistoryType.ChatRoom None)
+        Async.Start (DB.createChatHistory (room, DB.ChatHistoryType.ChatRoom, None))
         controller
 
     let joinById id continuation =

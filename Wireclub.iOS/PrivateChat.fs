@@ -194,7 +194,7 @@ module ChatSessions =
                 (fun _ x -> x)
             )
 
-        Async.Start (DB.createChatHistory user DB.ChatHistoryType.PrivateChat None)
+        Async.Start (DB.createChatHistory (user, DB.ChatHistoryType.PrivateChat, None))
         controller
 
     let startById id continuation =
@@ -207,7 +207,7 @@ module ChatSessions =
                     let user =
                         {
                             Id = newSession.UserId
-                            Slug = newSession.Url // FIXME
+                            Slug = newSession.Slug // FIXME
                             Label = newSession.DisplayName
                             Image = newSession.PartnerAvatar
                         } 
