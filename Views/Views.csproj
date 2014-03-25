@@ -138,6 +138,22 @@
     <Compile Include="AsyncPickerViewController.designer.cs">
       <DependentUpon>AsyncPickerViewController.cs</DependentUpon>
     </Compile>
+    <Compile Include="PrivacyOptionsViewController.cs" />
+    <Compile Include="PrivacyOptionsViewController.designer.cs">
+      <DependentUpon>PrivacyOptionsViewController.cs</DependentUpon>
+    </Compile>
+    <Compile Include="MessagingOptionsViewController.cs" />
+    <Compile Include="MessagingOptionsViewController.designer.cs">
+      <DependentUpon>MessagingOptionsViewController.cs</DependentUpon>
+    </Compile>
+    <Compile Include="EmailViewController.cs" />
+    <Compile Include="EmailViewController.designer.cs">
+      <DependentUpon>EmailViewController.cs</DependentUpon>
+    </Compile>
+    <Compile Include="BlockedUsersViewController.cs" />
+    <Compile Include="BlockedUsersViewController.designer.cs">
+      <DependentUpon>BlockedUsersViewController.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <InterfaceDefinition Include="FriendsViewController.xib" />
