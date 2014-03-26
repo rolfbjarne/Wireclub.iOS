@@ -12,9 +12,31 @@ namespace Views
 	[Register ("MessagingOptionsViewController")]
 	partial class MessagingOptionsViewController
 	{
+		[Outlet]
+		MonoTouch.UIKit.UISwitch Picture { get; set; }
+
+		[Outlet]
+		MonoTouch.UIKit.UIButton Save { get; set; }
+
+		[Outlet]
+		MonoTouch.UIKit.UISwitch Verified { get; set; }
 		
 		void ReleaseDesignerOutlets ()
 		{
+			if (Picture != null) {
+				Picture.Dispose ();
+				Picture = null;
+			}
+
+			if (Verified != null) {
+				Verified.Dispose ();
+				Verified = null;
+			}
+
+			if (Save != null) {
+				Save.Dispose ();
+				Save = null;
+			}
 		}
 	}
 }

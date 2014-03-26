@@ -1,19 +1,14 @@
 ﻿<Properties>
-  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug|iPhone" PreferredExecutionTarget="MonoDevelop.IPhone.IPhoneDeviceTarget.Braden Evans’s iPod" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Wireclub.iOS/Home.fs">
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug|iPhoneSimulator" PreferredExecutionTarget="MonoDevelop.IPhone.IPhoneSimulatorTarget.IPhoneRetina4_64.7.1" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="Wireclub.iOS/Settings.fs">
     <Files>
-      <File FileName="Wireclub.iOS/Home.fs" Line="82" Column="29" />
-      <File FileName="Wireclub.iOS/PrivateChat.fs" Line="61" Column="15" />
-      <File FileName="Wireclub.iOS/Chat.fs" Line="234" Column="72" />
-      <File FileName="Wireclub.iOS/Directory.fs" Line="23" Column="73" />
+      <File FileName="Wireclub.iOS/Settings.fs" Line="97" Column="50" />
+      <File FileName="Wireclub.iOS/Home.fs" Line="1" Column="1" />
+      <File FileName="Wireclub.iOS/Chat.fs" Line="50" Column="41" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
-    <BreakpointStore>
-      <Breakpoint file="/Users/bradene/wireclub.android/Wireclub.AppClient/App.fs" line="5" column="1" />
-      <Breakpoint file="/Volumes/Fatty/repo/Wireclub.iOS/Wireclub.iOS/Home.fs" line="85" column="1" />
-      <Breakpoint file="/Volumes/Fatty/repo/Wireclub.iOS/Wireclub.iOS/Home.fs" line="84" column="1" />
-    </BreakpointStore>
+    <BreakpointStore />
   </MonoDevelop.Ide.DebuggingService.Breakpoints>
   <MonoDevelop.Ide.DebuggingService.PinnedWatches />
 </Properties>

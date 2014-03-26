@@ -12,9 +12,39 @@ namespace Views
 	[Register ("NotificationsViewController")]
 	partial class NotificationsViewController
 	{
+		[Outlet]
+		MonoTouch.UIKit.UISwitch ClubActivity { get; set; }
+
+		[Outlet]
+		MonoTouch.UIKit.UISwitch Invitations { get; set; }
+
+		[Outlet]
+		MonoTouch.UIKit.UISwitch NewMessages { get; set; }
+
+		[Outlet]
+		MonoTouch.UIKit.UIButton Save { get; set; }
 		
 		void ReleaseDesignerOutlets ()
 		{
+			if (ClubActivity != null) {
+				ClubActivity.Dispose ();
+				ClubActivity = null;
+			}
+
+			if (NewMessages != null) {
+				NewMessages.Dispose ();
+				NewMessages = null;
+			}
+
+			if (Invitations != null) {
+				Invitations.Dispose ();
+				Invitations = null;
+			}
+
+			if (Save != null) {
+				Save.Dispose ();
+				Save = null;
+			}
 		}
 	}
 }

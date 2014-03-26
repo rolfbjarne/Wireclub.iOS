@@ -204,20 +204,6 @@ type FriendsViewController () as controller =
 
         base.ViewDidLoad ()
 
-[<Register ("SettingsMenuViewController")>]
-type SettingsMenuViewController (handle:nativeint) =
-    inherit UITableViewController (handle)
-
-    override this.ViewDidLoad () =
-        base.ViewDidLoad ()
-            
-
-[<Register ("MegaMenuViewController")>]
-type MegaMenuViewController (handle:nativeint) =
-    inherit UITableViewController (handle)
-
-    override this.ViewDidLoad () =
-        base.ViewDidLoad ()
 
 [<Register ("HomeViewController")>]
 type HomeViewController () as controller =
