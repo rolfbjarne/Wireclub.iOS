@@ -133,6 +133,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Utility.fs" />
+    <Compile Include="Toast.fs" />
     <Compile Include="Reachability.fs" />
     <Compile Include="Resources.fs" />
     <Compile Include="DB.fs" />

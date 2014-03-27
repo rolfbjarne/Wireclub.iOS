@@ -19,9 +19,6 @@ namespace Views
 		MonoTouch.UIKit.UITextField New { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField Old { get; set; }
-
-		[Outlet]
 		MonoTouch.UIKit.UITextField Password { get; set; }
 
 		[Outlet]
@@ -29,19 +26,14 @@ namespace Views
 		
 		void ReleaseDesignerOutlets ()
 		{
-			if (Old != null) {
-				Old.Dispose ();
-				Old = null;
+			if (Confirm != null) {
+				Confirm.Dispose ();
+				Confirm = null;
 			}
 
 			if (New != null) {
 				New.Dispose ();
 				New = null;
-			}
-
-			if (Confirm != null) {
-				Confirm.Dispose ();
-				Confirm = null;
 			}
 
 			if (Password != null) {

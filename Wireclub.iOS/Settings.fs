@@ -46,14 +46,13 @@ type ChatOptionsViewController(handle:nativeint) =
 type EmailViewController(handle:nativeint) =
     inherit UITableViewController (handle)
 
+    let identity = match Api.userIdentity with | Some id -> id | None -> failwith "User must be logged in"
+
     [<Outlet>]
     member val Confirm:UITextField = null with get, set
 
     [<Outlet>]
     member val New:UITextField = null with get, set
-
-    [<Outlet>]
-    member val Old:UITextField = null with get, set
 
     [<Outlet>]
     member val Password:UITextField = null with get, set
