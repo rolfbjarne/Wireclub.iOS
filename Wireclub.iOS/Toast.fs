@@ -1,4 +1,28 @@
-﻿module Toast
+﻿//    Copyright (c) 2013 Charles Scalesse.
+//
+//    Permission is hereby granted, free of charge, to any person obtaining a
+//    copy of this software and associated documentation files (the
+//    "Software"), to deal in the Software without restriction, including
+//    without limitation the rights to use, copy, modify, merge, publish,
+//    distribute, sublicense, and/or sell copies of the Software, and to
+//    permit persons to whom the Software is furnished to do so, subject to
+//    the following conditions:
+//
+//    The above copyright notice and this permission notice shall be included
+//    in all copies or substantial portions of the Software.
+//
+//    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+//    OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+//    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+//    IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+//    CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+//    TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+//    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+//    Ported Toast by Charles Scalesse to F#
+//    https://github.com/scalessec/Toast
+
+module Toast
 
 open System
 open System.Collections.Generic
@@ -21,7 +45,7 @@ let toastOpacity = 0.8f
 let toastFontSize = 16.0f
 let toastMaxTitleLines  = 0
 let toastMaxMessageLines = 0
-let toastFadeDuration = 0.2f
+let toastFadeDuration = 0.2
 
 // shadow appearance
 let toastShadowOpacity = 0.8f
@@ -60,30 +84,24 @@ let sizeForString (str:string) (font:UIFont) (constrainedSize:SizeF) (lineBreakM
 //        return CGSizeMake(ceilf(boundingRect.Size.Width), ceilf(boundingRect.Size.Height))
 //    }
 
-
 // Toast Methods
-//
-//let makeToast (message:string) = makeToast message toastDefaultDuration toastDefaultPosition
-//
-//let makeToast (message:string) (duration:int) (position:string) =
-//    let toast = viewForMessage message None None
-//    showToast toast duration position
-//
-//let makeToast (message:string) (duration:int) (position:string) (title:string) =
-//    let toast = viewForMessage message title None
-//    showToast toast duration position
-//
-//let makeToast:(NSString *)message duration:(NSTimeInterval)duration position:(id)position image:(UIImage *)image {
-//    let toast = viewForMessage message title None
-//    showToast toast duration position
-//}
-//
-//let makeToast:(NSString *)message duration:(NSTimeInterval)duration  position:(id)position title:(NSString *)title image:(UIImage *)image {
-//    UIView *toast = [self viewForMessage:message title:title image:image]
-//    [self showToast:toast duration:duration position:position]  
-//}
 
 type UIView with
+    member this.MakeToast (message:string) =
+        this.MakeToast(message, toastDefaultDuration, toastDefaultPosition)
+
+    member this.MakeToast (message:string, duration:float, position:string) =
+        this.ShowToast ((this.ViewForMessage message null null), duration, position)
+
+    member this.MakeToast (message:string, duration:float, position:string, title:string) =
+        this.ShowToast ((this.ViewForMessage message title null), duration, position)
+
+    member this.MakeToast (message:string, duration:float, position:string, image:UIImage) =
+        this.ShowToast ((this.ViewForMessage message null image), duration, position)
+
+    member this.MakeToast (message:string, duration:float, position:string, title:string, image:UIImage) =
+        this.ShowToast ((this.ViewForMessage message title image), duration, position)
+
     member this.CenterPointForPosition (point:string) (toast:UIView) =
         match point with
         | "top" -> new PointF(this.Bounds.Size.Width/2.0f, (toast.Frame.Size.Height / 2.0f) + toastVerticalPadding)
@@ -100,64 +118,45 @@ type UIView with
 //        return [point CGPointValue]
 //    }
 
-    member this.ShowToast (toast:UIView) =
+    member this.ShowToast(toast:UIView) =
         this.ShowToast (toast, toastDefaultDuration, toastDefaultPosition)
 
-    member this.ShowToast (toast:UIView, duration:float, position:string) =
+    member this.ShowToast(toast:UIView, duration:float, position:string) =
         toast.Center <- this.CenterPointForPosition position toast
         toast.Alpha <- 0.0f
-    
+
+        let timer:NSTimer ref = ref null
         if toastHidesOnTap then
-            let recognizer =  new UITapGestureRecognizer(new Action<_>(fun _ -> ()))
+            let recognizer =  new UITapGestureRecognizer(new Action<_>(fun _ -> timer.Value.Invalidate(); this.HideToast toast ))
             toast.AddGestureRecognizer recognizer
             toast.UserInteractionEnabled <- true
             toast.ExclusiveTouch <- true
         
-        this.AddSubview toast
-//        
-//        [UIView animateWithDuration:toastFadeDuration
-//                              delay:0.0f
-//                            options:(UIViewAnimationOptionCurveEaseOut | UIViewAnimationOptionAllowUserInteraction)
-//                         animations:^{
-//                             toast.Alpha <- 1.0f
-//                         } completion:^(BOOL finished) {
-//                             NSTimer *timer <- [NSTimer scheduledTimerWithTimeInterval:duration target:self selector:@selector(toastTimerDidFinish:) userInfo:toast repeats:NO]
-//                             // associate the timer with the toast view
-//                             objc_setAssociatedObject (toast, &toastTimerKey, timer, OBJC_ASSOCIATION_RETAIN_NONATOMIC)
-//                         }]
+        this.AddSubview(toast)
+
+        UIView.Animate(
+            toastFadeDuration,
+            0.0,
+            UIViewAnimationOptions.CurveEaseOut ||| UIViewAnimationOptions.AllowUserInteraction,
+            (fun _ -> toast.Alpha <- 1.0f),
+            (fun _ -> timer := NSTimer.CreateTimer(duration, (fun _ ->  this.HideToast toast ))))
+
+    member this.HideToast (toast:UIView) =
+        UIView.Animate(
+                toastFadeDuration,
+                0.0,
+                UIViewAnimationOptions.CurveEaseIn ||| UIViewAnimationOptions.BeginFromCurrentState,
+                (fun _ -> toast.Alpha <- 0.0f),
+                (fun _ -> toast.RemoveFromSuperview()))
 
 
-//let hideToast:(UIView *)toast {
-//    [UIView animateWithDuration:toastFadeDuration
-//                          delay:0.0f
-//                        options:(UIViewAnimationOptionCurveEaseIn | UIViewAnimationOptionBeginFromCurrentState)
-//                     animations:^{
-//                         toast.Alpha <- 0.0f
-//                     } completion:^(BOOL finished) {
-//                         [toast removeFromSuperview]
-//                     }]
-//}
-//
-//#pragma mark - Events
-//
-//let toastTimerDidFinish:(NSTimer *)timer {
-//    [self hideToast:(UIView *)timer.userInfo]
-//}
-//
-//let handleToastTapped:(UITapGestureRecognizer *)recognizer {
-//    NSTimer *timer <- (NSTimer *)objc_getAssociatedObject(self, &toastTimerKey)
-//    [timer invalidate]
-//    
-//    [self hideToast:recognizer.view]
-//}
-//
 //#pragma mark - Toast Activity Methods
 //
-//let makeToastActivity {
+//member this.MakeToastActivity {
 //    [self makeToastActivity:toastActivityDefaultPosition]
 //}
 //
-//let makeToastActivity:(id)position {
+//member this.MakeToastActivity:(id)position {
 //    // sanity
 //    UIView *existingActivityView <- (UIView *)objc_getAssociatedObject(self, &toastActivityViewKey)
 //    if (existingActivityView <> null) return
@@ -208,7 +207,6 @@ type UIView with
 //                         }]
 //    }
 //}
-
 
     member this.ViewForMessage (message:string) (title:string) (image:UIImage) =
         // dynamically build a toast view with any combination of message, title, & image.
