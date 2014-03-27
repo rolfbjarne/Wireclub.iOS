@@ -31,7 +31,7 @@ let toastDisplayShadow = true
 
 // display duration and position
 let toastDefaultPosition = "bottom"
-let int toastDefaultDuration  = 3.0f
+let toastDefaultDuration  = 3.0
 
 // image view size
 let toastImageViewWidth = 80.0f
@@ -48,6 +48,17 @@ let toastHidesOnTap = true // excludes activity views
 // associative reference keys
 let toastTimerKey = "toastTimerKey"
 let toastActivityViewKey = "toastActivityViewKey"
+
+let sizeForString (str:string) (font:UIFont) (constrainedSize:SizeF) (lineBreakMode:UILineBreakMode) =
+    let str = NSString.op_Explicit str 
+    str.StringSize(font, constrainedSize, lineBreakMode)
+//    if ([str respondsToSelector:@selector(boundingRectWithSize:options:attributes:context:)]) {
+//        NSMutableParagraphStyle *paragraphStyle <- [[NSMutableParagraphStyle alloc] init]
+//        paragraphStyle.lineBreakMode <- lineBreakMode
+//        NSDictionary *attributes <- @{NSFontAttributeName:font, NSParagraphStyleAttributeName:paragraphStyle}
+//        CGRect boundingRect <- [str boundingRectWithSize:constrainedSize options:NSStringDrawingUsesLineFragmentOrigin attributes:attributes context:null]
+//        return CGSizeMake(ceilf(boundingRect.Size.Width), ceilf(boundingRect.Size.Height))
+//    }
 
 
 // Toast Methods
@@ -71,43 +82,57 @@ let toastActivityViewKey = "toastActivityViewKey"
 //    UIView *toast = [self viewForMessage:message title:title image:image]
 //    [self showToast:toast duration:duration position:position]  
 //}
-//
-//let showToast (toast:UIView) =
-//    [self showToast:toast duration:toastDefaultDuration position:toastDefaultPosition]
-//
-//
-//let showToast:(UIView *)toast duration:(NSTimeInterval)duration position:(id)point {
-//    toast.center <- [self centerPointForPosition:point withToast:toast]
-//    toast.alpha <- 0.0f
-//    
-//    if (toastHidesOnTap) {
-//        UITapGestureRecognizer *recognizer <- [[UITapGestureRecognizer alloc] initWithTarget:toast action:@selector(handleToastTapped:)]
-//        [toast addGestureRecognizer:recognizer]
-//        toast.userInteractionEnabled <- true
-//        toast.exclusiveTouch <- true
+
+type UIView with
+    member this.CenterPointForPosition (point:string) (toast:UIView) =
+        match point with
+        | "top" -> new PointF(this.Bounds.Size.Width/2.0f, (toast.Frame.Size.Height / 2.0f) + toastVerticalPadding)
+        | "bottom" -> new PointF(this.Bounds.Size.Width/2.0f, (this.Bounds.Size.Height - (toast.Frame.Size.Height / 2.0f)) - toastVerticalPadding)
+        | "center" -> new PointF(this.Bounds.Size.Width / 2.0f, this.Bounds.Size.Height / 2.0f)
+        | _-> this.CenterPointForPosition toastDefaultPosition toast
+
+//    if([point isKindOfClass:[NSString class]]) {
+//        // convert string literals "top", "bottom", "center", or any point wrapped in an NSValue object into a CGPoint
+//        if([point caseInsensitiveCompare:"top"] == NSOrderedSame) {        }
+//        else if([point caseInsensitiveCompare:"bottom"] == NSOrderedSame) {        }
+//        else if([point caseInsensitiveCompare:"center"] == NSOrderedSame) {        }
+//    } else if ([point isKindOfClass:[NSValue class]]) {
+//        return [point CGPointValue]
 //    }
-//    
-//    [self addSubview:toast]
-//    
-//    [UIView animateWithDuration:toastFadeDuration
-//                          delay:0.0f
-//                        options:(UIViewAnimationOptionCurveEaseOut | UIViewAnimationOptionAllowUserInteraction)
-//                     animations:^{
-//                         toast.alpha <- 1.0f
-//                     } completion:^(BOOL finished) {
-//                         NSTimer *timer <- [NSTimer scheduledTimerWithTimeInterval:duration target:self selector:@selector(toastTimerDidFinish:) userInfo:toast repeats:NO]
-//                         // associate the timer with the toast view
-//                         objc_setAssociatedObject (toast, &toastTimerKey, timer, OBJC_ASSOCIATION_RETAIN_NONATOMIC)
-//                     }]
-//    
-//}
-//
+
+    member this.ShowToast (toast:UIView) =
+        this.ShowToast (toast, toastDefaultDuration, toastDefaultPosition)
+
+    member this.ShowToast (toast:UIView, duration:float, position:string) =
+        toast.Center <- this.CenterPointForPosition position toast
+        toast.Alpha <- 0.0f
+    
+        if toastHidesOnTap then
+            let recognizer =  new UITapGestureRecognizer(new Action<_>(fun _ -> ()))
+            toast.AddGestureRecognizer recognizer
+            toast.UserInteractionEnabled <- true
+            toast.ExclusiveTouch <- true
+        
+        this.AddSubview toast
+//        
+//        [UIView animateWithDuration:toastFadeDuration
+//                              delay:0.0f
+//                            options:(UIViewAnimationOptionCurveEaseOut | UIViewAnimationOptionAllowUserInteraction)
+//                         animations:^{
+//                             toast.Alpha <- 1.0f
+//                         } completion:^(BOOL finished) {
+//                             NSTimer *timer <- [NSTimer scheduledTimerWithTimeInterval:duration target:self selector:@selector(toastTimerDidFinish:) userInfo:toast repeats:NO]
+//                             // associate the timer with the toast view
+//                             objc_setAssociatedObject (toast, &toastTimerKey, timer, OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+//                         }]
+
+
 //let hideToast:(UIView *)toast {
 //    [UIView animateWithDuration:toastFadeDuration
 //                          delay:0.0f
 //                        options:(UIViewAnimationOptionCurveEaseIn | UIViewAnimationOptionBeginFromCurrentState)
 //                     animations:^{
-//                         toast.alpha <- 0.0f
+//                         toast.Alpha <- 0.0f
 //                     } completion:^(BOOL finished) {
 //                         [toast removeFromSuperview]
 //                     }]
@@ -140,7 +165,7 @@ let toastActivityViewKey = "toastActivityViewKey"
 //    UIView *activityView <- [[UIView alloc] initWithFrame:new RectangleF(0, 0, toastActivityWidth, toastActivityHeight)]
 //    activityView.center <- [self centerPointForPosition:position withToast:activityView]
 //    activityView.backgroundColor <- [[UIColor blackColor] colorWithAlphaComponent:toastOpacity]
-//    activityView.alpha <- 0.0f
+//    activityView.Alpha <- 0.0f
 //    activityView.autoresizingMask <- (UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin)
 //    activityView.layer.cornerRadius <- toastCornerRadius
 //    
@@ -152,7 +177,7 @@ let toastActivityViewKey = "toastActivityViewKey"
 //    }
 //    
 //    UIActivityIndicatorView *activityIndicatorView <- [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge]
-//    activityIndicatorView.center <- CGPointMake(activityView.bounds.size.width / 2, activityView.bounds.size.height / 2)
+//    activityIndicatorView.center <- CGPointMake(activityView.Bounds.Size.Width / 2, activityView.Bounds.Size.Height / 2)
 //    [activityView addSubview:activityIndicatorView]
 //    [activityIndicatorView startAnimating]
 //    
@@ -165,7 +190,7 @@ let toastActivityViewKey = "toastActivityViewKey"
 //                          delay:0.0f
 //                        options:UIViewAnimationOptionCurveEaseOut
 //                     animations:^{
-//                         activityView.alpha <- 1.0f
+//                         activityView.Alpha <- 1.0f
 //                     } completion:null]
 //}
 //
@@ -176,47 +201,14 @@ let toastActivityViewKey = "toastActivityViewKey"
 //                              delay:0.0f
 //                            options:(UIViewAnimationOptionCurveEaseIn | UIViewAnimationOptionBeginFromCurrentState)
 //                         animations:^{
-//                             existingActivityView.alpha <- 0.0f
+//                             existingActivityView.Alpha <- 0.0f
 //                         } completion:^(BOOL finished) {
 //                             [existingActivityView removeFromSuperview]
 //                             objc_setAssociatedObject (self, &toastActivityViewKey, null, OBJC_ASSOCIATION_RETAIN_NONATOMIC)
 //                         }]
 //    }
 //}
-//
-//#pragma mark - Helpers
-//
-//- (CGPoint)centerPointForPosition:(id)point withToast:(UIView *)toast {
-//    if([point isKindOfClass:[NSString class]]) {
-//        // convert string literals "top", "bottom", "center", or any point wrapped in an NSValue object into a CGPoint
-//        if([point caseInsensitiveCompare:"top"] == NSOrderedSame) {
-//            return CGPointMake(self.bounds.size.width/2, (toast.frame.size.height / 2) + toastVerticalPadding)
-//        } else if([point caseInsensitiveCompare:"bottom"] == NSOrderedSame) {
-//            return CGPointMake(self.bounds.size.width/2, (self.bounds.size.height - (toast.frame.size.height / 2)) - toastVerticalPadding)
-//        } else if([point caseInsensitiveCompare:"center"] == NSOrderedSame) {
-//            return CGPointMake(self.bounds.size.width / 2, self.bounds.size.height / 2)
-//        }
-//    } else if ([point isKindOfClass:[NSValue class]]) {
-//        return [point CGPointValue]
-//    }
-//    
-//    NSLog("Warning: Invalid position for toast.")
-//    return [self centerPointForPosition:toastDefaultPosition withToast:toast]
-//}
 
-let sizeForString (str:string) (font:UIFont) (constrainedSize:SizeF) (lineBreakMode:UILineBreakMode) =
-    let str = NSString.op_Explicit str 
-//    if ([str respondsToSelector:@selector(boundingRectWithSize:options:attributes:context:)]) {
-//        NSMutableParagraphStyle *paragraphStyle <- [[NSMutableParagraphStyle alloc] init]
-//        paragraphStyle.lineBreakMode <- lineBreakMode
-//        NSDictionary *attributes <- @{NSFontAttributeName:font, NSParagraphStyleAttributeName:paragraphStyle}
-//        CGRect boundingRect <- [str boundingRectWithSize:constrainedSize options:NSStringDrawingUsesLineFragmentOrigin attributes:attributes context:null]
-//        return CGSizeMake(ceilf(boundingRect.size.width), ceilf(boundingRect.size.height))
-//    }
-
-    str.StringSize(font, constrainedSize, lineBreakMode)
-
-type UIView with
 
     member this.ViewForMessage (message:string) (title:string) (image:UIImage) =
         // dynamically build a toast view with any combination of message, title, & image.
