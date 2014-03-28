@@ -139,15 +139,15 @@ type UIView with
             0.0,
             UIViewAnimationOptions.CurveEaseOut ||| UIViewAnimationOptions.AllowUserInteraction,
             (fun _ -> toast.Alpha <- 1.0f),
-            (fun _ -> timer := NSTimer.CreateTimer(duration, (fun _ ->  this.HideToast toast ))))
+            (fun _ -> timer := NSTimer.CreateScheduledTimer(duration, (fun _ ->  this.HideToast toast ))))
 
     member this.HideToast (toast:UIView) =
         UIView.Animate(
-                toastFadeDuration,
-                0.0,
-                UIViewAnimationOptions.CurveEaseIn ||| UIViewAnimationOptions.BeginFromCurrentState,
-                (fun _ -> toast.Alpha <- 0.0f),
-                (fun _ -> toast.RemoveFromSuperview()))
+            toastFadeDuration,
+            0.0,
+            UIViewAnimationOptions.CurveEaseIn ||| UIViewAnimationOptions.BeginFromCurrentState,
+            (fun _ -> toast.Alpha <- 0.0f),
+            (fun _ -> toast.RemoveFromSuperview()))
 
 
 //#pragma mark - Toast Activity Methods

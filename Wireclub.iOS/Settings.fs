@@ -19,6 +19,7 @@ open Newtonsoft.Json
 
 open ChannelEvent
 
+open Toast
 
 [<Register ("ChatOptionsViewController")>]
 type ChatOptionsViewController(handle:nativeint) =
@@ -63,6 +64,17 @@ type EmailViewController(handle:nativeint) =
     override this.ViewDidLoad () =
         base.ViewDidLoad ()
 
+        this.Save.TouchUpInside.Add(fun _ ->
+            this.View.EndEditing(true) |> ignore
+            Async.startNetworkWithContinuation
+                (Settings.email this.New.Text this.Confirm.Text this.Password.Text)
+                (function
+                    | Api.ApiOk data -> this.View.MakeToast("Saved", 2.0, "center")
+                    | error -> this.HandleApiFailure error
+                )
+            
+        )
+
 [<Register ("MessagingOptionsViewController")>]
 type MessagingOptionsViewController(handle:nativeint) =
     inherit UITableViewController (handle)
@@ -78,7 +90,30 @@ type MessagingOptionsViewController(handle:nativeint) =
 
     override this.ViewDidLoad () =
         base.ViewDidLoad ()
-        
+
+        Async.startNetworkWithContinuation
+            (Settings.messaging ())
+            (function
+                | Api.ApiOk data -> 
+                    this.Picture.On <- data.BlockWithoutPicture
+                    this.Verified.On <- data.BlockWithoutVerifiedEmail
+
+                    this.Save.TouchUpInside.Add(fun _ ->
+                        this.View.EndEditing(true) |> ignore
+                        Async.startNetworkWithContinuation
+                            (Settings.updateMessaging this.Picture.On false this.Verified.On)
+                            (function
+                                | Api.ApiOk data ->
+                                    this.Picture.On <- data.BlockWithoutPicture
+                                    this.Verified.On <- data.BlockWithoutVerifiedEmail
+                                    this.View.MakeToast("Saved", 2.0, "center")
+                                | error -> this.HandleApiFailure error
+                            )
+                        )
+
+                | error -> this.HandleApiFailure error
+            )
+    
 [<Register ("NotificationsViewController")>]
 type NotificationsViewController(handle:nativeint) =
     inherit UITableViewController (handle)
@@ -98,9 +133,43 @@ type NotificationsViewController(handle:nativeint) =
     override this.ViewDidLoad () =
         base.ViewDidLoad ()
 
+        Async.startNetworkWithContinuation
+            (Settings.notifications ())
+            (function
+                | Api.ApiOk data -> 
+                    this.ClubActivity.On <- data.SurpressedEmailTypes.Contains("AlertClubMembership") = false
+                    this.NewMessages.On <- data.SurpressedEmailTypes.Contains("AlertMessage") = false
+                    this.Invitations.On <- data.SurpressedEmailTypes.Contains("AlertInvitedToEntity") = false
+
+                    this.Save.TouchUpInside.Add(fun _ ->
+                        this.View.EndEditing(true) |> ignore
+                        let suppressedNotifications = 
+                            [
+                                if this.ClubActivity.On then yield "AlertClubMembership"
+                                if this.NewMessages.On then yield "AlertMessage"
+                                if this.Invitations.On then yield "AlertInvitedToEntity"
+                            ]
+
+                        Async.startNetworkWithContinuation
+                            (Settings.suppressNotifications suppressedNotifications)
+                            (function
+                                | Api.ApiOk data ->
+                                    this.ClubActivity.On <- data.SurpressedEmailTypes.Contains("AlertClubMembership") = false
+                                    this.NewMessages.On <- data.SurpressedEmailTypes.Contains("AlertMessage") = false
+                                    this.Invitations.On <- data.SurpressedEmailTypes.Contains("AlertInvitedToEntity") = false
+                                    this.View.MakeToast("Saved", 2.0, "center")
+                                | error -> this.HandleApiFailure error
+                            )
+                        )
+
+                | error -> this.HandleApiFailure error
+            )
+
 [<Register ("PasswordViewController")>]
 type PasswordViewController(handle:nativeint) =
     inherit UITableViewController (handle)
+
+    let forgotPasswordStoryboard = UIStoryboard.FromName ("ForgotPassword", null)
 
     [<Outlet>]
     member val Confirm:UITextField = null with get, set
@@ -119,6 +188,21 @@ type PasswordViewController(handle:nativeint) =
 
     override this.ViewDidLoad () =
         base.ViewDidLoad ()
+
+        this.Save.TouchUpInside.Add(fun _ ->
+            this.View.EndEditing(true) |> ignore
+            Async.startNetworkWithContinuation
+                (Settings.password this.Old.Text this.New.Text this.Confirm.Text)
+                (function
+                    | Api.ApiOk data -> this.View.MakeToast("Saved", 2.0, "center")
+                    | error -> this.HandleApiFailure error
+                )
+        )
+
+        this.Forgot.TouchUpInside.Add(fun _ ->
+            this.NavigationController.PushViewController (forgotPasswordStoryboard.InstantiateInitialViewController() :?> UIViewController, true)
+        )
+
         
 [<Register ("PrivacyOptionsViewController")>]
 type PrivacyOptionsViewController(handle:nativeint) =
@@ -144,6 +228,13 @@ type PrivacyOptionsViewController(handle:nativeint) =
 
     [<Outlet>]
     member val ViewProfile:UITextField = null with get, set
+
+    override this.ViewDidLoad () =
+        base.ViewDidLoad ()
+
+[<Register ("BlockedUsersViewController")>]
+type BlockedUsersViewController (handle:nativeint) =
+    inherit UITableViewController (handle)
 
     override this.ViewDidLoad () =
         base.ViewDidLoad ()
