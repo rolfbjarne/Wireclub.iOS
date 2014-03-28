@@ -343,11 +343,58 @@ type PrivacyOptionsViewController(handle:nativeint) =
             )
 
 [<Register ("BlockedUsersViewController")>]
-type BlockedUsersViewController (handle:nativeint) =
+type BlockedUsersViewController (handle:nativeint) as controller =
     inherit UITableViewController (handle)
+
+    let mutable users:Entity [] = [||]
+
+    let source = {
+        new UITableViewSource() with
+            override this.GetCell(tableView, indexPath) =
+                let user = users.[indexPath.Row]
+                let cell = 
+                    match tableView.DequeueReusableCell "room-user-cell" with
+                    | null -> new UITableViewCell (UITableViewCellStyle.Subtitle, "room-user-cell")
+                    | c -> c
+
+                cell.SelectionStyle <- UITableViewCellSelectionStyle.None
+                cell.Tag <- indexPath.Row
+                cell.TextLabel.Text <- user.Label
+                Image.loadImageForCell (App.imageUrl user.Image 44) Image.placeholder cell tableView
+                cell
+
+            override this.RowsInSection(tableView, section) = users.Length
+            override this.RowSelected(tableView, indexPath) = ()
+            override this.CanEditRow(tableView, indexPath) = true
+            override this.EditingStyleForRow(tableView, indexPath) = UITableViewCellEditingStyle.Delete
+            override this.CommitEditingStyle(tableView, style, indexPath) =
+                let userId = users.[indexPath.Row].Id
+                Async.startNetworkWithContinuation
+                    (Settings.unblock [ userId ])
+                    (function
+                        | Api.ApiOk data -> 
+                            users <- [| for user in users do if user.Id <> userId then yield user |]
+                            tableView.DeleteRows([| indexPath |], UITableViewRowAnimation.Automatic)
+                        | error -> controller.HandleApiFailure error
+                    )
+
+           
+        }
 
     override this.ViewDidLoad () =
         base.ViewDidLoad ()
+
+        this.TableView.Source <- source
+        Async.startNetworkWithContinuation
+            (Settings.blocked ())
+            (function
+                | Api.ApiOk data -> 
+                    users <- data.BlockedUsers
+                    this.TableView.ReloadData()
+                    this.TableView.Editing <- true
+                | error -> this.HandleApiFailure error
+            )
+
 
 [<Register ("SettingsMenuViewController")>]
 type SettingsMenuViewController (handle:nativeint) =
