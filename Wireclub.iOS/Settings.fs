@@ -277,7 +277,6 @@ type PrivacyOptionsViewController(handle:nativeint) =
                             let prev = match prev with | Some prev -> Some (fst prev) | _ -> None
                             let next = match next with | Some next -> Some (fst next) | _ -> None
                             let field, value = field
-                           
 
                             let pickerNext _ = match next with | Some next -> next.BecomeFirstResponder() |> ignore | _ -> ()
                             let pickerPrev _ = match prev with | Some prev -> prev.BecomeFirstResponder() |> ignore | _ -> ()
@@ -288,24 +287,57 @@ type PrivacyOptionsViewController(handle:nativeint) =
                             let accessory = new NavigateInputAccessoryViewController( pickerNext, pickerPrev, pickerDone )
                             let source =  new UIPrivacyPickerViewModel(field)
 
-
+                            field.TintColor <- UIColor.Clear
                             field.Text <- value.ToString()
                             field.InputView <- picker
                             field.InputAccessoryView <- accessory.View
                             picker.Source <- source
+                            let row = 
+                                function
+                                | RelationshipRequiredType.NoOne -> 2
+                                | RelationshipRequiredType.Friends -> 1
+                                | _ -> 0
+
+                            picker.Select(row value, 0, false)
                             field.EditingDidBegin.Add(fun _ -> picker.ReloadAllComponents())
                             picker, accessory, source
-                        )             
+                        )
 
-//                    this.Save.TouchUpInside.Add(fun _ ->
-//                        this.View.EndEditing(true) |> ignore
-//                        Async.startNetworkWithContinuation
-//                            (Settings.)
-//                            (function
-//                                | Api.ApiOk data -> this.View.MakeToast("Saved", 2.0, "center")
-//                                | error -> this.HandleApiFailure error
-//                            )
-//                        )
+                    this.OptOut.On <- data.OptOutFromRatePictures
+
+                    let relationship =
+                        function
+                        | "NoOne" -> RelationshipRequiredType.NoOne
+                        | "Friends" -> RelationshipRequiredType.Friends
+                        | _ -> RelationshipRequiredType.Anyone
+
+                    this.Save.TouchUpInside.Add(fun _ ->
+                        this.View.EndEditing(true) |> ignore
+                        Async.startNetworkWithContinuation
+                            (Settings.updatePrivacy
+                                (this.Contact.Text |> relationship)
+                                (this.PrivateChat.Text |> relationship)
+                                (this.ViewPictures.Text |> relationship)
+                                (this.ViewBlog.Text |> relationship)
+                                (this.ViewPictures.Text |> relationship)
+                                RelationshipRequiredType.Anyone
+                                RelationshipRequiredType.Anyone
+                                RelationshipRequiredType.Anyone
+                                (this.InviteGames.Text |> relationship)
+                                this.OptOut.On
+                            )
+                            (function
+                                | Api.ApiOk data ->
+                                    this.Contact.Text <- data.RequiredRelationshipToContact.ToString()
+                                    this.PrivateChat.Text <- data.RequiredRelationshipToPrivateChat.ToString()
+                                    this.ViewProfile.Text <- data.RequiredRelationshipToViewProfile.ToString()
+                                    this.ViewBlog.Text <- data.RequiredRelationshipToViewBlog.ToString()
+                                    this.ViewPictures.Text <- data.RequiredRelationshipToViewPictures.ToString()
+                                    this.InviteGames.Text <- data.RequiredRelationshipToGameChallenge.ToString()
+                                    this.View.MakeToast("Saved", 2.0, "center")
+                                | error -> this.HandleApiFailure error
+                            )
+                        )
 
                 | error -> this.HandleApiFailure error
             )
