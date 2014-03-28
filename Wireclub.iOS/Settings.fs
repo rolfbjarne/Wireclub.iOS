@@ -204,35 +204,14 @@ type PasswordViewController(handle:nativeint) =
         )
 
 
- type UIPrivacyPickerViewModel (fields:(UITextField * _) option * (UITextField * RelationshipRequiredType)  * (UITextField * _)  option) as pickerViewModel =
+ type UIPrivacyPickerViewModel (field:UITextField) =
     inherit UIPickerViewModel()
-
-    let prev, field, next = fields
-    let prev = match prev with | Some prev -> Some (fst prev) | _ -> None
-    let next = match next with | Some next -> Some (fst next) | _ -> None
-    let field, value = field
-   
-
-    let picker = new UIPickerView()
-    let accessory =
-        new NavigateInputAccessoryViewController(
-            (fun _ -> match next with | Some next -> next.BecomeFirstResponder() |> ignore | _ -> ()),
-            (fun _ -> match prev with | Some prev -> prev.BecomeFirstResponder() |> ignore | _ -> ()),
-            (fun _ -> field.ResignFirstResponder() |> ignore)
-        )
 
     let options = [
         RelationshipRequiredType.Anyone
         RelationshipRequiredType.Friends
         RelationshipRequiredType.NoOne
     ]
-
-    do
-        field.Text <- value.ToString()
-        field.InputView <- picker
-        field.InputAccessoryView <- accessory.View
-        field.EditingDidBegin.Add(fun _ -> picker.ReloadAllComponents())
-        picker.Source <- pickerViewModel
 
 
     override this.GetRowsInComponent(pickerView, comp) = options.Length
@@ -247,7 +226,7 @@ type PasswordViewController(handle:nativeint) =
 type PrivacyOptionsViewController(handle:nativeint) =
     inherit UITableViewController (handle)
 
-    let mutable pickers:UIPrivacyPickerViewModel list = []
+    let mutable pickers:(UIPickerView * NavigateInputAccessoryViewController * UIPrivacyPickerViewModel) list = []
 
     [<Outlet>]
     member val Contact:UITextField = null with get, set
@@ -293,7 +272,30 @@ type PrivacyOptionsViewController(handle:nativeint) =
                             this.InviteGames, data.RequiredRelationshipToGameChallenge
                         ]
                         |> List.nextPrevTuple
-                        |> List.map (fun e -> new UIPrivacyPickerViewModel(e))             
+                        |> List.map (fun fields ->
+                            let prev, field, next = fields
+                            let prev = match prev with | Some prev -> Some (fst prev) | _ -> None
+                            let next = match next with | Some next -> Some (fst next) | _ -> None
+                            let field, value = field
+                           
+
+                            let pickerNext _ = match next with | Some next -> next.BecomeFirstResponder() |> ignore | _ -> ()
+                            let pickerPrev _ = match prev with | Some prev -> prev.BecomeFirstResponder() |> ignore | _ -> ()
+                            let pickerDone _ = field.ResignFirstResponder() |> ignore
+
+
+                            let picker = new UIPickerView()
+                            let accessory = new NavigateInputAccessoryViewController( pickerNext, pickerPrev, pickerDone )
+                            let source =  new UIPrivacyPickerViewModel(field)
+
+
+                            field.Text <- value.ToString()
+                            field.InputView <- picker
+                            field.InputAccessoryView <- accessory.View
+                            picker.Source <- source
+                            field.EditingDidBegin.Add(fun _ -> picker.ReloadAllComponents())
+                            picker, accessory, source
+                        )             
 
 //                    this.Save.TouchUpInside.Add(fun _ ->
 //                        this.View.EndEditing(true) |> ignore
