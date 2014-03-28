@@ -19,10 +19,16 @@ namespace Views
 		MonoTouch.UIKit.UITextField InviteGames { get; set; }
 
 		[Outlet]
+		MonoTouch.UIKit.UISwitch OptOut { get; set; }
+
+		[Outlet]
 		MonoTouch.UIKit.UISwitch PictureRankings { get; set; }
 
 		[Outlet]
 		MonoTouch.UIKit.UITextField PrivateChat { get; set; }
+
+		[Outlet]
+		MonoTouch.UIKit.UIButton Save { get; set; }
 
 		[Outlet]
 		MonoTouch.UIKit.UITextField ViewBlog { get; set; }
@@ -40,14 +46,19 @@ namespace Views
 				Contact = null;
 			}
 
+			if (InviteGames != null) {
+				InviteGames.Dispose ();
+				InviteGames = null;
+			}
+
+			if (PictureRankings != null) {
+				PictureRankings.Dispose ();
+				PictureRankings = null;
+			}
+
 			if (PrivateChat != null) {
 				PrivateChat.Dispose ();
 				PrivateChat = null;
-			}
-
-			if (ViewProfile != null) {
-				ViewProfile.Dispose ();
-				ViewProfile = null;
 			}
 
 			if (ViewBlog != null) {
@@ -60,14 +71,19 @@ namespace Views
 				ViewPictures = null;
 			}
 
-			if (InviteGames != null) {
-				InviteGames.Dispose ();
-				InviteGames = null;
+			if (ViewProfile != null) {
+				ViewProfile.Dispose ();
+				ViewProfile = null;
 			}
 
-			if (PictureRankings != null) {
-				PictureRankings.Dispose ();
-				PictureRankings = null;
+			if (OptOut != null) {
+				OptOut.Dispose ();
+				OptOut = null;
+			}
+
+			if (Save != null) {
+				Save.Dispose ();
+				Save = null;
 			}
 		}
 	}

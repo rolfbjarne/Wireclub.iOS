@@ -450,8 +450,10 @@
                     <connections>
                         <outlet property="Contact" destination="QJ2-MH-CXy" id="G0m-jN-DH7"/>
                         <outlet property="InviteGames" destination="b5F-5S-JUj" id="F5n-Tk-6Tx"/>
+                        <outlet property="OptOut" destination="k3M-9r-R1F" id="dHp-6B-b7k"/>
                         <outlet property="PictureRankings" destination="k3M-9r-R1F" id="GuX-2B-JHc"/>
                         <outlet property="PrivateChat" destination="hku-pj-y0Z" id="awW-dG-bzr"/>
+                        <outlet property="Save" destination="tDR-ne-ZO2" id="KA5-Nb-QqC"/>
                         <outlet property="ViewBlog" destination="knq-id-xQG" id="gnV-Yb-CDG"/>
                         <outlet property="ViewPictures" destination="gsA-LU-HHj" id="Gid-Hw-81j"/>
                         <outlet property="ViewProfile" destination="byW-90-bPY" id="wLj-aH-4J8"/>
