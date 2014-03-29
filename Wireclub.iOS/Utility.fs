@@ -47,6 +47,12 @@ module List =
 
         nextPrevTuple None list
 
+type CustomColor = {
+    Id:int
+    Name:string
+    Value:int
+}
+
 [<AutoOpen>]
 module Utility =
     let showSimpleAlert title message button =
@@ -65,17 +71,42 @@ module Utility =
         return result
     } 
 
+    let colors =
+        [
+            { Id = 1; Name = "Black"; Value = 0x000000 }
+            { Id = 2; Name = "Pretty Dark Gray"; Value = 0x333333 }
+            { Id = 3; Name = "Wireclub Blue"; Value = 0x3287d6 }
+            { Id = 4; Name = "Darker Blue"; Value = 0x25639d }
+            { Id = 5; Name = "Yummy Green"; Value = 0x70d632 }
+            { Id = 6; Name = "Dirty Yellow"; Value = 0xd6c532 }
+            { Id = 8; Name = "Alarm orange"; Value = 0xd65932 }
+            { Id = 9; Name = "Tastes like burning"; Value = 0xd63232 }
+            { Id = 10; Name = "Pink"; Value = 0xd632c5 }
+            { Id = 11; Name = "Purple"; Value = 0x9632d6 }
+        ]
+
     //make a custom mapping for each OS based on supported fonts
-    let fontFamily id =
-        match id with
-        | 1 -> "Arial"
-        | 2 -> "Courier New"
-        | 3 -> "Georgia"
-        | 4 -> "Times New Roman"
-        | 5 -> "Trebuchet"
-        | 6 -> "Lucida Sans"
-        | 7 -> "Comic Sans MS"
-        | _ -> "Arial"
+    let customColor id = 
+        match colors |> List.filter (fun c -> c.Id = id) with
+        | [ color ] -> color
+        | _-> colors.Head
+
+    let fonts = 
+        [
+            1, "Arial"
+            2, "Courier New"
+            3, "Georgia"
+            4, "Times New Roman"
+            5, "Trebuchet"
+            6, "Lucida Sans"
+            7, "Comic Sans MS"
+        ]
+
+    //make a custom mapping for each OS based on supported fonts
+    let fontFamily id = 
+        match fonts |> List.filter (fun (i, _) -> i = id) with
+        | [ id, font ] -> font
+        | _-> snd fonts.Head
 
     let cssToColor (color:string) =
         let color = 

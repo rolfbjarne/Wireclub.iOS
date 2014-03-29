@@ -22,14 +22,82 @@ open ChannelEvent
 open Toast
 
 [<Register ("ChatOptionsViewController")>]
-type ChatOptionsViewController(handle:nativeint) =
+type ChatOptionsViewController(handle:nativeint) as controller =
     inherit UITableViewController (handle)
+
+    let joinLeave =
+        [
+            0, "Show Join/Leave Messages"
+            1, "Hide Join/Leave In Busy Rooms"
+            2, "Hide Join/Leave Messages"
+        ]
+
+    let joinLeaveById id = 
+        match joinLeave |> List.filter (fun (i, _) -> i = id) with
+        | [ id, message ] -> message
+        | _-> snd joinLeave.Head
+
+    let pickerFont = new UIPickerView() 
+    let accessoryFont =
+        new NavigateInputAccessoryViewController(
+            (fun _ -> controller.Color.BecomeFirstResponder() |> ignore),
+            (fun _ -> ()),
+            (fun _ -> controller.Font.ResignFirstResponder() |> ignore)
+        )
+    let sourceFont =
+        { 
+            new UIPickerViewModel() with
+            override this.GetRowsInComponent(pickerView, comp) = Utility.fonts.Length
+            override this.GetComponentCount(pickerView) = 1
+            override this.GetTitle(pickerView, row, comp) = snd Utility.fonts.[row]
+            override this.Selected(pickerView, row, comp) =
+                controller.Font.Text <- snd Utility.fonts.[row]
+        }
+                
+    let pickerColor = new UIPickerView() 
+    let accessoryColor =
+        new NavigateInputAccessoryViewController(
+            (fun _ -> controller.ShowJoinLeave.BecomeFirstResponder() |> ignore),
+            (fun _ -> controller.Font.BecomeFirstResponder() |> ignore),
+            (fun _ -> controller.Color.ResignFirstResponder() |> ignore)
+        )
+
+    let sourceColor =
+        { 
+            new UIPickerViewModel() with
+            override this.GetRowsInComponent(pickerView, comp) = Utility.colors.Length
+            override this.GetComponentCount(pickerView) = 1
+            override this.GetTitle(pickerView, row, comp) = Utility.colors.[row].Name
+            override this.Selected(pickerView, row, comp) =
+                controller.Color.Text <- Utility.colors.[row].Name
+        }
+
+    let pickerJoinLeave = new UIPickerView() 
+    let accessoryJoinLeave =
+        new NavigateInputAccessoryViewController(
+            (fun _ -> ()),
+            (fun _ -> controller.Color.BecomeFirstResponder() |> ignore),
+            (fun _ -> controller.ShowJoinLeave.ResignFirstResponder() |> ignore)
+        )
+
+    let sourceJoinLeave =
+        { 
+            new UIPickerViewModel() with
+            override this.GetRowsInComponent(pickerView, comp) = joinLeave.Length
+            override this.GetComponentCount(pickerView) = 1
+            override this.GetTitle(pickerView, row, comp) = snd joinLeave.[row]
+            override this.Selected(pickerView, row, comp) =
+                controller.ShowJoinLeave.Text <- snd joinLeave.[row]
+        }
+
+    [<Outlet>]
+    member val Font:UITextField = null with get, set
 
     [<Outlet>]
     member val Color:UITextField = null with get, set
 
     [<Outlet>]
-    member val Font:UITextField = null with get, set
+    member val ShowJoinLeave:UITextField = null with get, set
 
     [<Outlet>]
     member val PlaySounds:UISwitch = null with get, set
@@ -37,11 +105,75 @@ type ChatOptionsViewController(handle:nativeint) =
     [<Outlet>]
     member val Save:UIButton = null with get, set
 
-    [<Outlet>]
-    member val ShowJoinLeave:UITextField = null with get, set
 
     override this.ViewDidLoad () =
         base.ViewDidLoad ()
+
+        Async.startNetworkWithContinuation
+            (Settings.chat ())
+            (function
+                | Api.ApiOk data -> 
+                    this.Font.Text <- Utility.fontFamily data.Font
+                    this.Font.TintColor <- UIColor.Clear
+                    this.Font.InputView <- pickerFont
+                    this.Font.InputAccessoryView <- accessoryFont.View
+                    pickerFont.Source <- sourceFont
+                    pickerFont.Select(Utility.fonts |> List.findIndex (fun (i, _) -> i = data.Font), 0, false)
+                    this.Font.EditingDidBegin.Add(fun _ -> pickerFont.ReloadAllComponents())
+
+                    this.Color.Text <- (Utility.customColor data.ColorId).Name
+                    this.Color.TintColor <- UIColor.Clear
+                    this.Color.InputView <- pickerColor
+                    this.Color.InputAccessoryView <- accessoryColor.View
+                    pickerColor.Source <- sourceColor
+                    pickerColor.Select(Utility.colors |> List.findIndex (fun c -> c.Id = data.ColorId), 0, false)
+                    this.Color.EditingDidBegin.Add(fun _ -> pickerColor.ReloadAllComponents())
+
+                    this.ShowJoinLeave.Text <- joinLeaveById data.JoinLeaveMessages
+                    this.ShowJoinLeave.TintColor <- UIColor.Clear
+                    this.ShowJoinLeave.InputView <- pickerJoinLeave
+                    this.ShowJoinLeave.InputAccessoryView <- accessoryJoinLeave.View
+                    pickerJoinLeave.Source <- sourceJoinLeave
+                    pickerJoinLeave.Select(joinLeave |> List.findIndex (fun (i, _) -> i = data.JoinLeaveMessages), 0, false)
+                    this.ShowJoinLeave.EditingDidBegin.Add(fun _ -> pickerJoinLeave.ReloadAllComponents())
+
+                    this.PlaySounds.On <- data.PlaySounds
+
+                    this.Save.TouchUpInside.Add(fun _ ->
+                        this.View.EndEditing(true) |> ignore
+                        Async.startNetworkWithContinuation
+                            (Settings.updateChat
+                                (
+                                    match Utility.fonts |> List.filter (fun (_, m) -> m = this.Font.Text) with
+                                    | [ id, _ ] -> id
+                                    | _-> fst fonts.Head 
+                                )
+                                (
+                                    match Utility.colors |> List.filter (fun c -> c.Name = this.Color.Text) with
+                                    | [ color ] -> color.Id
+                                    | _-> Utility.colors.Head.Id
+                                )
+                                this.PlaySounds.On
+                                (
+                                    match joinLeave |> List.filter (fun (_, m) -> m = this.ShowJoinLeave.Text) with
+                                    | [ id, _ ] -> id
+                                    | _-> fst joinLeave.Head 
+                                )
+                            )
+                            (function
+                                | Api.ApiOk data ->
+                                    this.Color.Text <- (Utility.customColor data.ColorId).Name
+                                    this.Font.Text <- Utility.fontFamily data.Font
+                                    this.ShowJoinLeave.Text <- joinLeaveById data.JoinLeaveMessages
+                                    this.PlaySounds.On <- data.PlaySounds
+
+                                    this.View.MakeToast("Saved", 2.0, "center")
+                                | error -> this.HandleApiFailure error
+                            )
+                        )
+
+                | error -> this.HandleApiFailure error
+            )
 
 [<Register ("EmailViewController")>]
 type EmailViewController(handle:nativeint) =
