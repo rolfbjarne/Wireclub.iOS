@@ -532,8 +532,16 @@ type BlockedUsersViewController (handle:nativeint) as controller =
 type SettingsMenuViewController (handle:nativeint) =
     inherit UITableViewController (handle)
 
+    let editProfileController = lazy (Resources.editProfileStoryboard.Value.InstantiateInitialViewController() :?> UIViewController)
+
     override this.ViewDidLoad () =
         base.ViewDidLoad ()
+
+
+    override this.RowSelected (tableView, indexPath) =
+        match indexPath.Section, indexPath.Row with
+        | 0, 0 ->  this.NavigationController.PushViewController(editProfileController.Value, true)
+        | _ -> ()
             
 
 [<Register ("MegaMenuViewController")>]

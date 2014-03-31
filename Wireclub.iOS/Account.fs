@@ -65,6 +65,8 @@ type NavigateInputAccessoryViewController (next, prev, ``done``) =
 type EditProfileViewController (handle:nativeint) as controller =
     inherit UITableViewController (handle)
         
+    let identity = match Api.userIdentity with | Some id -> id | None -> failwith "User must be logged in"
+
     let pickerMedia = new MediaPicker()
     let pickerDate = new UIDatePicker(new RectangleF(0.0f,0.0f,320.0f,216.0f))
     let accessoryBirthday =
@@ -134,7 +136,6 @@ type EditProfileViewController (handle:nativeint) as controller =
     override this.ViewDidLoad () =
         this.NavigationItem.Title <- "Create Profile"
         this.NavigationItem.HidesBackButton <- true
-
 
         // Birthday picker
         pickerDate.MinimumDate <-  NSDate.op_Implicit (DateTime.UtcNow.AddYears(-120))
@@ -236,6 +237,23 @@ type EditProfileViewController (handle:nativeint) as controller =
                     | error -> this.HandleApiFailure error
                 )
         )
+
+
+
+    override this.GetHeightForRow (tableView, indexPath) =
+        match indexPath.Section, indexPath.Row with
+        | 0, 0 -> 74.0f
+        | 1, 0 -> if identity.Membership = MembershipTypePublic.Guest then tableView.RowHeight else 0.0f
+        | 3, 0 -> 74.0f
+        | _ -> tableView.RowHeight
+
+
+    override this.WillDisplay (tableView, cell, indexPath) = 
+        match indexPath.Section, indexPath.Row with
+        | 1, 0 ->
+            if identity.Membership <> MembershipTypePublic.Guest then cell.Hidden <- true
+        | _ -> ()
+
 
     override this.RowSelected (tableView, indexPath) =
         tableView.DeselectRow (indexPath, false)
