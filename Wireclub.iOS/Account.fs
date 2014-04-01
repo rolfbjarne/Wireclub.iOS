@@ -4,13 +4,18 @@ open System
 open System.Linq
 open System.Drawing
 open System.Globalization
+
 open MonoTouch.Foundation
 open MonoTouch.UIKit
+
 open Wireclub.Models
 open Wireclub.Boundary
 open Wireclub.Boundary.Models
 open Wireclub.Boundary.Chat
+
 open Xamarin.Media
+
+open Toast
 
 [<Register ("ForgotPasswordViewController")>]
 type ForgotPasswordViewController (handle:nativeint) =
@@ -76,6 +81,8 @@ type EditProfileViewController (handle:nativeint) as controller =
             (fun _ -> controller.Birthday.ResignFirstResponder() |> ignore)
         )
 
+    let mutable country:LocationCountry option = None
+    let mutable countries:LocationCountry [] = [||]
     let pickerCountry = new AsyncPickerViewController() //new RectangleF(0.0f,0.0f,320.0f,216.0f)
     let accessoryCountry =
         new NavigateInputAccessoryViewController(
@@ -83,7 +90,20 @@ type EditProfileViewController (handle:nativeint) as controller =
             (fun _ -> controller.Birthday.BecomeFirstResponder() |> ignore),
             (fun _ -> controller.Country.ResignFirstResponder() |> ignore)
         )
+    let sourceCountry =
+        { 
+            new UIPickerViewModel() with
+            override this.GetRowsInComponent(pickerView, comp) = countries.Length
+            override this.GetComponentCount(pickerView) = 1
+            override this.GetTitle(pickerView, row, comp) = countries.[row].Name
+            override this.Selected(pickerView, row, comp) =
+                country <- Some countries.[row]
+                controller.Country.Text <- country.Value.Name
+        }
 
+
+    let mutable region:LocationRegion option = None
+    let mutable regions:LocationRegion [] = [||]
     let pickerRegion = new AsyncPickerViewController()
     let accessoryRegion =
         new NavigateInputAccessoryViewController(
@@ -91,12 +111,17 @@ type EditProfileViewController (handle:nativeint) as controller =
             (fun _ -> controller.Country.BecomeFirstResponder() |> ignore),
             (fun _ -> controller.Region.ResignFirstResponder() |> ignore)
         )
+    let sourceRegion =
+        { 
+            new UIPickerViewModel() with
+            override this.GetRowsInComponent(pickerView, comp) = regions.Length
+            override this.GetComponentCount(pickerView) = 1
+            override this.GetTitle(pickerView, row, comp) = regions.[row].Name
+            override this.Selected(pickerView, row, comp) =
+                region <- Some regions.[row]
+                controller.Region.Text <- region.Value.Name
+        }
 
-    let mutable country:LocationCountry option = None
-    let mutable countries:LocationCountry [] = [||]
-
-    let mutable region:LocationRegion option = None
-    let mutable regions:LocationRegion [] = [||]
 
     [<Outlet>]
     member val Birthday:UITextField = null with get, set
@@ -131,11 +156,9 @@ type EditProfileViewController (handle:nativeint) as controller =
     [<Outlet>]
     member val ProfileImageProgress:UIActivityIndicatorView  = null with get, set
 
-
-
     override this.ViewDidLoad () =
-        this.NavigationItem.Title <- "Create Profile"
-        this.NavigationItem.HidesBackButton <- true
+        this.NavigationItem.Title <- if identity.Membership = MembershipTypePublic.Pending then "Create Profile" else "Edit Profile"
+        this.NavigationItem.HidesBackButton <- identity.Membership = MembershipTypePublic.Pending
 
         // Birthday picker
         pickerDate.MinimumDate <-  NSDate.op_Implicit (DateTime.UtcNow.AddYears(-120))
@@ -148,28 +171,27 @@ type EditProfileViewController (handle:nativeint) as controller =
         )
         this.Birthday.InputView <- pickerDate
         this.Birthday.InputAccessoryView <- accessoryBirthday.View
+        this.Birthday.EditingDidBegin.Add(fun _ ->
+            if String.IsNullOrEmpty(this.Birthday.Text.Trim()) = false then
+                pickerDate.Date <- NSDate.op_Implicit (DateTime.ParseExact(this.Birthday.Text, "M/d/yyyy", CultureInfo.CurrentCulture))
+        )
 
         // Country Picker
         this.Country.InputView <- pickerCountry.View
         this.Country.InputAccessoryView <- accessoryCountry.View
-        pickerCountry.Picker.Source <- { 
-            new UIPickerViewModel() with
-            override this.GetRowsInComponent(pickerView, comp) = countries.Length
-            override this.GetComponentCount(pickerView) = 1
-            override this.GetTitle(pickerView, row, comp) = countries.[row].Name
-            override this.Selected(pickerView, row, comp) =
-                country <- Some countries.[row]
-                controller.Country.Text <- country.Value.Name
-        }
+        pickerCountry.Picker.Source <- sourceCountry
         this.Country.EditingDidBegin.Add(fun _ ->
             Async.startNetworkWithContinuation
                 (Settings.countries ())
                 (function
-                    | Api.ApiOk result -> 
-                        countries <- result
+                    | Api.ApiOk c -> 
+                        countries <- c
                         regions <- [||]
                         pickerCountry.Progress.StopAnimating()
                         pickerCountry.Picker.ReloadAllComponents()
+                        match country with
+                        | Some country -> pickerCountry.Picker.Select(countries |> Array.findIndex (fun c -> c.Id = country.Id), 0, false)
+                        | _ -> ()
                     | error ->
                         pickerCountry.Progress.StopAnimating()
                         this.HandleApiFailure error
@@ -179,15 +201,7 @@ type EditProfileViewController (handle:nativeint) as controller =
         // Region Picker
         this.Region.InputView <- pickerRegion.View
         this.Region.InputAccessoryView <- accessoryRegion.View
-        pickerRegion.Picker.Source <- { 
-            new UIPickerViewModel() with
-            override this.GetRowsInComponent(pickerView, comp) = regions.Length
-            override this.GetComponentCount(pickerView) = 1
-            override this.GetTitle(pickerView, row, comp) = regions.[row].Name
-            override this.Selected(pickerView, row, comp) =
-                region <- Some regions.[row]
-                controller.Region.Text <- region.Value.Name
-        }
+        pickerRegion.Picker.Source <- sourceRegion
         this.Region.EditingDidBegin.Add(fun _ ->
             match country with
             | Some country ->
@@ -195,10 +209,14 @@ type EditProfileViewController (handle:nativeint) as controller =
                 Async.startNetworkWithContinuation
                     (Settings.regions country.Id)
                     (function
-                        | Api.ApiOk rs -> 
-                            regions <- rs
+                        | Api.ApiOk r -> 
+                            regions <- r
                             pickerRegion.Progress.StopAnimating()
                             pickerRegion.Picker.ReloadAllComponents()
+                            match region, regions with
+                            | _, [||] -> ()
+                            | Some region, regions -> pickerCountry.Picker.Select(regions |> Array.findIndex (fun r -> r.Id = region.Id), 0, false)
+                            | _ -> ()
                         | error ->
                             pickerRegion.Progress.StopAnimating()
                             this.HandleApiFailure error
@@ -221,24 +239,68 @@ type EditProfileViewController (handle:nativeint) as controller =
 
         this.SaveButton.TouchUpInside.Add(fun _ ->
             Async.startNetworkWithContinuation
-                (Settings.profile
+                (Settings.updateProfile
                     (this.Username.Text.Trim())
-                    (match this.GenderSelect.SelectedSegment with | 1 -> GenderType.Male | 2 -> GenderType.Female | _ -> GenderType.Undefined)
+                    (match this.GenderSelect.SelectedSegment with | 0 -> GenderType.Male | 1 -> GenderType.Female | _ -> GenderType.Undefined)
                     (DateTime.ParseExact(this.Birthday.Text, "M/d/yyyy", CultureInfo.CurrentCulture))
                     (match country with | Some country -> country.Id | None _ -> String.Empty)
                     (match region with | Some region -> region.Name | None _ -> String.Empty)
                     (this.City.Text.Trim())
-                    this.About.Text
+                    (this.About.Text.Trim())
                     )
                 (function
-                    | Api.ApiOk identity -> 
-                        Api.userIdentity <- Some identity
-                        Navigation.navigate "/home" None
+                    | Api.ApiOk i -> 
+                        Api.userIdentity <- Some i
+                        if identity.Membership = MembershipTypePublic.Pending then
+                            Navigation.navigate "/home" None
+                        else
+                            this.View.EndEditing true |> ignore
+                            this.View.MakeToast("Saved", 2.0, "bottom")
+
                     | error -> this.HandleApiFailure error
                 )
         )
 
+        Async.startNetworkWithContinuation
+            (async {
+                let! result = Settings.profile ()
+                match result with
+                | Api.ApiOk profile -> 
+                    let! countries = Settings.countries ()
+                    let! regions = Settings.regions profile.CountryId
+                    return result, countries, regions
+                | _ -> 
+                    return result, Api.ApiResult.Exception (Exception "No profile loaded"), Api.ApiResult.Exception (Exception "No profile loaded")
+            })
+            (function
+                | Api.ApiOk profile, Api.ApiOk c, Api.ApiOk r ->
+                    countries <- c
+                    regions <- r
+                    this.Username.Text <- identity.Name
+                    this.GenderSelect.SelectedSegment <-
+                        match profile.Gender with
+                        | GenderType.Female -> 1
+                        | _ -> 0
 
+                    this.Birthday.Text <- profile.Birthday.ToString("M/d/yyyy")
+
+                    match countries |> Array.filter (fun e -> e.Id = profile.CountryId) with
+                    | [| c |] ->
+                        country <- Some c 
+                        this.Country.Text <- c.Name                       
+                    |  _ -> ()
+
+                    match regions |> Array.filter (fun e -> e.Id = profile.RegionId) with
+                    | [| r |] ->
+                        region <- Some r 
+                        this.Region.Text <- r.Name                       
+                    |  _ -> ()
+
+                    this.City.Text <- profile.CityName
+                    this.About.Text <- profile.Bio
+
+                | _ -> ()
+            )
 
     override this.GetHeightForRow (tableView, indexPath) =
         match indexPath.Section, indexPath.Row with
