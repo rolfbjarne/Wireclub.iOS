@@ -18,6 +18,9 @@ type AlertDelegate (action: int -> unit) =
 module Navigation =
     let mutable navigate: (string -> (Entity option) -> unit) = (fun _ _ -> failwith "No navigation handler attached")
 
+module Logger =
+    let mutable log: (Exception -> unit) = (fun _ -> failwith "No log handler attached")
+
 module String =
     let stripHtml html =
         // Replace all tags with a space, otherwise words either side of a tag might be concatenated 
@@ -171,7 +174,12 @@ module Utility =
 module Async =
     //TODO factor this into appClient
     let startWithContinuation (computation: Async<'T>) (continuation: 'T -> unit) =
-        Async.StartWithContinuations (computation, continuation, (fun ex -> raise ex), (fun _ -> ()))
+        Async.StartWithContinuations
+            (
+                computation,
+                continuation,
+                Logger.log,
+                (fun _ -> ()))
 
     let startNetworkWithContinuation (computation: Async<'T>) (continuation: 'T -> unit) =
         startWithContinuation

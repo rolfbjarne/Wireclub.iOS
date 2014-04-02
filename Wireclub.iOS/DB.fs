@@ -49,11 +49,16 @@ let dbChatHistory = db.CreateTableAsync<ChatHistory> () |> Async.AwaitTask |> As
 let dbChatEventHistory = db.CreateTableAsync<ChatHistoryEvent> () |> Async.AwaitTask |> Async.RunSynchronously
 let dbError = db.CreateTableAsync<Error> () |> Async.AwaitTask |> Async.RunSynchronously
 
+
+
+let fetchErrors () =
+    db.Table<Error>().ToListAsync() |> Async.AwaitTask 
+
 let createError (error:Error) = async {
     do! db.InsertAsync (error) |> Async.AwaitTask |> Async.Ignore
 
     #if DEBUG
-    let! errors = db.Table<Error>().ToListAsync() |> Async.AwaitTask 
+    let! errors = fetchErrors()
     printfn "Errors: %A" (errors.Select(fun (e:Error) -> e.Error).ToArray())
     #endif
 }

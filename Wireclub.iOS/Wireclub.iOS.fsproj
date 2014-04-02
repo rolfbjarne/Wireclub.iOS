@@ -146,6 +146,7 @@
     <Compile Include="Settings.fs" />
     <Compile Include="Home.fs" />
     <Compile Include="AppDelegate.fs" />
+    <Compile Include="Error.fs" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" />
   <ItemGroup>

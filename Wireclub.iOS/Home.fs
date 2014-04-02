@@ -443,7 +443,11 @@ type EntryViewController () as controller =
         // User has an account but has not authenticated with the api
         | token, true -> 
             Async.startNetworkWithContinuation
-                (Account.loginToken token)
+                (async {
+                    let! login = Account.loginToken token
+                    do! Error.report ()
+                    return login
+                })
                 (function
                     | Api.ApiOk identity -> proceed true
                     | _ -> this.NavigationController.PushViewController (loginController.Value, true)

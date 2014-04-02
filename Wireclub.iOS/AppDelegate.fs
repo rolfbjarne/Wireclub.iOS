@@ -19,6 +19,15 @@ type AppDelegate () =
         NSUserDefaults.StandardUserDefaults.RegisterDefaults(
             NSDictionary.FromObjectAndKey(NSObject.FromObject(Api.agent), NSObject.FromObject("UserAgent")))
 
+        Logger.log <-
+            (fun ex -> 
+                Async.StartWithContinuations (
+                    (DB.createError (Error(Error = ex.Message))),
+                    (fun _ -> ()),
+                    (fun _ -> ()),
+                    (fun _ -> ()))
+            )
+                    
         window.RootViewController <- navigationController
         window.MakeKeyAndVisible ()
 
