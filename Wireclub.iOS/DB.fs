@@ -1,6 +1,7 @@
 module Wireclub.iOS.DB
 
 open System
+open System.Linq
 open System.IO
 open SQLite
 open Wireclub.Models
@@ -12,6 +13,13 @@ type ChatHistoryType =
 | None = 0
 | PrivateChat = 1
 | ChatRoom = 2
+
+[<AllowNullLiteral>]
+type Error() =
+    [<PrimaryKey; AutoIncrement>]
+    member val Id = 0 with get, set
+    member val Error = "" with get, set
+    member val LastStamp = DateTime.UtcNow with get, set
 
 [<AllowNullLiteral>]
 type ChatHistory() =
@@ -39,8 +47,22 @@ type ChatHistoryEvent() =
 let db = new SQLiteAsyncConnection(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "db"))
 let dbChatHistory = db.CreateTableAsync<ChatHistory> () |> Async.AwaitTask |> Async.RunSynchronously
 let dbChatEventHistory = db.CreateTableAsync<ChatHistoryEvent> () |> Async.AwaitTask |> Async.RunSynchronously
+let dbError = db.CreateTableAsync<Error> () |> Async.AwaitTask |> Async.RunSynchronously
 
+let createError (error:Error) = async {
+    do! db.InsertAsync (error) |> Async.AwaitTask |> Async.Ignore
 
+    #if DEBUG
+    let! errors = db.Table<Error>().ToListAsync() |> Async.AwaitTask 
+    printfn "Errors: %A" (errors.Select(fun (e:Error) -> e.Error).ToArray())
+    #endif
+}
+
+let clearErrors () = async {
+    let! errors = db.Table<Error>().ToListAsync() |> Async.AwaitTask 
+    for error in errors.Take(100) do
+        do! db.DeleteAsync(error) |> Async.AwaitTask |> Async.Ignore
+}
 
 let createChatHistoryEvent (entity:Entity) historyType eventJson = async {
     do!

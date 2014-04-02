@@ -4,6 +4,8 @@ open System
 open MonoTouch.UIKit
 open MonoTouch.Foundation
 open Newtonsoft.Json
+open Wireclub.iOS.DB
+
 
 [<Register ("AppDelegate")>]
 type AppDelegate () =
@@ -43,6 +45,11 @@ type AppDelegate () =
 module Main =
     [<EntryPoint>]
     let main args =
-        UIApplication.Main (args, null, "AppDelegate")
+        try
+            UIApplication.Main(args, null, "AppDelegate")
+        with
+        | ex ->
+            let reportError = DB.createError (Error(Error = ex.Message)) |> Async.StartAsTask
+            reportError.Wait()
         0
 
