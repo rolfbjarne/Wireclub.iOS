@@ -67,9 +67,14 @@ type ChatOptionsViewController(handle:nativeint) as controller =
             new UIPickerViewModel() with
             override this.GetRowsInComponent(pickerView, comp) = Utility.colors.Length
             override this.GetComponentCount(pickerView) = 1
-            override this.GetTitle(pickerView, row, comp) = Utility.colors.[row].Name
-            override this.Selected(pickerView, row, comp) =
-                controller.Color.Text <- Utility.colors.[row].Name
+            override this.GetView(pickerView, row, comp, view) =
+                let colors = Utility.colors.[row]
+                let label = new UILabel()
+                label.TextColor <- colors.Color
+                label.Text <- colors.Name
+                label.TextAlignment <- UITextAlignment.Center
+                upcast label
+            override this.Selected(pickerView, row, comp) = controller.Color.Text <- Utility.colors.[row].Name
         }
 
     let pickerJoinLeave = new UIPickerView() 
@@ -86,8 +91,7 @@ type ChatOptionsViewController(handle:nativeint) as controller =
             override this.GetRowsInComponent(pickerView, comp) = joinLeave.Length
             override this.GetComponentCount(pickerView) = 1
             override this.GetTitle(pickerView, row, comp) = snd joinLeave.[row]
-            override this.Selected(pickerView, row, comp) =
-                controller.ShowJoinLeave.Text <- snd joinLeave.[row]
+            override this.Selected(pickerView, row, comp) = controller.ShowJoinLeave.Text <- snd joinLeave.[row]
         }
 
     [<Outlet>]
@@ -120,6 +124,8 @@ type ChatOptionsViewController(handle:nativeint) as controller =
                     pickerFont.Source <- sourceFont
                     pickerFont.Select(Utility.fonts |> List.findIndex (fun (i, _) -> i = data.Font), 0, false)
                     this.Font.EditingDidBegin.Add(fun _ -> pickerFont.ReloadAllComponents())
+
+                    pickerColor.BackgroundColor <- UIColor.White
 
                     this.Color.Text <- (Utility.customColor data.ColorId).Name
                     this.Color.TintColor <- UIColor.Clear

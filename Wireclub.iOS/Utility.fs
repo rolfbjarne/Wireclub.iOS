@@ -50,7 +50,7 @@ module List =
 type CustomColor = {
     Id:int
     Name:string
-    Value:int
+    Color:UIColor
 }
 
 [<AutoOpen>]
@@ -71,18 +71,36 @@ module Utility =
         return result
     } 
 
+    let cssToColor (color:string) =
+        let color = 
+            match color.ToCharArray() with 
+            | [| '#'; r; g; b; |] -> new String([| r; r; g; g; b; b; |])
+            | _ -> color.Substring(1, 6)
+
+        let color = Int32.Parse(color, NumberStyles.HexNumber)
+            
+        UIColor.FromRGBA(
+            (byte)((color >>> 0x10) &&& 0xff),
+            (byte)((color >>> 8) &&& 0xff),
+            (byte)(color &&& 0xff),
+            (byte)0xff)
+
+    let colorToCss (color:UIColor) = 
+        match color.GetRGBA () with
+        | red, green, blue, _ -> sprintf "#%02x%02x%02x" (int (red * 255.0f)) (int (green * 255.0f)) (int (blue * 255.0f))
+
     let colors =
         [
-            { Id = 1; Name = "Black"; Value = 0x000000 }
-            { Id = 2; Name = "Pretty Dark Gray"; Value = 0x333333 }
-            { Id = 3; Name = "Wireclub Blue"; Value = 0x3287d6 }
-            { Id = 4; Name = "Darker Blue"; Value = 0x25639d }
-            { Id = 5; Name = "Yummy Green"; Value = 0x70d632 }
-            { Id = 6; Name = "Dirty Yellow"; Value = 0xd6c532 }
-            { Id = 8; Name = "Alarm orange"; Value = 0xd65932 }
-            { Id = 9; Name = "Tastes like burning"; Value = 0xd63232 }
-            { Id = 10; Name = "Pink"; Value = 0xd632c5 }
-            { Id = 11; Name = "Purple"; Value = 0x9632d6 }
+            { Id = 1; Name = "Black"; Color = cssToColor "#000000" }
+            { Id = 2; Name = "Pretty Dark Gray"; Color = cssToColor "#333333" }
+            { Id = 3; Name = "Wireclub Blue"; Color = cssToColor "#3287d6" }
+            { Id = 4; Name = "Darker Blue"; Color = cssToColor "#25639d" }
+            { Id = 5; Name = "Yummy Green"; Color = cssToColor "#70d632" }
+            { Id = 6; Name = "Dirty Yellow"; Color = cssToColor "#d6c532" }
+            { Id = 8; Name = "Alarm orange"; Color = cssToColor "#d65932" }
+            { Id = 9; Name = "Tastes like burning"; Color = cssToColor "#d63232" }
+            { Id = 10; Name = "Pink"; Color = cssToColor "#d632c5" }
+            { Id = 11; Name = "Purple"; Color = cssToColor "#9632d6" }
         ]
 
     //make a custom mapping for each OS based on supported fonts
@@ -107,24 +125,6 @@ module Utility =
         match fonts |> List.filter (fun (i, _) -> i = id) with
         | [ id, font ] -> font
         | _-> snd fonts.Head
-
-    let cssToColor (color:string) =
-        let color = 
-            match color.ToCharArray() with 
-            | [| '#'; r; g; b; |] -> new String([| r; r; g; g; b; b; |])
-            | _ -> color.Substring(1, 6)
-
-        let color = Int32.Parse(color, NumberStyles.HexNumber)
-            
-        UIColor.FromRGBA(
-            (byte)((color >>> 0x10) &&& 0xff),
-            (byte)((color >>> 8) &&& 0xff),
-            (byte)(color &&& 0xff),
-            (byte)0xff)
-
-    let colorToCss (color:UIColor) = 
-        match color.GetRGBA () with
-        | red, green, blue, _ -> sprintf "#%02x%02x%02x" (int (red * 255.0f)) (int (green * 255.0f)) (int (blue * 255.0f))
 
     let grayBackground = cssToColor "#e9eaef"
     let grayLightAccent = cssToColor "#f0f1f6"
