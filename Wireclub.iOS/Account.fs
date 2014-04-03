@@ -170,6 +170,7 @@ type EditProfileViewController (handle:nativeint) as controller =
             this.Birthday.Text <- value.ToString("M/d/yyyy")
         )
         this.Birthday.InputView <- pickerDate
+        this.Birthday.TintColor <- UIColor.Clear
         this.Birthday.InputAccessoryView <- accessoryBirthday.View
         this.Birthday.EditingDidBegin.Add(fun _ ->
             if String.IsNullOrEmpty(this.Birthday.Text.Trim()) = false then
@@ -179,6 +180,7 @@ type EditProfileViewController (handle:nativeint) as controller =
         // Country Picker
         this.Country.InputView <- pickerCountry.View
         this.Country.InputAccessoryView <- accessoryCountry.View
+        this.Country.TintColor <- UIColor.Clear
         pickerCountry.Picker.Source <- sourceCountry
         this.Country.EditingDidBegin.Add(fun _ ->
             Async.startNetworkWithContinuation
@@ -201,6 +203,7 @@ type EditProfileViewController (handle:nativeint) as controller =
         // Region Picker
         this.Region.InputView <- pickerRegion.View
         this.Region.InputAccessoryView <- accessoryRegion.View
+        this.Region.TintColor <- UIColor.Clear
         pickerRegion.Picker.Source <- sourceRegion
         this.Region.EditingDidBegin.Add(fun _ ->
             match country with
