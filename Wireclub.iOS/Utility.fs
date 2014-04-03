@@ -27,6 +27,15 @@ module String =
         let regex = new Regex("<(.|\n)+?>");
         regex.Replace(html, " ");
 
+module Timer =
+    let rec ticker fn interval = async {
+        try fn ()        
+        with | ex -> Logger.log ex
+
+        do! Async.Sleep interval
+        return! ticker fn interval
+    }
+
 module List =
     let rec nextTuple list =
         match list with

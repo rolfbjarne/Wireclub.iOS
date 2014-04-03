@@ -171,6 +171,14 @@ type ChatRoomViewController (room:Entity) as this =
 
     let memberTypes = [  MembershipTypePublic.Member; MembershipTypePublic.Moderator; MembershipTypePublic.Admin ]
 
+    let cancelPoll = new Threading.CancellationTokenSource()
+
+    let keepAlive () =
+        Async.startWithContinuation
+            (Chat.keepAlive room.Slug)
+            (fun _ -> ())
+        ()
+
     static member val buttonImage = Image.resize (new SizeF(22.0f, 22.0f)) (UIImage.FromFile "UIButtonBarProfile.png") with get
 
     [<Outlet>]
@@ -203,7 +211,7 @@ type ChatRoomViewController (room:Entity) as this =
             sendMessage identity this.Text.Text
         )
 
-        this.WebView.LoadRequest(new NSUrlRequest(new NSUrl(Api.baseUrl + "/mobile/chat")))
+        this.WebView.LoadRequest(new NSUrlRequest(new NSUrl(Api.baseUrl + "/api/chat/chatRoomTemplate")))
         this.WebView.LoadFinished.Add(fun _ ->
             this.WebView.Delegate <- webViewDelegate
             this.WebView.SetBodyBackgroundColor (colorToCss UIColor.White)
@@ -221,6 +229,9 @@ type ChatRoomViewController (room:Entity) as this =
                         for event in events do processEvent event (fun l _ -> lines.Add l)
                         addLines (lines.ToArray())
                         processor.Start()
+
+                        Async.Start(Timer.ticker keepAlive (5 * 60 * 1000), cancelPoll.Token)
+
                     | error -> this.HandleApiFailure error 
             )
         )
@@ -248,6 +259,9 @@ type ChatRoomViewController (room:Entity) as this =
     member this.HandleChannelEvent = processor.Post
 
     member this.Room = room
+
+    override this.Dispose (bool) =
+        cancelPoll.Cancel()
 
 module ChatRooms =
     let rooms = ConcurrentDictionary<string, Entity * ChatRoomViewController>()
