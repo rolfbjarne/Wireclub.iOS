@@ -174,10 +174,13 @@ type ChatRoomViewController (room:Entity) as this =
     let cancelPoll = new Threading.CancellationTokenSource()
 
     let keepAlive () =
-        Async.startWithContinuation
-            (Chat.keepAlive room.Slug)
-            (fun _ -> ())
-        ()
+        this.InvokeOnMainThread(fun _ -> 
+            if this.NavigationController <> null && this.NavigationController.VisibleViewController = upcast this then
+                Async.startWithContinuation
+                    (Chat.keepAlive room.Slug)
+                    (fun _ -> ())
+                ()
+        )
 
     static member val buttonImage = Image.resize (new SizeF(22.0f, 22.0f)) (UIImage.FromFile "UIButtonBarProfile.png") with get
 
@@ -230,7 +233,7 @@ type ChatRoomViewController (room:Entity) as this =
                         addLines (lines.ToArray())
                         processor.Start()
 
-                        Async.Start(Timer.ticker keepAlive (5 * 60 * 1000), cancelPoll.Token)
+                        Async.Start(Timer.ticker keepAlive (30 * 1000), cancelPoll.Token)
 
                     | error -> this.HandleApiFailure error 
             )

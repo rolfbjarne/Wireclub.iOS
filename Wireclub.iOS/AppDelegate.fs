@@ -22,7 +22,7 @@ type AppDelegate () =
         Logger.log <-
             (fun ex -> 
                 Async.StartWithContinuations (
-                    (DB.createError (Error(Error = ex.Message))),
+                    (DB.createError (Error(Error = ex.ToString()))),
                     (fun _ -> ()),
                     (fun _ -> ()),
                     (fun _ -> ()))
