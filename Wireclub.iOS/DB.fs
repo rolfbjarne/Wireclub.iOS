@@ -49,7 +49,11 @@ let dbChatHistory = db.CreateTableAsync<ChatHistory> () |> Async.AwaitTask |> As
 let dbChatEventHistory = db.CreateTableAsync<ChatHistoryEvent> () |> Async.AwaitTask |> Async.RunSynchronously
 let dbError = db.CreateTableAsync<Error> () |> Async.AwaitTask |> Async.RunSynchronously
 
-
+let deleteAll<'T when 'T : (new : unit -> 'T)>() = async {
+    let! toDelete = db.Table<'T>().ToListAsync() |> Async.AwaitTask 
+    for event in toDelete do
+        do! db.DeleteAsync(event) |> Async.AwaitTask |> Async.Ignore
+}
 
 let fetchErrors () =
     db.Table<Error>().ToListAsync() |> Async.AwaitTask 

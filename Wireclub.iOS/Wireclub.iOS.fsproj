@@ -138,6 +138,7 @@
     <Compile Include="Resources.fs" />
     <Compile Include="DB.fs" />
     <Compile Include="Dialog.fs" />
+    <Compile Include="Error.fs" /> 
     <Compile Include="User.fs" />
     <Compile Include="PrivateChat.fs" />
     <Compile Include="Chat.fs" />
@@ -146,7 +147,6 @@
     <Compile Include="Settings.fs" />
     <Compile Include="Home.fs" />
     <Compile Include="AppDelegate.fs" />
-    <Compile Include="Error.fs" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" />
   <ItemGroup>

@@ -556,3 +556,17 @@ type MegaMenuViewController (handle:nativeint) =
 
     override this.ViewDidLoad () =
         base.ViewDidLoad ()
+
+    override this.RowSelected (tableView, indexPath) =
+        match indexPath.Section, indexPath.Row with
+        | 0, 1 ->  Navigation.navigate "/logout" None
+        | _ -> ()
+
+
+
+
+
+
+
+
+

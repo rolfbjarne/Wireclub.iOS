@@ -267,7 +267,7 @@ type HomeViewController () as controller =
 type EntryViewController () as controller =
     inherit UIViewController ()
 
-    let rootController = new HomeViewController()
+    let mutable rootController = new HomeViewController()
     let loginController = lazy (Resources.loginStoryboard.Value.InstantiateInitialViewController() :?> UIViewController)
     let editProfileController = lazy (Resources.editProfileStoryboard.Value.InstantiateInitialViewController() :?> UIViewController)
 
@@ -418,6 +418,20 @@ type EntryViewController () as controller =
                 else
                     this.NavigationController.PopToViewController (this, false) |> ignore
                     this.NavigationController.PushViewController(rootController, true)
+            | "/logout", _ ->
+                NSUserDefaults.StandardUserDefaults.RemoveObject("auth-token")
+                NSUserDefaults.StandardUserDefaults.Synchronize () |> ignore
+                Async.startWithContinuation
+                    (async {
+                        do! DB.deleteAll<DB.ChatHistory>()
+                        do! DB.deleteAll<DB.ChatHistoryEvent>()
+                    })
+                    (fun _ -> ())
+                Account.logout ()
+                ChannelClient.close()
+
+                this.NavigationController.PopToRootViewController(true) |> ignore
+                rootController <- new HomeViewController()
             | url, _ -> 
                 this.NavigationController.PushViewController (new DialogViewController (url), true)
 
