@@ -41,6 +41,9 @@
     <ConsolePause>false</ConsolePause>
     <Tailcalls>true</Tailcalls>
     <MtouchLink>None</MtouchLink>
+    <MtouchI18n>
+    </MtouchI18n>
+    <MtouchArch>ARMv7</MtouchArch>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|iPhone' ">
     <DebugSymbols>true</DebugSymbols>
@@ -74,6 +77,8 @@
     <ConsolePause>false</ConsolePause>
     <Tailcalls>true</Tailcalls>
     <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
+    <IpaPackageName>
+    </IpaPackageName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Ad-Hoc|iPhone' ">
     <DebugSymbols>true</DebugSymbols>
@@ -138,7 +143,7 @@
     <Compile Include="Resources.fs" />
     <Compile Include="DB.fs" />
     <Compile Include="Dialog.fs" />
-    <Compile Include="Error.fs" /> 
+    <Compile Include="Error.fs" />
     <Compile Include="User.fs" />
     <Compile Include="PrivateChat.fs" />
     <Compile Include="Chat.fs" />
