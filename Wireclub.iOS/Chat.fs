@@ -233,7 +233,8 @@ type ChatRoomViewController (room:Entity) as this =
                         addLines (lines.ToArray())
                         processor.Start()
 
-                        Async.Start(Timer.ticker keepAlive (30 * 1000), cancelPoll.Token)
+                        //remove this for know
+                        //Async.Start(Timer.ticker keepAlive (30 * 1000), cancelPoll.Token)
 
                     | error -> this.HandleApiFailure error 
             )
