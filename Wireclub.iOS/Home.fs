@@ -156,7 +156,17 @@ type FriendsViewController () as controller =
                 
                 cell.Tag <- indexPath.Row
                 cell.TextLabel.Text <- friend.Name
-                //cell.DetailTextLabel.Text <- room
+                match friend.State with
+                | OnlineStateType.Idle -> 
+                    cell.DetailTextLabel.Text <- "Away"
+                    cell.DetailTextLabel.TextColor <- UIColor.DarkTextColor
+                | OnlineStateType.Visible ->
+                    cell.DetailTextLabel.Text <- "Online"
+                    cell.DetailTextLabel.TextColor <- UIColor.DarkTextColor
+                | _ -> 
+                    cell.DetailTextLabel.Text <- "Offline"
+                    cell.DetailTextLabel.TextColor <- UIColor.LightGray
+
                 Image.loadImageForCell (App.imageUrl friend.Avatar 100) Image.placeholder cell tableView
 
                 cell
@@ -198,7 +208,7 @@ type FriendsViewController () as controller =
             (PrivateChat.online())
             (function
                 | Api.ApiOk response ->
-                    friends <- response.Friends
+                    friends <- response.Friends.OrderBy(fun e -> e.State).ToArray()
                     loaded <- true
                     controller.Table.ReloadData ()
                     controller.OnlineState.ValueChanged.Add(fun _ -> 
