@@ -13,6 +13,9 @@ namespace Views
 	partial class ChatDirectoryViewController
 	{
 		[Outlet]
+		MonoTouch.UIKit.UISegmentedControl RoomFilter { get; set; }
+
+		[Outlet]
 		MonoTouch.UIKit.UITableView Table { get; set; }
 		
 		void ReleaseDesignerOutlets ()
@@ -20,6 +23,11 @@ namespace Views
 			if (Table != null) {
 				Table.Dispose ();
 				Table = null;
+			}
+
+			if (RoomFilter != null) {
+				RoomFilter.Dispose ();
+				RoomFilter = null;
 			}
 		}
 	}

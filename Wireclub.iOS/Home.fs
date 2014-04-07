@@ -159,13 +159,11 @@ type FriendsViewController () as controller =
                 match friend.State with
                 | OnlineStateType.Idle -> 
                     cell.DetailTextLabel.Text <- "Away"
-                    cell.DetailTextLabel.TextColor <- UIColor.DarkTextColor
                 | OnlineStateType.Visible ->
                     cell.DetailTextLabel.Text <- "Online"
-                    cell.DetailTextLabel.TextColor <- UIColor.DarkTextColor
                 | _ -> 
                     cell.DetailTextLabel.Text <- "Offline"
-                    cell.DetailTextLabel.TextColor <- UIColor.LightGray
+                    cell.DetailTextLabel.TextColor <- UIColor.Gray
 
                 Image.loadImageForCell (App.imageUrl friend.Avatar 100) Image.placeholder cell tableView
 
