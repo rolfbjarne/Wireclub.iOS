@@ -13,10 +13,18 @@ namespace Views
 	partial class FriendsViewController
 	{
 		[Outlet]
+		MonoTouch.UIKit.UISegmentedControl OnlineState { get; set; }
+
+		[Outlet]
 		MonoTouch.UIKit.UITableView Table { get; set; }
 		
 		void ReleaseDesignerOutlets ()
 		{
+			if (OnlineState != null) {
+				OnlineState.Dispose ();
+				OnlineState = null;
+			}
+
 			if (Table != null) {
 				Table.Dispose ();
 				Table = null;

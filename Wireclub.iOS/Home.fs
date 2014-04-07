@@ -189,6 +189,9 @@ type FriendsViewController () as controller =
     [<Outlet>]
     member val Table: UITableView = null with get, set
 
+    [<Outlet>]
+    member val OnlineState: UISegmentedControl = null with get, set
+
     override controller.ViewDidLoad () =
         controller.Table.Source <- tableSource
         Async.startNetworkWithContinuation
@@ -198,9 +201,24 @@ type FriendsViewController () as controller =
                     friends <- response.Friends
                     loaded <- true
                     controller.Table.ReloadData ()
+                    controller.OnlineState.ValueChanged.Add(fun _ -> 
+                        let state =
+                            match controller.OnlineState.SelectedSegment with
+                            | 1 -> OnlineStateType.Idle
+                            | 2 -> OnlineStateType.Invisible
+                            | _ -> OnlineStateType.Visible
 
+                        Async.startNetworkWithContinuation
+                            (PrivateChat.changeOnlineState state)
+                            (function
+                                | Api.ApiOk _ -> ()
+                                | error -> controller.HandleApiFailure error
+                            )
+                    )
                 | error -> controller.HandleApiFailure error
             )
+
+        
 
         base.ViewDidLoad ()
 
