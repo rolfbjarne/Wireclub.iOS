@@ -12,9 +12,15 @@ namespace Views
 	[Register ("UserGalleryViewController")]
 	partial class UserGalleryViewController
 	{
+		[Outlet]
+		MonoTouch.UIKit.UIWebView WebView { get; set; }
 		
 		void ReleaseDesignerOutlets ()
 		{
+			if (WebView != null) {
+				WebView.Dispose ();
+				WebView = null;
+			}
 		}
 	}
 }

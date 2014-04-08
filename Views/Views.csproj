@@ -158,6 +158,10 @@
     <Compile Include="UserGalleryViewController.designer.cs">
       <DependentUpon>UserGalleryViewController.cs</DependentUpon>
     </Compile>
+    <Compile Include="UserBlogViewController.cs" />
+    <Compile Include="UserBlogViewController.designer.cs">
+      <DependentUpon>UserBlogViewController.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <InterfaceDefinition Include="FriendsViewController.xib" />
@@ -193,5 +197,10 @@
     <BundleResource Include="Resources\UITabBarContact%402x.png" />
     <BundleResource Include="Resources\UIButtonBarProfile%402x.png" />
     <BundleResource Include="Resources\UILogo%402x.png" />
+    <BundleResource Include="Resources\UIUserProfileBlog%402x.png" />
+    <BundleResource Include="Resources\UIUserProfileFeed%402x.png" />
+    <BundleResource Include="Resources\UIUserProfileFemale%402x.png" />
+    <BundleResource Include="Resources\UIUserProfileGallery%402x.png" />
+    <BundleResource Include="Resources\UIUserProfileMale%402x.png" />
   </ItemGroup>
 </Project>

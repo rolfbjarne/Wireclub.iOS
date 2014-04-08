@@ -246,6 +246,21 @@
     <BundleResource Include="..\Views\Resources\UILogo%402x.png">
       <Link>Resources\UILogo%402x.png</Link>
     </BundleResource>
+    <BundleResource Include="..\Views\Resources\UIUserProfileBlog%402x.png">
+      <Link>Resources\UIUserProfileBlog%402x.png</Link>
+    </BundleResource>
+    <BundleResource Include="..\Views\Resources\UIUserProfileFeed%402x.png">
+      <Link>Resources\UIUserProfileFeed%402x.png</Link>
+    </BundleResource>
+    <BundleResource Include="..\Views\Resources\UIUserProfileFemale%402x.png">
+      <Link>Resources\UIUserProfileFemale%402x.png</Link>
+    </BundleResource>
+    <BundleResource Include="..\Views\Resources\UIUserProfileGallery%402x.png">
+      <Link>Resources\UIUserProfileGallery%402x.png</Link>
+    </BundleResource>
+    <BundleResource Include="..\Views\Resources\UIUserProfileMale%402x.png">
+      <Link>Resources\UIUserProfileMale%402x.png</Link>
+    </BundleResource>
   </ItemGroup>
   <ItemGroup>
     <ImageAsset Include="Resources\Images.xcassets\AppIcons.appiconset\Contents.json" />

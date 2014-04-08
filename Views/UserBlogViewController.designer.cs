@@ -9,8 +9,8 @@ using System.CodeDom.Compiler;
 
 namespace Views
 {
-	[Register ("UserFeedViewController")]
-	partial class UserFeedViewController
+	[Register ("UserBlogViewController")]
+	partial class UserBlogViewController
 	{
 		[Outlet]
 		MonoTouch.UIKit.UIWebView WebView { get; set; }
