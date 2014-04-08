@@ -15,9 +15,12 @@ module WebView =
     let navigateDelegate = {
         new UIWebViewDelegate() with
         override this.ShouldStartLoad (view, request, navigationType) =
-            let uri = new Uri(request.Url.AbsoluteString)
-            Navigation.navigate (uri.ToString()) None
-            false
+            if navigationType = UIWebViewNavigationType.LinkClicked then
+                let uri = new Uri(request.Url.AbsoluteString)
+                Navigation.navigate (uri.ToString()) None
+                false
+            else
+                true
     }
 
     let setupWebView (webView:UIWebView, url:string) =
