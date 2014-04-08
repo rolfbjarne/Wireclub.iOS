@@ -54,11 +54,15 @@ type AppDelegate () =
 module Main =
     [<EntryPoint>]
     let main args =
-        try
+        #if DEBUG
             UIApplication.Main(args, null, "AppDelegate")
-        with
-        | ex ->
-            let reportError = DB.createError (Error(Error = ex.Message)) |> Async.StartAsTask
-            reportError.Wait()
-        0
-
+            0
+        #else
+            try
+                UIApplication.Main(args, null, "AppDelegate")
+            with
+            | ex ->
+                let reportError = DB.createError (Error(Error = ex.Message)) |> Async.StartAsTask
+                reportError.Wait()
+            0
+        #endif
