@@ -19,6 +19,29 @@ module WebView =
             Navigation.navigate (uri.ToString()) None
             false
     }
+
+    let setupWebView (webView:UIWebView, url:string) =
+            webView.LoadRequest(new NSUrlRequest(new NSUrl(url)))
+
+            webView.ShouldStartLoad <- UIWebLoaderControl(fun webView request navigationType ->
+                if request.Url.ToString() = url && request.Headers.Keys |> Array.exists ((=) (NSObject.FromObject "x-auth-token")) = false then
+
+                    let headers = new NSMutableDictionary (request.Headers)
+                    headers.SetValueForKey(NSObject.FromObject (Api.userToken), new NSString("x-auth-token"))
+                    let request = request.MutableCopy () :?> NSMutableUrlRequest
+
+                    request.Headers <- headers
+                    webView.LoadRequest request
+                    false
+                else
+                    true
+            )
+
+            webView.LoadFinished.Add(fun _ ->
+                webView.Delegate <- navigateDelegate
+                webView.SetBodyBackgroundColor (colorToCss Utility.grayLightAccent)
+            )
+
         
 type UserBaseViewController (handle:nativeint) =
     inherit UIViewController (handle)
@@ -26,56 +49,47 @@ type UserBaseViewController (handle:nativeint) =
     member val User: Entity option = None with get, set
 
 
-type UserWebViewBaseViewController (handle:nativeint) =
+[<Register ("UserFeedViewController")>]
+type UserFeedViewController (handle:nativeint) as controller =
     inherit UserBaseViewController (handle)
 
     [<Outlet>]
     member val WebView: UIWebView = null with get, set
 
-    member val Url: string = null with get, set
-
     override this.ViewDidLoad () =
         base.ViewDidLoad ()
 
         match this.User with
-        | Some user ->
-            this.WebView.LoadRequest(new NSUrlRequest(new NSUrl(this.Url)))
-            this.WebView.LoadFinished.Add(fun _ ->
-                this.WebView.Delegate <- WebView.navigateDelegate
-                this.WebView.SetBodyBackgroundColor (colorToCss Utility.grayLightAccent)
-            )
+        | Some user -> WebView.setupWebView(this.WebView, Api.baseUrl + "/users/" + controller.User.Value.Slug)
         | _ -> ()
-
-[<Register ("UserFeedViewController")>]
-type UserFeedViewController (handle:nativeint) as controller =
-    inherit UserWebViewBaseViewController (handle)
-
-    do controller.Url <- Api.baseUrl + "/users/" + controller.User.Value.Slug
-
-    override this.ViewDidLoad () =
-        base.ViewDidLoad ()
-
 
 [<Register ("UserGalleryViewController")>]
 type UserGalleryViewController (handle:nativeint) as controller =
-    inherit UserWebViewBaseViewController (handle)
-
-    do controller.Url <- Api.baseUrl + "/users/" + controller.User.Value.Slug + "/pictures"
-
-    override this.ViewDidLoad () =
-        base.ViewDidLoad ()
-
-[<Register ("UserBlogViewController")>]
-type UserBlogViewController (handle:nativeint) as controller =
-    inherit UserWebViewBaseViewController (handle)
-
-    do controller.Url <- Api.baseUrl + "/users/" + controller.User.Value.Slug + "/blog"
+    inherit UserBaseViewController (handle)
 
     [<Outlet>]
     member val WebView: UIWebView = null with get, set
 
     override this.ViewDidLoad () =
         base.ViewDidLoad ()
+
+        match this.User with
+        | Some user -> WebView.setupWebView(this.WebView, Api.baseUrl + "/users/" + controller.User.Value.Slug + "/pictures")
+        | _ -> ()
+
+[<Register ("UserBlogViewController")>]
+type UserBlogViewController (handle:nativeint) as controller =
+    inherit UserBaseViewController (handle)
+
+    [<Outlet>]
+    member val WebView: UIWebView = null with get, set
+
+    override this.ViewDidLoad () =
+        base.ViewDidLoad ()
+
+        match this.User with
+        | Some user -> WebView.setupWebView(this.WebView, Api.baseUrl + "/users/" + controller.User.Value.Slug + "/blog")
+        | _ -> ()
 
 
 [<Register ("UserViewController")>]
