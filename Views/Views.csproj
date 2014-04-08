@@ -154,6 +154,10 @@
     <Compile Include="BlockedUsersViewController.designer.cs">
       <DependentUpon>BlockedUsersViewController.cs</DependentUpon>
     </Compile>
+    <Compile Include="UserGalleryViewController.cs" />
+    <Compile Include="UserGalleryViewController.designer.cs">
+      <DependentUpon>UserGalleryViewController.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <InterfaceDefinition Include="FriendsViewController.xib" />

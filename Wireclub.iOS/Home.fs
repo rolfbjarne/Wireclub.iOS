@@ -400,8 +400,12 @@ type EntryViewController () as controller =
             match url, data with
             | Routes.User id, data -> 
                 let pushUser user =
-                    let controller = Resources.userStoryboard.Value.InstantiateInitialViewController () :?> UserViewController
-                    controller.User <- Some user
+                    let controller = Resources.userStoryboard.Value.InstantiateInitialViewController () :?> UITabBarController
+
+                    for controller in controller.ChildViewControllers do
+                        let controller = controller :?> UserBaseViewController
+                        controller.User <- Some user
+
                     this.NavigationController.PushViewController (controller, true)
 
                 match data with

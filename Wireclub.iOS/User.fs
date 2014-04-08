@@ -11,15 +11,29 @@ open Wireclub.Boundary.Chat
 open Wireclub.Boundary.Models
 open Routes
         
-[<Register ("UserFeedViewController")>]
-type UserFeedViewController (handle:nativeint) =
-    inherit UIViewController (handle)
 
-[<Register ("UserViewController")>]
-type UserViewController (handle:nativeint) =
+type UserBaseViewController (handle:nativeint) =
     inherit UIViewController (handle)
 
     member val User: Entity option = None with get, set
+
+[<Register ("UserFeedViewController")>]
+type UserFeedViewController (handle:nativeint) =
+    inherit UserBaseViewController (handle)
+
+    override this.ViewDidLoad () =
+        base.ViewDidLoad ()
+
+[<Register ("UserGalleryViewController")>]
+type UserGalleryViewController (handle:nativeint) =
+    inherit UserBaseViewController (handle)
+
+    override this.ViewDidLoad () =
+        base.ViewDidLoad ()
+
+[<Register ("UserViewController")>]
+type UserViewController (handle:nativeint) =
+    inherit UserBaseViewController (handle)
 
     [<Outlet>]
     member val Avatar: UIImageView = null with get, set
