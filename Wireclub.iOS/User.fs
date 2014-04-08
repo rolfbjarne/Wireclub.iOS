@@ -25,49 +25,51 @@ type UserBaseViewController (handle:nativeint) =
 
     member val User: Entity option = None with get, set
 
-[<Register ("UserFeedViewController")>]
-type UserFeedViewController (handle:nativeint) =
+
+type UserWebViewBaseViewController (handle:nativeint) =
     inherit UserBaseViewController (handle)
 
     [<Outlet>]
     member val WebView: UIWebView = null with get, set
+
+    member val Url: string = null with get, set
 
     override this.ViewDidLoad () =
         base.ViewDidLoad ()
 
         match this.User with
         | Some user ->
-            this.WebView.LoadRequest(new NSUrlRequest(new NSUrl(Api.baseUrl + "/users/" + user.Slug)))
+            this.WebView.LoadRequest(new NSUrlRequest(new NSUrl(this.Url)))
             this.WebView.LoadFinished.Add(fun _ ->
                 this.WebView.Delegate <- WebView.navigateDelegate
                 this.WebView.SetBodyBackgroundColor (colorToCss Utility.grayLightAccent)
             )
         | _ -> ()
+
+[<Register ("UserFeedViewController")>]
+type UserFeedViewController (handle:nativeint) as controller =
+    inherit UserWebViewBaseViewController (handle)
+
+    do controller.Url <- Api.baseUrl + "/users/" + controller.User.Value.Slug
+
+    override this.ViewDidLoad () =
+        base.ViewDidLoad ()
 
 
 [<Register ("UserGalleryViewController")>]
-type UserGalleryViewController (handle:nativeint) =
-    inherit UserBaseViewController (handle)
+type UserGalleryViewController (handle:nativeint) as controller =
+    inherit UserWebViewBaseViewController (handle)
 
-    [<Outlet>]
-    member val WebView: UIWebView = null with get, set
+    do controller.Url <- Api.baseUrl + "/users/" + controller.User.Value.Slug + "/pictures"
 
     override this.ViewDidLoad () =
         base.ViewDidLoad ()
-
-        match this.User with
-        | Some user ->
-            this.WebView.LoadRequest(new NSUrlRequest(new NSUrl(Api.baseUrl + "/users/" + user.Slug + "/pictures")))
-            this.WebView.LoadFinished.Add(fun _ ->
-                this.WebView.Delegate <- WebView.navigateDelegate
-                this.WebView.SetBodyBackgroundColor (colorToCss Utility.grayLightAccent)
-            )
-        | _ -> ()
-
 
 [<Register ("UserBlogViewController")>]
-type UserBlogViewController (handle:nativeint) =
-    inherit UserBaseViewController (handle)
+type UserBlogViewController (handle:nativeint) as controller =
+    inherit UserWebViewBaseViewController (handle)
+
+    do controller.Url <- Api.baseUrl + "/users/" + controller.User.Value.Slug + "/blog"
 
     [<Outlet>]
     member val WebView: UIWebView = null with get, set
@@ -75,14 +77,6 @@ type UserBlogViewController (handle:nativeint) =
     override this.ViewDidLoad () =
         base.ViewDidLoad ()
 
-        match this.User with
-        | Some user ->
-            this.WebView.LoadRequest(new NSUrlRequest(new NSUrl(Api.baseUrl + "/users/" + user.Slug + "/blog")))
-            this.WebView.LoadFinished.Add(fun _ ->
-                this.WebView.Delegate <- WebView.navigateDelegate
-                this.WebView.SetBodyBackgroundColor (colorToCss Utility.grayLightAccent)
-            )
-        | _ -> ()
 
 [<Register ("UserViewController")>]
 type UserViewController (handle:nativeint) =
