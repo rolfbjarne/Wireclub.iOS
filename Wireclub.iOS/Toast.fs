@@ -1,3 +1,9 @@
+// Copyright (c) Wireclub Media Inc. All Rights Reserved. See License.md in the project root for license information.
+//
+// Adapted from: Toast by Charles Scalesse to F#
+// https://github.com/scalessec/Toast
+//
+// ORIGINAL LICENSE:
 //
 //    Permission is hereby granted, free of charge, to any person obtaining a
 //    copy of this software and associated documentation files (the
@@ -17,9 +23,6 @@
 //    CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 //    TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 //    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-//    Ported Toast by Charles Scalesse to F#
-//    https://github.com/scalessec/Toast
 
 module Toast
 
