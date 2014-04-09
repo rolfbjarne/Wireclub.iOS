@@ -182,7 +182,7 @@ type ChatRoomViewController (room:Entity) as this =
                 ()
         )
 
-    static member val buttonImage = Image.resize (new SizeF(22.0f, 22.0f)) (UIImage.FromFile "UIButtonBarProfile.png") with get
+    static member val buttonImage = UIImage.FromFile "UIButtonBarProfile.png" with get
 
     [<Outlet>]
     member val WebView: UIWebView = null with get, set
