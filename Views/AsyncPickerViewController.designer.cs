@@ -20,14 +20,14 @@ namespace Views
 		
 		void ReleaseDesignerOutlets ()
 		{
-			if (Progress != null) {
-				Progress.Dispose ();
-				Progress = null;
-			}
-
 			if (Picker != null) {
 				Picker.Dispose ();
 				Picker = null;
+			}
+
+			if (Progress != null) {
+				Progress.Dispose ();
+				Progress = null;
 			}
 		}
 	}

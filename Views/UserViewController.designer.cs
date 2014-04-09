@@ -31,11 +31,6 @@ namespace Views
 				Avatar = null;
 			}
 
-			if (FriendButton != null) {
-				FriendButton.Dispose ();
-				FriendButton = null;
-			}
-
 			if (BlockButton != null) {
 				BlockButton.Dispose ();
 				BlockButton = null;
@@ -44,6 +39,11 @@ namespace Views
 			if (ChatButton != null) {
 				ChatButton.Dispose ();
 				ChatButton = null;
+			}
+
+			if (FriendButton != null) {
+				FriendButton.Dispose ();
+				FriendButton = null;
 			}
 		}
 	}

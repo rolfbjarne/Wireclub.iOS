@@ -23,6 +23,11 @@ namespace Views
 		
 		void ReleaseDesignerOutlets ()
 		{
+			if (CancelButton != null) {
+				CancelButton.Dispose ();
+				CancelButton = null;
+			}
+
 			if (Email != null) {
 				Email.Dispose ();
 				Email = null;
@@ -31,11 +36,6 @@ namespace Views
 			if (SubmitButton != null) {
 				SubmitButton.Dispose ();
 				SubmitButton = null;
-			}
-
-			if (CancelButton != null) {
-				CancelButton.Dispose ();
-				CancelButton = null;
 			}
 		}
 	}

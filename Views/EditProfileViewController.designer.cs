@@ -74,6 +74,11 @@ namespace Views
 				ProfileImage = null;
 			}
 
+			if (ProfileImageProgress != null) {
+				ProfileImageProgress.Dispose ();
+				ProfileImageProgress = null;
+			}
+
 			if (Region != null) {
 				Region.Dispose ();
 				Region = null;
@@ -87,11 +92,6 @@ namespace Views
 			if (Username != null) {
 				Username.Dispose ();
 				Username = null;
-			}
-
-			if (ProfileImageProgress != null) {
-				ProfileImageProgress.Dispose ();
-				ProfileImageProgress = null;
 			}
 		}
 	}

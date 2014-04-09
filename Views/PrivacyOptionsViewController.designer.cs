@@ -51,6 +51,11 @@ namespace Views
 				InviteGames = null;
 			}
 
+			if (OptOut != null) {
+				OptOut.Dispose ();
+				OptOut = null;
+			}
+
 			if (PictureRankings != null) {
 				PictureRankings.Dispose ();
 				PictureRankings = null;
@@ -59,6 +64,11 @@ namespace Views
 			if (PrivateChat != null) {
 				PrivateChat.Dispose ();
 				PrivateChat = null;
+			}
+
+			if (Save != null) {
+				Save.Dispose ();
+				Save = null;
 			}
 
 			if (ViewBlog != null) {
@@ -74,16 +84,6 @@ namespace Views
 			if (ViewProfile != null) {
 				ViewProfile.Dispose ();
 				ViewProfile = null;
-			}
-
-			if (OptOut != null) {
-				OptOut.Dispose ();
-				OptOut = null;
-			}
-
-			if (Save != null) {
-				Save.Dispose ();
-				Save = null;
 			}
 		}
 	}

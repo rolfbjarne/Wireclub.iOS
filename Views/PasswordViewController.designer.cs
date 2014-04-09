@@ -29,9 +29,14 @@ namespace Views
 		
 		void ReleaseDesignerOutlets ()
 		{
-			if (Old != null) {
-				Old.Dispose ();
-				Old = null;
+			if (Confirm != null) {
+				Confirm.Dispose ();
+				Confirm = null;
+			}
+
+			if (Forgot != null) {
+				Forgot.Dispose ();
+				Forgot = null;
 			}
 
 			if (New != null) {
@@ -39,19 +44,14 @@ namespace Views
 				New = null;
 			}
 
-			if (Confirm != null) {
-				Confirm.Dispose ();
-				Confirm = null;
+			if (Old != null) {
+				Old.Dispose ();
+				Old = null;
 			}
 
 			if (Save != null) {
 				Save.Dispose ();
 				Save = null;
-			}
-
-			if (Forgot != null) {
-				Forgot.Dispose ();
-				Forgot = null;
 			}
 		}
 	}

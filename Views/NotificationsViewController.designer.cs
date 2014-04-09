@@ -31,14 +31,14 @@ namespace Views
 				ClubActivity = null;
 			}
 
-			if (NewMessages != null) {
-				NewMessages.Dispose ();
-				NewMessages = null;
-			}
-
 			if (Invitations != null) {
 				Invitations.Dispose ();
 				Invitations = null;
+			}
+
+			if (NewMessages != null) {
+				NewMessages.Dispose ();
+				NewMessages = null;
 			}
 
 			if (Save != null) {

@@ -23,11 +23,6 @@ namespace Views
 		
 		void ReleaseDesignerOutlets ()
 		{
-			if (WebView != null) {
-				WebView.Dispose ();
-				WebView = null;
-			}
-
 			if (SendButton != null) {
 				SendButton.Dispose ();
 				SendButton = null;
@@ -36,6 +31,11 @@ namespace Views
 			if (Text != null) {
 				Text.Dispose ();
 				Text = null;
+			}
+
+			if (WebView != null) {
+				WebView.Dispose ();
+				WebView = null;
 			}
 		}
 	}

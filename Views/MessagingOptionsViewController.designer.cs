@@ -28,14 +28,14 @@ namespace Views
 				Picture = null;
 			}
 
-			if (Verified != null) {
-				Verified.Dispose ();
-				Verified = null;
-			}
-
 			if (Save != null) {
 				Save.Dispose ();
 				Save = null;
+			}
+
+			if (Verified != null) {
+				Verified.Dispose ();
+				Verified = null;
 			}
 		}
 	}
