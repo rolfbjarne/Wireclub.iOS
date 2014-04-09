@@ -1,12 +1,23 @@
 namespace Wireclub.iOS
 
 open System
-open System.Threading
-open System.Collections.Concurrent
+open System.Text.RegularExpressions
+open System.Linq
+open System.Drawing
+open System.Globalization
+open System.Web
+
 open MonoTouch.Foundation
 open MonoTouch.UIKit
+
+open Wireclub.Models
 open Wireclub.Boundary
 open Wireclub.Boundary.Chat
+open Wireclub.Boundary.Models
+
+open Newtonsoft.Json
+
+open ChannelEvent
 
 [<Register ("ChatDirectoryViewController")>]
 type ChatDirectoryViewController() as controller =
@@ -72,3 +83,218 @@ type ChatDirectoryViewController() as controller =
         controller.Table.Source <- tableSource
         updateDirectory ()
         base.ViewDidLoad ()
+
+
+
+[<RequireQualifiedAccess>]
+type ChatSession =
+| User of Entity
+| ChatRoom of Entity
+
+[<Register("ChatsViewController")>]
+type ChatsViewController () as controller =
+    inherit UIViewController ()
+         
+    let mutable (chats:DB.ChatHistory[]) = [| |]
+
+    let readColor = new UIColor(0.3f, 0.3f, 0.3f, 1.0f)
+    let unreadColor = new UIColor(0.0f, 0.0f, 0.0f, 1.0f)
+    let mutable loaded = false
+
+    let tableSource = { 
+        new UITableViewSource() with
+        override this.GetCell(tableView, indexPath) =
+            match chats with
+            | [||] when loaded -> 
+                let cell = 
+                    match tableView.DequeueReusableCell "no-chat-cell" with
+                    | null -> new UITableViewCell (UITableViewCellStyle.Subtitle, "no-chat-cell")
+                    | c -> c
+
+                let label = new UILabel(tableView.Frame)
+                label.TextAlignment <- UITextAlignment.Center
+                label.Text <- "No chats yet."
+                cell.ContentView.AddSubview(label)
+                cell.SelectionStyle <- UITableViewCellSelectionStyle.None
+                cell
+            | _ -> 
+                let chat = chats.[indexPath.Row]
+                let cell = 
+                    match tableView.DequeueReusableCell "chat-cell" with
+                    | null -> new UITableViewCell (UITableViewCellStyle.Subtitle, "chat-cell")
+                    | c -> c
+                
+                cell.Tag <- indexPath.Row
+                match chat.Type with
+                | DB.ChatHistoryType.PrivateChat
+                | DB.ChatHistoryType.ChatRoom
+                | _ ->
+                    let color = if chat.Read then readColor else unreadColor
+                    cell.TextLabel.Text <- chat.Label
+                    cell.TextLabel.TextColor <- color
+                    cell.DetailTextLabel.Text <- chat.Last
+                    cell.DetailTextLabel.TextColor <- color
+                    Image.loadImageForCell (App.imageUrl chat.Image 100) Image.placeholder cell tableView
+                
+                cell
+
+        override this.RowsInSection(tableView, section) =
+            match chats with
+            | [||] when loaded -> 1
+            | _ -> chats.Length
+
+        override this.GetHeightForRow(tableView, index) =
+            match chats with
+            | [||] when loaded -> controller.Table.Frame.Height
+            | _ -> tableView.RowHeight
+    
+        override this.RowSelected(tableView, indexPath) =
+            match chats with
+            | [||] when loaded -> ()
+            | _ -> 
+                tableView.DeselectRow (indexPath, false)
+                let session = chats.[indexPath.Row]
+                let entity = {
+                    Id = session.EntityId
+                    Slug = session.Slug
+                    Label = session.Label
+                    Image = session.Image
+                }
+                match session.Type with
+                | DB.ChatHistoryType.PrivateChat ->
+                    let newController = ChatSessions.start entity
+                    controller.NavigationController.PushViewController(newController, true)
+                | DB.ChatHistoryType.ChatRoom
+                | _ ->
+                    let newController = ChatRooms.join entity
+                    controller.NavigationController.PushViewController(newController, true)
+    }
+
+    [<Outlet>]
+    member val Table: UITableView = null with get, set
+
+    member this.Reload () =
+        Async.startWithContinuation
+            (DB.fetchChatHistory ())
+            (fun sessions ->
+                chats <- Seq.toArray sessions
+                loaded <- true
+                this.Table.ReloadData()
+            )
+
+    override controller.ViewDidLoad () =
+        base.ViewDidLoad ()
+        controller.Table.Source <- tableSource
+
+    override this.ViewDidAppear (animated) =
+        base.ViewDidAppear (animated)
+        this.Reload()
+
+
+[<Register("FriendsViewController")>]
+type FriendsViewController () as controller =
+    inherit UIViewController ()
+     
+    let mutable (friends:PrivateChatFriend[]) = [| |]
+    let mutable loaded = false
+
+    let tableSource = { 
+        new UITableViewSource() with
+        override this.GetCell(tableView, indexPath) =
+            match friends with
+            | [||] when loaded -> 
+                let cell = 
+                    match tableView.DequeueReusableCell "no-friend-cell" with
+                    | null -> new UITableViewCell (UITableViewCellStyle.Subtitle, "no-friends-cell")
+                    | c -> c
+
+                let label = new UILabel(tableView.Frame)
+                label.TextAlignment <- UITextAlignment.Center
+                label.Text <- "No friends yet."
+                cell.ContentView.AddSubview(label)
+                cell.SelectionStyle <- UITableViewCellSelectionStyle.None
+                cell
+            | _ -> 
+                let friend = friends.[indexPath.Row]
+                let cell = 
+                    match tableView.DequeueReusableCell "friend-cell" with
+                    | null -> new UITableViewCell (UITableViewCellStyle.Subtitle, "friend-cell")
+                    | c -> c
+                
+                cell.Tag <- indexPath.Row
+                cell.TextLabel.Text <- friend.Name
+                match friend.State with
+                | OnlineStateType.Idle -> 
+                    cell.DetailTextLabel.Text <- "Away"
+                | OnlineStateType.Visible ->
+                    cell.DetailTextLabel.Text <- "Online"
+                | _ -> 
+                    cell.DetailTextLabel.Text <- "Offline"
+                    cell.DetailTextLabel.TextColor <- UIColor.Gray
+
+                Image.loadImageForCell (App.imageUrl friend.Avatar 100) Image.placeholder cell tableView
+
+                cell
+
+        override this.RowsInSection(tableView, section) =
+            match friends with
+            | [||] when loaded -> 1
+            | _ -> friends.Length
+
+        override this.GetHeightForRow(tableView, index) =
+            match friends with
+            | [||] when loaded -> controller.Table.Frame.Height
+            | _ -> tableView.RowHeight
+    
+        override this.RowSelected(tableView, indexPath) =
+            match friends with
+            | [||] when loaded -> ()
+            | _ ->
+                tableView.DeselectRow (indexPath, false)
+                let friend = friends.[indexPath.Row]
+                let newController = ChatSessions.start {
+                        Id = friend.Id
+                        Slug = friend.Slug
+                        Label = friend.Name
+                        Image = friend.Avatar
+                    }
+                controller.NavigationController.PushViewController(newController, true)
+    }
+
+    [<Outlet>]
+    member val Table: UITableView = null with get, set
+
+    [<Outlet>]
+    member val OnlineState: UISegmentedControl = null with get, set
+
+    override controller.ViewDidLoad () =
+        controller.Table.Source <- tableSource
+        Async.startNetworkWithContinuation
+            (PrivateChat.online())
+            (function
+                | Api.ApiOk response ->
+                    friends <- response.Friends.OrderBy(fun e -> e.State).ToArray()
+                    loaded <- true
+                    controller.Table.ReloadData ()
+                    controller.OnlineState.ValueChanged.Add(fun _ -> 
+                        let state =
+                            match controller.OnlineState.SelectedSegment with
+                            | 1 -> OnlineStateType.Idle
+                            | 2 -> OnlineStateType.Invisible
+                            | _ -> OnlineStateType.Visible
+
+                        Async.startNetworkWithContinuation
+                            (PrivateChat.changeOnlineState state)
+                            (function
+                                | Api.ApiOk _ -> ()
+                                | error -> controller.HandleApiFailure error
+                            )
+                    )
+                | error -> controller.HandleApiFailure error
+            )
+
+        
+
+        base.ViewDidLoad ()
+
+
