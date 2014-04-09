@@ -25,23 +25,21 @@ namespace Views
 		MonoTouch.UIKit.UIButton Save { get; set; }
 
 		[Outlet]
+		MonoTouch.UIKit.UISwitch ShowAdultContent { get; set; }
+
+		[Outlet]
 		MonoTouch.UIKit.UITextField ShowJoinLeave { get; set; }
 		
 		void ReleaseDesignerOutlets ()
 		{
-			if (Font != null) {
-				Font.Dispose ();
-				Font = null;
-			}
-
 			if (Color != null) {
 				Color.Dispose ();
 				Color = null;
 			}
 
-			if (ShowJoinLeave != null) {
-				ShowJoinLeave.Dispose ();
-				ShowJoinLeave = null;
+			if (Font != null) {
+				Font.Dispose ();
+				Font = null;
 			}
 
 			if (PlaySounds != null) {
@@ -52,6 +50,16 @@ namespace Views
 			if (Save != null) {
 				Save.Dispose ();
 				Save = null;
+			}
+
+			if (ShowJoinLeave != null) {
+				ShowJoinLeave.Dispose ();
+				ShowJoinLeave = null;
+			}
+
+			if (ShowAdultContent != null) {
+				ShowAdultContent.Dispose ();
+				ShowAdultContent = null;
 			}
 		}
 	}

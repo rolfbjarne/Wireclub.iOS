@@ -109,6 +109,8 @@ type ChatOptionsViewController(handle:nativeint) as controller =
     [<Outlet>]
     member val Save:UIButton = null with get, set
 
+    [<Outlet>]
+    member val ShowAdultContent:UISwitch = null with get, set
 
     override this.ViewDidLoad () =
         base.ViewDidLoad ()
@@ -144,6 +146,16 @@ type ChatOptionsViewController(handle:nativeint) as controller =
                     this.ShowJoinLeave.EditingDidBegin.Add(fun _ -> pickerJoinLeave.ReloadAllComponents())
 
                     this.PlaySounds.On <- data.PlaySounds
+                    this.ShowAdultContent.On <- data.ShowRatedR
+
+                    this.ShowAdultContent.ValueChanged.Add(fun args ->
+                        Async.startNetworkWithContinuation
+                            (Settings.updateContentOptions this.ShowAdultContent.On)
+                            (function
+                                | Api.ApiOk _ -> ()
+                                | error -> this.HandleApiFailure error
+                            )
+                    )
 
                     this.Save.TouchUpInside.Add(fun _ ->
                         this.View.EndEditing(true) |> ignore
