@@ -19,72 +19,6 @@ open Newtonsoft.Json
 
 open ChannelEvent
 
-[<Register ("ChatDirectoryViewController")>]
-type ChatDirectoryViewController() as controller =
-    inherit UIViewController ()
-
-    let mutable directory:ChatDirectoryViewModel option = None
-    let rooms () = 
-        match directory, controller.RoomFilter.SelectedSegment with
-        | Some directory, 0 -> directory.Official 
-        | Some directory, 1 -> directory.Member
-        | Some directory, 2 -> directory.Personal
-        | _, _ -> [||]
-   
-    let tableSource = { 
-        new UITableViewSource() with
-        override this.GetCell(tableView, indexPath) =
-            let room = rooms().[indexPath.Row]
-            let cell = 
-                match tableView.DequeueReusableCell "room-cell" with
-                | null -> new UITableViewCell (UITableViewCellStyle.Subtitle, "room-cell")
-                | c -> c
-
-            cell.Tag <- indexPath.Row
-            cell.TextLabel.Text <- room.Name
-            cell.DetailTextLabel.Text <- room.Description
-            cell.DetailTextLabel.TextColor <- UIColor.Gray
-            Image.loadImageForCell (App.imageUrl room.Image 100) Image.placeholderChat cell tableView
-            cell
-
-        override this.RowsInSection(tableView, section) =
-            rooms().Length
-
-        override this.RowSelected(tableView, indexPath) =
-            tableView.DeselectRow (indexPath, false)
-            let room = rooms().[indexPath.Row]
-            let roomController = ChatRooms.join { Id=room.Id; Slug=room.Slug; Label=room.Name; Image=room.Image }
-            controller.NavigationController.PushViewController(roomController, true)
-    }
-
-    let updateDirectory () = 
-        Async.startNetworkWithContinuation
-            (Chat.directory ())
-            (function
-                | Api.ApiOk d ->
-                    directory <- Some d
-                    controller.Table.ReloadData ()
-                    controller.RoomFilter.ValueChanged.Add(fun args ->
-                        controller.Table.ReloadData ()
-                    )
-                | er -> 
-                    // ## Handle "soft" errors (no alertview, maybe a toast if the table is empty?)
-                    printfn "Api Error: %A" er
-            )
-    
-
-    [<Outlet>]
-    member val Table: UITableView = null with get, set
-
-    [<Outlet>]
-    member val RoomFilter: UISegmentedControl = null with get, set
-
-    override controller.ViewDidLoad () =
-        controller.Table.Source <- tableSource
-        updateDirectory ()
-        base.ViewDidLoad ()
-
-
 
 [<RequireQualifiedAccess>]
 type ChatSession =
@@ -191,6 +125,75 @@ type ChatsViewController () as controller =
         this.Reload()
 
 
+[<Register ("ChatDirectoryViewController")>]
+type ChatDirectoryViewController() as controller =
+    inherit UIViewController ()
+
+    let mutable directory:ChatDirectoryViewModel option = None
+    let rooms () = 
+        match directory, controller.RoomFilter.SelectedSegment with
+        | Some directory, 0 -> directory.Official 
+        | Some directory, 1 -> directory.Member
+        | Some directory, 2 -> directory.Personal
+        | _, _ -> [||]
+   
+    let tableSource = { 
+        new UITableViewSource() with
+        override this.GetCell(tableView, indexPath) =
+            let room = rooms().[indexPath.Row]
+            let cell = 
+                match tableView.DequeueReusableCell "room-cell" with
+                | null -> new UITableViewCell (UITableViewCellStyle.Subtitle, "room-cell")
+                | c -> c
+
+            cell.Tag <- indexPath.Row
+            cell.TextLabel.Text <- room.Name
+            cell.DetailTextLabel.Text <- room.Description
+            cell.DetailTextLabel.TextColor <- UIColor.Gray
+            Image.loadImageForCell (App.imageUrl room.Image 100) Image.placeholderChat cell tableView
+            cell
+
+        override this.RowsInSection(tableView, section) =
+            rooms().Length
+
+        override this.RowSelected(tableView, indexPath) =
+            tableView.DeselectRow (indexPath, false)
+            let room = rooms().[indexPath.Row]
+            let roomController = ChatRooms.join { Id=room.Id; Slug=room.Slug; Label=room.Name; Image=room.Image }
+            controller.NavigationController.PushViewController(roomController, true)
+    }
+
+    let refresh (tableController:UITableViewController) =
+        Async.startNetworkWithContinuation
+            (Chat.directory ())
+            (function
+                | Api.ApiOk d ->
+                    directory <- Some d
+                    tableController.TableView.ReloadData ()
+                    tableController.RefreshControl.EndRefreshing()
+                | error -> controller.HandleApiFailure error
+            )
+
+    [<Outlet>]
+    member val ContentView: UIView = null with get, set
+
+    [<Outlet>]
+    member val RoomFilter: UISegmentedControl = null with get, set
+
+    override this.ViewDidLoad () =
+        base.ViewDidLoad ()
+
+        let tableController = new UITableViewController()
+        this.AddChildViewController tableController
+        this.ContentView.AddSubview tableController.View
+        this.RoomFilter.ValueChanged.Add(fun args -> tableController.TableView.ReloadData () )
+
+        tableController.View.Frame <- new RectangleF(0.f, 0.f, this.ContentView.Frame.Width, this.ContentView.Frame.Height)
+        tableController.TableView.Source <- tableSource
+        tableController.RefreshControl <- new UIRefreshControl()
+        tableController.RefreshControl.ValueChanged.Add(fun _ -> refresh tableController)
+        refresh tableController
+
 [<Register("FriendsViewController")>]
 type FriendsViewController () as controller =
     inherit UIViewController ()
@@ -226,8 +229,10 @@ type FriendsViewController () as controller =
                 match friend.State with
                 | OnlineStateType.Idle -> 
                     cell.DetailTextLabel.Text <- "Away"
+                    cell.DetailTextLabel.TextColor <- UIColor.DarkTextColor
                 | OnlineStateType.Visible ->
                     cell.DetailTextLabel.Text <- "Online"
+                    cell.DetailTextLabel.TextColor <- UIColor.DarkTextColor
                 | _ -> 
                     cell.DetailTextLabel.Text <- "Offline"
                     cell.DetailTextLabel.TextColor <- UIColor.Gray
@@ -243,7 +248,7 @@ type FriendsViewController () as controller =
 
         override this.GetHeightForRow(tableView, index) =
             match friends with
-            | [||] when loaded -> controller.Table.Frame.Height
+            | [||] when loaded -> tableView.Frame.Height
             | _ -> tableView.RowHeight
     
         override this.RowSelected(tableView, indexPath) =
@@ -261,40 +266,53 @@ type FriendsViewController () as controller =
                 controller.NavigationController.PushViewController(newController, true)
     }
 
-    [<Outlet>]
-    member val Table: UITableView = null with get, set
-
-    [<Outlet>]
-    member val OnlineState: UISegmentedControl = null with get, set
-
-    override controller.ViewDidLoad () =
-        controller.Table.Source <- tableSource
+    let refresh (tableController:UITableViewController) =
         Async.startNetworkWithContinuation
             (PrivateChat.online())
             (function
                 | Api.ApiOk response ->
                     friends <- response.Friends.OrderBy(fun e -> e.State).ToArray()
                     loaded <- true
-                    controller.Table.ReloadData ()
-                    controller.OnlineState.ValueChanged.Add(fun _ -> 
-                        let state =
-                            match controller.OnlineState.SelectedSegment with
-                            | 1 -> OnlineStateType.Idle
-                            | 2 -> OnlineStateType.Invisible
-                            | _ -> OnlineStateType.Visible
-
-                        Async.startNetworkWithContinuation
-                            (PrivateChat.changeOnlineState state)
-                            (function
-                                | Api.ApiOk _ -> ()
-                                | error -> controller.HandleApiFailure error
-                            )
-                    )
+                    tableController.TableView.ReloadData ()
+                    tableController.RefreshControl.EndRefreshing()
                 | error -> controller.HandleApiFailure error
             )
 
+    [<Outlet>]
+    member val ContentView: UIView = null with get, set
+
+    [<Outlet>]
+    member val OnlineState: UISegmentedControl = null with get, set
+
+    override this.ViewDidLoad () =
+        base.ViewDidLoad ()
+
+        let tableController = new UITableViewController()
+        this.AddChildViewController tableController
+        this.ContentView.AddSubview tableController.View
+        this.OnlineState.ValueChanged.Add(fun _ -> 
+            let state =
+                match this.OnlineState.SelectedSegment with
+                | 1 -> OnlineStateType.Idle
+                | 2 -> OnlineStateType.Invisible
+                | _ -> OnlineStateType.Visible
+
+            Async.startNetworkWithContinuation
+                (PrivateChat.changeOnlineState state)
+                (function
+                    | Api.ApiOk _ -> ()
+                    | error -> this.HandleApiFailure error
+                )
+        )
+
+        tableController.View.Frame <- new RectangleF(0.f, 0.f, this.ContentView.Frame.Width, this.ContentView.Frame.Height)
+        tableController.TableView.Source <- tableSource
+        tableController.RefreshControl <- new UIRefreshControl()
+        tableController.RefreshControl.ValueChanged.Add(fun _ -> refresh tableController)
+        refresh tableController
+
+
         
 
-        base.ViewDidLoad ()
 
 
