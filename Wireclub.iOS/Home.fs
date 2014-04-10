@@ -196,8 +196,8 @@ type EntryViewController () as controller =
 //                        let controller = controller :?> UserBaseViewController
 //                        controller.User <- Some user
 
-                    let controller = Resources.userStoryboard.Value.InstantiateInitialViewController () :?> UserBaseViewController
-                    controller.User <- Some user
+                    let controller = Resources.userStoryboard.Value.InstantiateInitialViewController () :?> UserViewController
+                    controller.Entity <- Some user
                     this.NavigationController.PushViewController (controller, true)
 
                 match data with

@@ -1,10 +1,9 @@
 ﻿<Properties>
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug|iPhoneSimulator" PreferredExecutionTarget="MonoDevelop.IPhone.IPhoneSimulatorTarget.IPhoneRetina4_64.7.1" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Wireclub.iOS/Home.fs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Wireclub.iOS/User.fs">
     <Files>
-      <File FileName="Wireclub.iOS/Chat.fs" Line="302" Column="18" />
-      <File FileName="Wireclub.iOS/PrivateChat.fs" Line="1" Column="1" />
-      <File FileName="Wireclub.iOS/Home.fs" Line="75" Column="29" />
+      <File FileName="Wireclub.iOS/User.fs" Line="140" Column="13" />
+      <File FileName="Wireclub.iOS/Settings.fs" Line="1" Column="1" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>

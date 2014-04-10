@@ -23,6 +23,15 @@ namespace Views
 
 		[Outlet]
 		MonoTouch.UIKit.UIButton FriendButton { get; set; }
+
+		[Outlet]
+		MonoTouch.UIKit.UILabel ProfileLabel { get; set; }
+
+		[Outlet]
+		MonoTouch.UIKit.UIButton UnblockButton { get; set; }
+
+		[Outlet]
+		MonoTouch.UIKit.UIButton UnfriendButton { get; set; }
 		
 		void ReleaseDesignerOutlets ()
 		{
@@ -44,6 +53,21 @@ namespace Views
 			if (FriendButton != null) {
 				FriendButton.Dispose ();
 				FriendButton = null;
+			}
+
+			if (ProfileLabel != null) {
+				ProfileLabel.Dispose ();
+				ProfileLabel = null;
+			}
+
+			if (UnfriendButton != null) {
+				UnfriendButton.Dispose ();
+				UnfriendButton = null;
+			}
+
+			if (UnblockButton != null) {
+				UnblockButton.Dispose ();
+				UnblockButton = null;
 			}
 		}
 	}

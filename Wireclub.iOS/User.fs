@@ -99,50 +99,128 @@ type UserBlogViewController (handle:nativeint) as controller =
 
 [<Register ("UserViewController")>]
 type UserViewController (handle:nativeint) =
-    inherit UserBaseViewController (handle)
+    inherit UITableViewController (handle)
+
+    let mutable isBlocked = false
+    let mutable isFriend = false
+
+    member val Entity: Entity option = None with get, set
 
     [<Outlet>]
     member val Avatar: UIImageView = null with get, set
 
     [<Outlet>]
-    member val BlockButton: UIButton = null with get, set
+    member val ChatButton: UIButton = null with get, set
 
     [<Outlet>]
-    member val ChatButton: UIButton = null with get, set
+    member val BlockButton: UIButton = null with get, set
 
     [<Outlet>]
     member val FriendButton: UIButton = null with get, set
 
+    [<Outlet>]
+    member val UnblockButton: UIButton = null with get, set
+
+    [<Outlet>]
+    member val UnfriendButton: UIButton = null with get, set
+
+    [<Outlet>]
+    member val ProfileLabel: UILabel = null with get, set
+
     override this.ViewDidLoad () =
         base.ViewDidLoad ()
     
-        match this.User with
+        match this.Entity with
         | Some user -> 
-            let url = (App.imageUrl user.Image 320) 
-            Image.loadImageForView url Image.placeholder this.Avatar
+            this.NavigationItem.Title <- user.Label
+
+            Image.loadImageWithContinuation (App.imageUrl user.Image 320)  Image.placeholder (fun image _ ->
+                this.Avatar.Image <- image
+                this.TableView.ReloadData()
+            )
+            this.TableView.ReloadData()
 
             this.ChatButton.TouchUpInside.Add(fun _ ->            
-                Navigation.navigate ("/privateChat/session/" + user.Slug) this.User
+                Navigation.navigate ("/privateChat/session/" + user.Slug) this.Entity
             )
 
-            this.NavigationItem.Title <- user.Label
-            this.NavigationItem.RightBarButtonItem <- null
-
-            this.FriendButton.TouchUpInside.Add(fun _ ->
-                let alert = new UIAlertView (Title="Send Friend Request?", Message="")
-                alert.AddButton "Cancel" |> ignore
-                alert.AddButton "Send" |> ignore
-                alert.Show ()
-                alert.Dismissed.Add(fun args ->
-                    match args.ButtonIndex with
-                    | 1 -> 
-                        Async.startNetworkWithContinuation
-                            (User.addFriend user.Slug)
-                            (this.HandleApiResult >> ignore)
-                    | _ -> ()
+            let setupButton (button:UIButton) verb description computation continuation =
+                button.TouchUpInside.Add(fun _ ->
+                    let alert = new UIAlertView (Title = description, Message="")
+                    alert.AddButton "Cancel" |> ignore
+                    alert.AddButton verb |> ignore
+                    alert.Show ()
+                    alert.Dismissed.Add(fun args ->
+                        match args.ButtonIndex with
+                        | 1 -> 
+                            Async.startNetworkWithContinuation
+                                computation
+                                continuation
+                        | _ -> ()
+                    )
                 )
-            )
 
-        | _ ->
-            //TODO make this async load a user
-            failwith "No user"
+            setupButton
+                this.FriendButton
+                "Send"
+                (sprintf "Send %s a friend request?" user.Label)
+                (User.addFriend user.Slug)
+                (function 
+                    | Api.ApiOk profile ->
+                        this.FriendButton.Hidden <- true
+                        this.UnfriendButton.Hidden <- false
+                    | error -> this.HandleApiFailure error
+                )
+
+            setupButton
+                this.UnfriendButton
+                "Unfriend"
+                (sprintf "Remove %s as a friend?" user.Label)
+                (User.removeFriend user.Slug)
+                (function 
+                    | Api.ApiOk profile ->
+                        this.FriendButton.Hidden <- false
+                        this.UnfriendButton.Hidden <- true
+                    | error -> this.HandleApiFailure error
+                )
+
+            setupButton
+                this.BlockButton
+                "Block"
+                (sprintf "Block %s?" user.Label)
+                (User.block user.Slug)
+                (function 
+                    | Api.ApiOk profile ->
+                        this.BlockButton.Hidden <- true
+                        this.UnblockButton.Hidden <- false
+                    | error -> this.HandleApiFailure error
+                )
+
+            setupButton
+                this.UnblockButton
+                "Unblock"
+                (sprintf "Unblock %s?" user.Label)
+                (User.unblock user.Slug)
+                (function 
+                    | Api.ApiOk profile ->
+                        this.BlockButton.Hidden <- false
+                        this.UnblockButton.Hidden <- true
+                    | error -> this.HandleApiFailure error
+                )
+
+
+            Async.startWithContinuation
+                (User.fetch user.Slug)
+                (function 
+                    | Api.ApiOk profile ->
+                        this.ProfileLabel.Text <- sprintf "%i, %s, %s" profile.Age profile.Gender profile.Location
+                        this.TableView.ReloadData()
+
+                        this.BlockButton.Hidden <- profile.Blocked
+                        this.UnblockButton.Hidden <- not profile.Blocked
+                        this.FriendButton.Hidden <- profile.Friend
+                        this.UnfriendButton.Hidden <- not profile.Friend
+
+                    | error -> this.HandleApiFailure error
+                )
+        | _ -> failwith "No user"

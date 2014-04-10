@@ -17,7 +17,7 @@ open ChannelEvent
 
 
 [<Register ("ChatRoomUsersViewController")>]
-type ChatRoomUsersViewController (users:ChatUser[]) =
+type ChatRoomUsersViewController (users:UserProfile[]) =
     inherit UIViewController ("ChatRoomUsersViewController", null)
 
     let users = users.OrderBy(fun e -> e.Name).ToArray()
@@ -60,12 +60,12 @@ type ChatRoomViewController (room:Entity) as this =
 
     let identity = match Api.userIdentity with | Some id -> id | None -> failwith "User must be logged in"
     let events = System.Collections.Generic.HashSet<int64>()
-    let users = ConcurrentDictionary<string, ChatUser>()
+    let users = ConcurrentDictionary<string, UserProfile>()
     let mutable startSequence = 0L
     let mutable starred = false
     let nameplateImageSize = 21
         
-    let nameplate (user:ChatUser) =     
+    let nameplate (user:UserProfile) =     
         sprintf
             "<a class=icon href=%s/users/%s><img src=%s width=%i height=%i /></a> <a class=name href=%s/users/%s>%s</a>"
             Api.baseUrl
@@ -124,7 +124,7 @@ type ChatRoomViewController (room:Entity) as this =
                     | error -> this.HandleApiFailure error
                 )
 
-    let addUser = (fun (user:ChatUser) -> users.AddOrUpdate (user.Id, user, System.Func<string,ChatUser,ChatUser>(fun _ _ -> user)) |> ignore)
+    let addUser = (fun (user:UserProfile) -> users.AddOrUpdate (user.Id, user, System.Func<string,UserProfile,UserProfile>(fun _ _ -> user)) |> ignore)
 
     let processEvent event addLine =
         let historic = event.Sequence < startSequence

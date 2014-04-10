@@ -7,7 +7,7 @@ using MonoTouch.UIKit;
 
 namespace Views
 {
-	public partial class UserViewController : UIViewController
+	public partial class UserViewController : UITableViewController
 	{
 		public UserViewController (IntPtr handle) : base (handle)
 		{
