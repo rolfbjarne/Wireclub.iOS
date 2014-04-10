@@ -202,5 +202,7 @@
     <BundleResource Include="Resources\UIUserProfileFemale%402x.png" />
     <BundleResource Include="Resources\UIUserProfileGallery%402x.png" />
     <BundleResource Include="Resources\UIUserProfileMale%402x.png" />
+    <BundleResource Include="Resources\UIBarButtonFavoriteActive%402x.png" />
+    <BundleResource Include="Resources\UIBarButtonFavoriteInactive%402x.png" />
   </ItemGroup>
 </Project>

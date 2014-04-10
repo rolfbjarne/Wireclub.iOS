@@ -62,6 +62,7 @@ type ChatRoomViewController (room:Entity) as this =
     let events = System.Collections.Generic.HashSet<int64>()
     let users = ConcurrentDictionary<string, ChatUser>()
     let mutable startSequence = 0L
+    let mutable starred = false
     let nameplateImageSize = 21
         
     let nameplate (user:ChatUser) =     
@@ -184,7 +185,37 @@ type ChatRoomViewController (room:Entity) as this =
                 ()
         )
 
-    static member val buttonImage = UIImage.FromFile "UIButtonBarProfile.png" with get
+
+
+    member this.UserButton:UIBarButtonItem =
+        new UIBarButtonItem(UIImage.FromFile "UIButtonBarProfile.png", UIBarButtonItemStyle.Bordered, new EventHandler(fun (s:obj) (e:EventArgs) -> 
+                this.NavigationController.PushViewController(new ChatRoomUsersViewController(users.Values |> Seq.toArray), true)
+            ))
+
+    member this.UnstarButton:UIBarButtonItem =
+        new UIBarButtonItem(UIImage.FromFile "UIBarButtonFavoriteActive.png", UIBarButtonItemStyle.Bordered, new EventHandler(fun (s:obj) (e:EventArgs) -> 
+                Async.startWithContinuation
+                    (Chat.unstar this.Room.Slug)
+                    (function 
+                        | Api.ApiOk _ -> 
+                            starred <- not starred
+                            this.NavigationItem.RightBarButtonItems <- [| this.UserButton; this.StarButton |]
+                        | error -> this.HandleApiFailure error 
+                    )
+            ))
+
+
+    member this.StarButton:UIBarButtonItem =
+        new UIBarButtonItem(UIImage.FromFile "UIBarButtonFavoriteInactive.png", UIBarButtonItemStyle.Bordered, new EventHandler(fun (s:obj) (e:EventArgs) -> 
+                Async.startWithContinuation
+                    (Chat.star this.Room.Slug)
+                    (function 
+                        | Api.ApiOk _ -> 
+                            starred <- not starred
+                            this.NavigationItem.RightBarButtonItems <- [| this.UserButton; this.UnstarButton |]
+                        | error -> this.HandleApiFailure error 
+                    )
+            ))
 
     [<Outlet>]
     member val WebView: UIWebView = null with get, set
@@ -203,9 +234,7 @@ type ChatRoomViewController (room:Entity) as this =
         this.AutomaticallyAdjustsScrollViewInsets <- false
         this.WebView.BackgroundColor <- UIColor.White
 
-        this.NavigationItem.RightBarButtonItem <- new UIBarButtonItem(ChatRoomViewController.buttonImage, UIBarButtonItemStyle.Bordered, new EventHandler(fun (s:obj) (e:EventArgs) -> 
-            this.NavigationController.PushViewController(new ChatRoomUsersViewController(users.Values |> Seq.toArray), true)
-        ))
+        this.NavigationItem.RightBarButtonItems <- [| this.UserButton ; this.StarButton |]
 
         // Send message
         this.Text.ShouldReturn <- (fun _ ->
@@ -226,6 +255,14 @@ type ChatRoomViewController (room:Entity) as this =
                 (function
                     | Api.ApiOk (result, events) ->
                         startSequence <- result.Sequence
+
+                        starred <- result.Channel.ViewerHasStarred
+                        this.NavigationItem.RightBarButtonItems <-
+                            [|
+                                yield this.UserButton
+                                if starred then yield this.UnstarButton
+                                else yield this.StarButton
+                            |]
 
                         result.Members |> Array.filter (fun e -> memberTypes.Contains e.Membership) |> Array.iter addUser
                         result.HistoricMembers |> Array.filter (fun e -> memberTypes.Contains e.Membership) |> Array.iter addUser
@@ -264,7 +301,7 @@ type ChatRoomViewController (room:Entity) as this =
 
     member this.HandleChannelEvent = processor.Post
 
-    member this.Room = room
+    member this.Room:Entity = room
 
     override this.Dispose (bool) =
         cancelPoll.Cancel()

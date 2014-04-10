@@ -261,6 +261,12 @@
     <BundleResource Include="..\Views\Resources\UIUserProfileMale%402x.png">
       <Link>Resources\UIUserProfileMale%402x.png</Link>
     </BundleResource>
+    <BundleResource Include="..\Views\Resources\UIBarButtonFavoriteActive%402x.png">
+      <Link>Resources\UIBarButtonFavoriteActive%402x.png</Link>
+    </BundleResource>
+    <BundleResource Include="..\Views\Resources\UIBarButtonFavoriteInactive%402x.png">
+      <Link>Resources\UIBarButtonFavoriteInactive%402x.png</Link>
+    </BundleResource>
   </ItemGroup>
   <ItemGroup>
     <ImageAsset Include="Resources\Images.xcassets\AppIcons.appiconset\Contents.json" />
