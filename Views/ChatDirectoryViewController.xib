@@ -22,7 +22,7 @@
                     <segments>
                         <segment title="Official"/>
                         <segment title="User Created"/>
-                        <segment title="Favorite"/>
+                        <segment title="Starred"/>
                     </segments>
                 </segmentedControl>
                 <view contentMode="scaleToFill" id="bKS-Yi-sLx">
