@@ -93,9 +93,9 @@ type ChatRoomViewController (room:Entity) as this =
     let placeKeyboard (sender:obj) (args:UIKeyboardEventArgs) =
         this.ResizeViewToKeyboard args
         this.WebView.EvaluateJavascript "wireclub.Mobile.scrollToEnd(true);" |> ignore
-        
-    let showObserver = UIKeyboard.Notifications.ObserveWillShow(System.EventHandler<UIKeyboardEventArgs>(placeKeyboard))
-    let hideObserver = UIKeyboard.Notifications.ObserveWillHide(System.EventHandler<UIKeyboardEventArgs>(placeKeyboard))
+
+    let mutable showObserver:NSObject = null
+    let mutable hideObserver:NSObject = null
 
     let webViewDelegate = {
         new UIWebViewDelegate() with
@@ -294,10 +294,13 @@ type ChatRoomViewController (room:Entity) as this =
                     ))
             )
     
+        showObserver <- UIKeyboard.Notifications.ObserveWillShow(System.EventHandler<UIKeyboardEventArgs>(placeKeyboard))
+        hideObserver <- UIKeyboard.Notifications.ObserveWillHide(System.EventHandler<UIKeyboardEventArgs>(placeKeyboard))
+        this.Text.BecomeFirstResponder () |> ignore
+    
     override this.ViewDidDisappear animated =
-        if this.IsMovingToParentViewController then
-            showObserver.Dispose ()
-            hideObserver.Dispose ()
+        showObserver.Dispose ()
+        hideObserver.Dispose ()
 
     member this.HandleChannelEvent = processor.Post
 
