@@ -135,12 +135,11 @@ type UserViewController (handle:nativeint) =
     override this.ViewDidLoad () =
         base.ViewDidLoad ()
    
+        this.AutomaticallyAdjustsScrollViewInsets <- false
+
         match this.Entity with
         | Some user -> 
             this.NavigationItem.Title <- user.Label
-
-
-
             Image.loadImageWithContinuation (App.imageUrl user.Image 320)  Image.placeholder (fun i _ ->
                 image <- i
                 let imageView = new UIImageView(image)
@@ -237,6 +236,10 @@ type UserViewController (handle:nativeint) =
                 )
         | _ -> failwith "No user"
 
+    override this.GetHeightForHeader (tableView, index) =
+        match index with
+        | 0 -> 64.0f
+        | _-> tableView.SectionHeaderHeight
 
     override this.GetHeightForRow(tableView, indexPath) =
         match indexPath.Section, indexPath.Row with
