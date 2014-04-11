@@ -132,6 +132,8 @@ type UserViewController (handle:nativeint) =
     [<Outlet>]
     member val LocationLabel: UILabel = null with get, set
 
+    static member val Placeholder = lazy Image.resize (new SizeF (320.0f, 320.0f)) Image.placeholder
+
     override this.ViewDidLoad () =
         base.ViewDidLoad ()
    
@@ -140,7 +142,7 @@ type UserViewController (handle:nativeint) =
         match this.Entity with
         | Some user -> 
             this.NavigationItem.Title <- user.Label
-            Image.loadImageWithContinuation (App.imageUrl user.Image 320)  Image.placeholder (fun i _ ->
+            Image.loadImageWithContinuation (App.imageUrl user.Image 320)  UserViewController.Placeholder.Value (fun i _ ->
                 image <- i
                 let imageView = new UIImageView(image)
                 for view in this.ImageView.Subviews do view.RemoveFromSuperview ()
