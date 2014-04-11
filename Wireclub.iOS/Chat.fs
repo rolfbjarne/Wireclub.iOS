@@ -234,6 +234,8 @@ type ChatRoomViewController (room:Entity) as this =
         this.AutomaticallyAdjustsScrollViewInsets <- false
         this.WebView.BackgroundColor <- UIColor.White
 
+
+
         this.NavigationItem.RightBarButtonItems <- [| this.UserButton ; this.StarButton |]
 
         // Send message
@@ -245,7 +247,8 @@ type ChatRoomViewController (room:Entity) as this =
             sendMessage identity this.Text.Text
         )
 
-        this.WebView.LoadRequest(new NSUrlRequest(new NSUrl(Api.baseUrl + "/api/chat/chatRoomTemplate")))
+        this.WebView.LoadRequest(new NSUrlRequest(new NSUrl(Api.webUrl + "/api/chat/chatRoomTemplate")))
+
         this.WebView.LoadFinished.Add(fun _ ->
             this.WebView.Delegate <- webViewDelegate
             this.WebView.SetBodyBackgroundColor (colorToCss UIColor.White)

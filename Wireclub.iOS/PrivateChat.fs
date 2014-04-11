@@ -123,7 +123,7 @@ type PrivateChatSessionViewController (user:Entity) as this =
         this.WebView.BackgroundColor <- Utility.grayLightAccent
 
         this.NavigationItem.Title <- user.Label
-        this.WebView.LoadRequest(new NSUrlRequest(new NSUrl(Api.baseUrl + "/api/chat/privateChatTemplate")))
+        this.WebView.LoadRequest(new NSUrlRequest(new NSUrl(Api.webUrl + "/api/chat/privateChatTemplate")))
         this.WebView.LoadFinished.Add(fun _ ->
             this.WebView.Delegate <- webViewDelegate
             this.WebView.SetBodyBackgroundColor (colorToCss Utility.grayLightAccent)

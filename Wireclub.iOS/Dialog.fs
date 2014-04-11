@@ -2,6 +2,7 @@
 
 namespace Wireclub.iOS
 
+open System
 open MonoTouch.Foundation
 open MonoTouch.UIKit
 
@@ -9,7 +10,10 @@ open MonoTouch.UIKit
 type DialogViewController (url:string) =
     inherit UIViewController ()
 
-    let url = Api.fullUrl url
+    let url = 
+        match url.Contains("://") with
+        | true -> url
+        | false -> Uri(Uri(Api.webUrl), url).ToString()
 
     [<Outlet>]
     member val WebView: UIWebView = null with get, set
