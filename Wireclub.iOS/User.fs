@@ -3,6 +3,7 @@
 namespace Wireclub.iOS
 
 open System
+open System.Drawing
 open System.Threading
 open System.Collections.Generic
 open System.Collections.Concurrent
@@ -103,11 +104,12 @@ type UserViewController (handle:nativeint) =
 
     let mutable isBlocked = false
     let mutable isFriend = false
+    let mutable image = Image.placeholderMale 
 
     member val Entity: Entity option = None with get, set
 
     [<Outlet>]
-    member val Avatar: UIImageView = null with get, set
+    member val ImageView: UIView = null with get, set
 
     [<Outlet>]
     member val ChatButton: UIButton = null with get, set
@@ -127,17 +129,26 @@ type UserViewController (handle:nativeint) =
     [<Outlet>]
     member val ProfileLabel: UILabel = null with get, set
 
+    [<Outlet>]
+    member val LocationLabel: UILabel = null with get, set
+
     override this.ViewDidLoad () =
         base.ViewDidLoad ()
-    
+   
         match this.Entity with
         | Some user -> 
             this.NavigationItem.Title <- user.Label
 
-            Image.loadImageWithContinuation (App.imageUrl user.Image 320)  Image.placeholder (fun image _ ->
-                this.Avatar.Image <- image
-                this.TableView.ReloadData()
+
+
+            Image.loadImageWithContinuation (App.imageUrl user.Image 320)  Image.placeholder (fun i _ ->
+                image <- i
+                let imageView = new UIImageView(image)
+                for view in this.ImageView.Subviews do view.RemoveFromSuperview ()
+                this.ImageView.Add imageView
+                this.TableView.ReloadRows([| NSIndexPath.FromRowSection(0, 0) |], UITableViewRowAnimation.None)
             )
+
             this.TableView.ReloadData()
 
             this.ChatButton.TouchUpInside.Add(fun _ ->            
@@ -213,7 +224,8 @@ type UserViewController (handle:nativeint) =
                 (User.fetch user.Slug)
                 (function 
                     | Api.ApiOk profile ->
-                        this.ProfileLabel.Text <- sprintf "%i, %s, %s" profile.Age profile.Gender profile.Location
+                        this.ProfileLabel.Text <- sprintf "%i, %s" profile.Age profile.Gender
+                        this.LocationLabel.Text <- profile.Location
                         this.TableView.ReloadData()
 
                         this.BlockButton.Hidden <- profile.Blocked
@@ -224,3 +236,10 @@ type UserViewController (handle:nativeint) =
                     | error -> this.HandleApiFailure error
                 )
         | _ -> failwith "No user"
+
+
+    override this.GetHeightForRow(tableView, indexPath) =
+        match indexPath.Section, indexPath.Row with
+        | 0, 0 -> match image with | null -> 320.f | image -> image.Size.Height
+        | _ -> tableView.RowHeight
+

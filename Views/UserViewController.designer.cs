@@ -13,9 +13,6 @@ namespace Views
 	partial class UserViewController
 	{
 		[Outlet]
-		MonoTouch.UIKit.UIImageView Avatar { get; set; }
-
-		[Outlet]
 		MonoTouch.UIKit.UIButton BlockButton { get; set; }
 
 		[Outlet]
@@ -23,6 +20,12 @@ namespace Views
 
 		[Outlet]
 		MonoTouch.UIKit.UIButton FriendButton { get; set; }
+
+		[Outlet]
+		MonoTouch.UIKit.UIView ImageView { get; set; }
+
+		[Outlet]
+		MonoTouch.UIKit.UILabel LocationLabel { get; set; }
 
 		[Outlet]
 		MonoTouch.UIKit.UILabel ProfileLabel { get; set; }
@@ -35,9 +38,9 @@ namespace Views
 		
 		void ReleaseDesignerOutlets ()
 		{
-			if (Avatar != null) {
-				Avatar.Dispose ();
-				Avatar = null;
+			if (ImageView != null) {
+				ImageView.Dispose ();
+				ImageView = null;
 			}
 
 			if (BlockButton != null) {
@@ -55,19 +58,24 @@ namespace Views
 				FriendButton = null;
 			}
 
+			if (LocationLabel != null) {
+				LocationLabel.Dispose ();
+				LocationLabel = null;
+			}
+
 			if (ProfileLabel != null) {
 				ProfileLabel.Dispose ();
 				ProfileLabel = null;
 			}
 
-			if (UnfriendButton != null) {
-				UnfriendButton.Dispose ();
-				UnfriendButton = null;
-			}
-
 			if (UnblockButton != null) {
 				UnblockButton.Dispose ();
 				UnblockButton = null;
+			}
+
+			if (UnfriendButton != null) {
+				UnfriendButton.Dispose ();
+				UnfriendButton = null;
 			}
 		}
 	}
