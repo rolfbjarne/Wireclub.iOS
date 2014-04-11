@@ -1,1 +1,1 @@
-Settings Section added. Better Diagnostics. Bug Fixes
+New Fancier Profiles. Online, Offline, Away states. Filter tcha rooms based on Official, Member Created and Favorite. Can now Favorite Rooms. Change Chat Content Ratings you wish to see.
