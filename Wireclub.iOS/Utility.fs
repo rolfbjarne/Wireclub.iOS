@@ -240,9 +240,12 @@ module Image =
     type Request = (string) * AsyncReplyChannel<byte[] option>
     let agent = MailboxProcessor<Request>.Start(fun inbox ->
         let rec loop () = async {
-            let! (url, replyChannel) = inbox.Receive ()
-            let! image = tryAcquireFromServer url
-            replyChannel.Reply image
+            try
+                let! (url, replyChannel) = inbox.Receive ()
+                let! image = tryAcquireFromServer url
+                replyChannel.Reply image
+            with
+            | ex -> Logger.log ex
             return! loop ()
         }
         loop ()
