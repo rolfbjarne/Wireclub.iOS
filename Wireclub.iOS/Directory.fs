@@ -307,12 +307,14 @@ type FriendsViewController () as controller =
                 )
         )
 
+
         tableController.View.Frame <- new RectangleF(0.f, 0.f, this.ContentView.Frame.Width, this.ContentView.Frame.Height)
         tableController.TableView.Source <- tableSource
         tableController.RefreshControl <- new UIRefreshControl()
         tableController.RefreshControl.ValueChanged.Add(fun _ -> refresh tableController)
         refresh tableController
 
+        Async.Start(Utility.Timer.ticker (fun _ -> this.InvokeOnMainThread(fun _->  refresh tableController)) (60 * 1000))
 
         
 
