@@ -237,8 +237,6 @@ type ChatRoomViewController (room:Entity) as this =
         this.AutomaticallyAdjustsScrollViewInsets <- false
         this.WebView.BackgroundColor <- UIColor.White
 
-
-
         this.NavigationItem.RightBarButtonItems <- [| this.UserButton ; this.StarButton |]
 
         // Send message
@@ -278,7 +276,7 @@ type ChatRoomViewController (room:Entity) as this =
                         addLines (lines.ToArray())
                         processor.Start()
 
-                        this.Progress.Hidden <- true
+                        this.Progress.StopAnimating ()
 
                     | error -> this.HandleApiFailure error 
             )

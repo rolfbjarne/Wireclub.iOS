@@ -156,7 +156,7 @@ type PrivateChatSessionViewController (user:Entity) as this =
                         // Send message
                         this.Text.ShouldReturn <- (fun _ -> sendMessage this.Text.Text; false)
                         this.SendButton.TouchUpInside.Add(fun args -> sendMessage this.Text.Text )
-                        this.Progress.Hidden <- true
+                        this.Progress.StopAnimating ()
 
                     | error, _ -> this.HandleApiFailure error
                 )
