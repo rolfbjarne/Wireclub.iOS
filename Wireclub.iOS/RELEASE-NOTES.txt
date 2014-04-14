@@ -1,1 +1,1 @@
-New Fancier Profiles. Online, Offline, Away states. Filter tcha rooms based on Official, Member Created and Favorite. Can now Favorite Rooms. Change Chat Content Ratings you wish to see.
+Added a badge to recent chats when you have unread chats. Refresh the friends so you don't have to pull to refresh. Some minor UI changes.
