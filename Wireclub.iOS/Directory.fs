@@ -27,8 +27,14 @@ type ChatSession =
 | User of Entity
 | ChatRoom of Entity
 
+type RootViewContoller () =
+    inherit UIViewController ()
+
+    abstract member Tabs: UITabBar with get
+    default this.Tabs with get () = null
+
 [<Register("ChatsViewController")>]
-type ChatsViewController () as controller =
+type ChatsViewController (rootController:RootViewContoller) as controller =
     inherit UIViewController ()
          
     let mutable (chats:DB.ChatHistory[]) = [| |]
@@ -104,6 +110,19 @@ type ChatsViewController () as controller =
                 | _ ->
                     let newController = ChatRooms.join entity
                     controller.NavigationController.PushViewController(newController, true)
+
+                
+                Async.startWithContinuation 
+                    (async {
+                        do! DB.updateChatHistoryReadById entity.Id
+                        let! unread = DB.fetchChatHistoryUnreadCount ()
+                        return unread
+                    })
+                    (function
+                        | 0 -> rootController.Tabs.Items.[0].BadgeValue <- null
+                        | unread -> rootController.Tabs.Items.[0].BadgeValue <- string unread
+                    )
+
     }
 
     [<Outlet>]

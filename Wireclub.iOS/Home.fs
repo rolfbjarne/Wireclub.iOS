@@ -23,12 +23,12 @@ open ChannelEvent
 
 [<Register ("HomeViewController")>]
 type HomeViewController () as controller =
-    inherit UIViewController ()
+    inherit RootViewContoller ()
 
     let controllers =
         lazy
             ([|
-                new ChatsViewController () :> UIViewController
+                new ChatsViewController (controller) :> UIViewController
                 new FriendsViewController () :> UIViewController
                 new ChatDirectoryViewController () :> UIViewController
                 Resources.menuStoryboard.Value.InstantiateInitialViewController() :?> UIViewController
@@ -51,7 +51,6 @@ type HomeViewController () as controller =
             override this.ItemSelected (bar, item) = changeTab (item.Tag)
         }
 
-    
     [<Outlet>]
     member val TabBar: UITabBar = null with get, set
 
@@ -74,10 +73,11 @@ type HomeViewController () as controller =
             this.ContentView.AddSubview controller.View
             controller.View.Frame <- frame
 
-        
         this.TabBar.Delegate <- tabBarDelegate
         this.TabBar.SelectedItem <- this.TabBar.Items.First()
         changeTab 0
+
+    override this.Tabs with get () = this.TabBar
 
 [<Register ("EntryViewController")>]
 type EntryViewController () as controller =
@@ -112,8 +112,10 @@ type EntryViewController () as controller =
                                 (DB.fetchChatHistoryUnreadCount())
                                 (function
                                     | 0 ->
+                                        rootController.TabBar.Items.[0].BadgeValue <- null
                                         controller.NavigationItem.LeftBarButtonItem <- null
                                     | unread ->
+                                        rootController.TabBar.Items.[0].BadgeValue <- string unread
                                         controller.NavigationItem.LeftBarButtonItem <-
                                             new UIBarButtonItem((sprintf "(%i)" unread), UIBarButtonItemStyle.Plain, new EventHandler(fun _ _ -> 
                                                 controller.NavigationController.PopViewControllerAnimated true |> ignore
