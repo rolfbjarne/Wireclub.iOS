@@ -13,6 +13,9 @@ namespace Views
 	partial class PrivateChatSessionViewController
 	{
 		[Outlet]
+		MonoTouch.UIKit.UIActivityIndicatorView Progress { get; set; }
+
+		[Outlet]
 		MonoTouch.UIKit.UIButton SendButton { get; set; }
 
 		[Outlet]
@@ -36,6 +39,11 @@ namespace Views
 			if (WebView != null) {
 				WebView.Dispose ();
 				WebView = null;
+			}
+
+			if (Progress != null) {
+				Progress.Dispose ();
+				Progress = null;
 			}
 		}
 	}

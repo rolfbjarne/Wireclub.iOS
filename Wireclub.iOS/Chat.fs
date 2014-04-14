@@ -226,6 +226,9 @@ type ChatRoomViewController (room:Entity) as this =
     [<Outlet>]
     member val Text: UITextField = null with get, set
 
+    [<Outlet>]
+    member val Progress: UIActivityIndicatorView = null with get, set
+
     override this.ViewDidLoad () =
         this.NavigationItem.Title <- room.Label
         this.NavigationItem.LeftItemsSupplementBackButton <- true
@@ -275,8 +278,7 @@ type ChatRoomViewController (room:Entity) as this =
                         addLines (lines.ToArray())
                         processor.Start()
 
-                        //remove this for know
-                        //Async.Start(Timer.ticker keepAlive (30 * 1000), cancelPoll.Token)
+                        this.Progress.Hidden <- true
 
                     | error -> this.HandleApiFailure error 
             )

@@ -113,6 +113,9 @@ type PrivateChatSessionViewController (user:Entity) as this =
     [<Outlet>]
     member val Text: UITextField = null with get, set
 
+    [<Outlet>]
+    member val Progress: UIActivityIndicatorView = null with get, set
+
     override this.ViewDidLoad () =
         this.NavigationItem.LeftItemsSupplementBackButton <- true
         this.NavigationItem.RightBarButtonItem <- new UIBarButtonItem(PrivateChatSessionViewController.buttonImage, UIBarButtonItemStyle.Bordered, new EventHandler(fun (s:obj) (e:EventArgs) -> 
@@ -153,6 +156,7 @@ type PrivateChatSessionViewController (user:Entity) as this =
                         // Send message
                         this.Text.ShouldReturn <- (fun _ -> sendMessage this.Text.Text; false)
                         this.SendButton.TouchUpInside.Add(fun args -> sendMessage this.Text.Text )
+                        this.Progress.Hidden <- true
 
                     | error, _ -> this.HandleApiFailure error
                 )

@@ -6,6 +6,7 @@
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="PrivateChatSessionViewController">
             <connections>
+                <outlet property="Progress" destination="0RX-ng-eXW" id="jmo-d6-YQu"/>
                 <outlet property="SendButton" destination="tAC-iI-Q6Z" id="T5Z-TT-G1v"/>
                 <outlet property="Text" destination="FPt-2A-E5U" id="YrS-lP-aVj"/>
                 <outlet property="WebView" destination="tIJ-CY-Yyj" id="3PQ-gD-gPI"/>
@@ -40,6 +41,10 @@
                             <fontDescription key="fontDescription" type="system" pointSize="14"/>
                             <textInputTraits key="textInputTraits" autocapitalizationType="sentences" enablesReturnKeyAutomatically="YES"/>
                         </textField>
+                        <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" hidesWhenStopped="YES" animating="YES" style="gray" id="0RX-ng-eXW">
+                            <rect key="frame" x="150" y="185" width="20" height="20"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                        </activityIndicatorView>
                     </subviews>
                     <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                 </view>
