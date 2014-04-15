@@ -1,1 +1,1 @@
-Added a badge to recent chats when you have unread chats. Refresh the friends so you don't have to pull to refresh. Some minor UI changes.
+Fixed a bug when messaging someone who was not your friend.
