@@ -190,17 +190,12 @@ type EntryViewController () as controller =
 
             printfn "[Navigate] %s" (uri.ToString())
             match url, data with
-            | Routes.User id, data -> 
+            | Routes.User id, data
+            | Routes.AddFriend id, data -> 
                 let pushUser user =
-//                    let controller = Resources.userStoryboard.Value.InstantiateInitialViewController () :?> UITabBarController
-//
-//                    for controller in controller.ChildViewControllers do
-//                        let controller = controller :?> UserBaseViewController
-//                        controller.User <- Some user
-
-                    let controller = Resources.userStoryboard.Value.InstantiateInitialViewController () :?> UserViewController
-                    controller.Entity <- Some user
-                    this.NavigationController.PushViewController (controller, true)
+                    let userController = Resources.userStoryboard.Value.InstantiateInitialViewController () :?> UserViewController
+                    userController.Entity <- Some user
+                    controller.NavigationController.PushViewController (userController, true)
 
                 match data with
                 | Some data -> pushUser data
