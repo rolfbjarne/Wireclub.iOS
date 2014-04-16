@@ -326,7 +326,7 @@ type EditProfileViewController (handle:nativeint) as controller =
         tableView.DeselectRow (indexPath, false)
         match indexPath.Section, indexPath.Row with
         | 0, 0 -> 
-            let alert = new UIAlertView (Title="Send Friend Request?", Message="")
+            let alert = new UIAlertView (Title="Upload a picture", Message="")
             alert.AddButton "Choose Existing" |> ignore
             alert.AddButton "Take Photo" |> ignore
             alert.AddButton "Cancel" |> ignore
