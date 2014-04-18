@@ -33,6 +33,9 @@ type RootViewContoller () =
     abstract member Tabs: UITabBar with get
     default this.Tabs with get () = null
 
+    abstract member SetOnlineStatus: OnlineStateType -> unit 
+    default this.SetOnlineStatus(online:OnlineStateType) = ()
+
 [<Register("ChatsViewController")>]
 type ChatsViewController (rootController:RootViewContoller) as controller =
     inherit UIViewController ()
@@ -216,7 +219,7 @@ type ChatDirectoryViewController() as controller =
         refresh tableController
 
 [<Register("FriendsViewController")>]
-type FriendsViewController () as controller =
+type FriendsViewController (rootController:RootViewContoller) as controller =
     inherit UIViewController ()
      
     let mutable (friends:PrivateChatFriend[]) = [| |]
@@ -296,6 +299,7 @@ type FriendsViewController () as controller =
                     loaded <- true
                     tableController.TableView.ReloadData ()
                     tableController.RefreshControl.EndRefreshing()
+                    rootController.SetOnlineStatus (response.State)
                 | error -> controller.HandleApiFailure error
             )
 
@@ -334,8 +338,4 @@ type FriendsViewController () as controller =
         refresh tableController
 
         Async.Start(Utility.Timer.ticker (fun _ -> this.InvokeOnMainThread(fun _->  refresh tableController)) (60 * 1000))
-
-        
-
-
 

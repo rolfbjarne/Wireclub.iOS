@@ -29,7 +29,7 @@ type HomeViewController () as controller =
         lazy
             ([|
                 new ChatsViewController (controller) :> UIViewController
-                new FriendsViewController () :> UIViewController
+                new FriendsViewController (controller) :> UIViewController
                 new ChatDirectoryViewController () :> UIViewController
                 Resources.menuStoryboard.Value.InstantiateInitialViewController() :?> UIViewController
             |])
@@ -63,7 +63,7 @@ type HomeViewController () as controller =
         base.ViewDidLoad ()
         printfn "[Home:Load]" 
         this.NavigationItem.HidesBackButton <- true
-            
+
         this.AutomaticallyAdjustsScrollViewInsets <- false
 
         // Set up the child controllers
@@ -78,6 +78,39 @@ type HomeViewController () as controller =
         changeTab 0
 
     override this.Tabs with get () = this.TabBar
+
+    override this.SetOnlineStatus(status:OnlineStateType) =
+        let statusDescription =
+            match status with
+            | OnlineStateType.Visible -> "Online"
+            | OnlineStateType.Idle -> "Away"
+            | _ -> "Offline"
+
+        let showStatus () =
+            let alert = new UIAlertView (Title = "Change Online Status", Message = sprintf "Currently: %s" statusDescription)
+            alert.AddButton "Online" |> ignore
+            alert.AddButton "Away" |> ignore
+            alert.AddButton "Offline" |> ignore
+            alert.AddButton "Cancel" |> ignore
+            alert.Show ()
+            alert.Dismissed.Add(fun args ->
+                match args.ButtonIndex with
+                | 0 -> ()
+                | 1 -> ()
+                | 2 -> ()
+                | _ -> ()
+            )
+
+        match status with
+        | OnlineStateType.Visible
+        | OnlineStateType.Idle
+        | OnlineStateType.Invisible
+        | OnlineStateType.Offline ->
+            this.NavigationItem.RightBarButtonItem <- new UIBarButtonItem(statusDescription, UIBarButtonItemStyle.Bordered, new EventHandler(fun (s:obj) (e:EventArgs) -> showStatus()))
+        | _->
+            this.NavigationItem.RightBarButtonItem <- null
+
+        
 
 [<Register ("EntryViewController")>]
 type EntryViewController () as controller =
