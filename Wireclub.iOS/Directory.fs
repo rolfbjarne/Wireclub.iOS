@@ -306,9 +306,6 @@ type FriendsViewController (rootController:RootViewContoller) as controller =
     [<Outlet>]
     member val ContentView: UIView = null with get, set
 
-    [<Outlet>]
-    member val OnlineState: UISegmentedControl = null with get, set
-
     override this.ViewDidLoad () =
         base.ViewDidLoad ()
 

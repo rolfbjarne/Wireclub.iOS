@@ -14,17 +14,9 @@ namespace Views
 	{
 		[Outlet]
 		MonoTouch.UIKit.UIView ContentView { get; set; }
-
-		[Outlet]
-		MonoTouch.UIKit.UISegmentedControl OnlineState { get; set; }
 		
 		void ReleaseDesignerOutlets ()
 		{
-			if (OnlineState != null) {
-				OnlineState.Dispose ();
-				OnlineState = null;
-			}
-
 			if (ContentView != null) {
 				ContentView.Dispose ();
 				ContentView = null;

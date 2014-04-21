@@ -7,7 +7,6 @@
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="FriendsViewController">
             <connections>
                 <outlet property="ContentView" destination="ayp-xK-OpD" id="o3x-63-OVw"/>
-                <outlet property="OnlineState" destination="tSI-SY-Fd6" id="Vsm-Tl-GTq"/>
                 <outlet property="view" destination="1" id="3"/>
             </connections>
         </placeholder>
@@ -16,26 +15,11 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="480"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
-                <segmentedControl opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="top" segmentControlStyle="plain" selectedSegmentIndex="0" id="tSI-SY-Fd6">
-                    <rect key="frame" x="107" y="20" width="193" height="29"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                    <segments>
-                        <segment title="Online"/>
-                        <segment title="Away"/>
-                        <segment title="Offline"/>
-                    </segments>
-                </segmentedControl>
                 <view contentMode="scaleToFill" id="ayp-xK-OpD">
-                    <rect key="frame" x="0.0" y="56" width="320" height="400"/>
+                    <rect key="frame" x="0.0" y="0.0" width="320" height="480"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                 </view>
-                <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Your Status: " lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="uRN-1d-11j">
-                    <rect key="frame" x="20" y="23" width="79" height="21"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                    <fontDescription key="fontDescription" type="system" pointSize="14"/>
-                    <nil key="highlightedColor"/>
-                </label>
             </subviews>
             <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
             <simulatedTabBarMetrics key="simulatedBottomBarMetrics"/>
