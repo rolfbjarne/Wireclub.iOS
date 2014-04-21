@@ -94,11 +94,23 @@ type HomeViewController () as controller =
             alert.AddButton "Cancel" |> ignore
             alert.Show ()
             alert.Dismissed.Add(fun args ->
-                match args.ButtonIndex with
-                | 0 -> ()
-                | 1 -> ()
-                | 2 -> ()
-                | _ -> ()
+                let status =
+                    match args.ButtonIndex with
+                        | 0 -> Some OnlineStateType.Visible
+                        | 1 -> Some OnlineStateType.Idle
+                        | 2 -> Some OnlineStateType.Invisible
+                        | _ -> None
+
+                match status with
+                | Some status ->
+                    this.SetOnlineStatus status
+                    Async.startNetworkWithContinuation
+                        (PrivateChat.changeOnlineState status)
+                        (function
+                            | Api.ApiOk _ -> ()
+                            | error -> this.HandleApiFailure error
+                        )
+                | _-> ()
             )
 
         match status with

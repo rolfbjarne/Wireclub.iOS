@@ -315,20 +315,6 @@ type FriendsViewController (rootController:RootViewContoller) as controller =
         let tableController = new UITableViewController()
         this.AddChildViewController tableController
         this.ContentView.AddSubview tableController.View
-        this.OnlineState.ValueChanged.Add(fun _ -> 
-            let state =
-                match this.OnlineState.SelectedSegment with
-                | 1 -> OnlineStateType.Idle
-                | 2 -> OnlineStateType.Invisible
-                | _ -> OnlineStateType.Visible
-
-            Async.startNetworkWithContinuation
-                (PrivateChat.changeOnlineState state)
-                (function
-                    | Api.ApiOk _ -> ()
-                    | error -> this.HandleApiFailure error
-                )
-        )
 
 
         tableController.View.Frame <- new RectangleF(0.f, 0.f, this.ContentView.Frame.Width, this.ContentView.Frame.Height)
