@@ -144,7 +144,11 @@ module Utility =
             | Api.ApiOk _ -> ()
             | Api.BadRequest [] -> showSimpleAlert "Error" "An error occured submitting your request" "Close"
             | Api.BadRequest ({Key=key; Value=value}::_) -> showSimpleAlert key value "Close"
-            | _ -> printfn "Api Failure: %A" result
+            | Api.Unauthorized -> showSimpleAlert "Unauthorized" "Your request is not authorized." "Close"
+            | Api.Timeout -> showSimpleAlert "Timeout" "Your request has timed out. Please try again in a few moments." "Close"
+            | Api.HttpError (code, desc) -> showSimpleAlert (sprintf "Http %i Error" code) desc "Close"
+            | Api.Deserialization (ex, key) -> Logger.log ex; showSimpleAlert "Error" "An error occured parsing your request" "Close"
+            | Api.Exception ex -> Logger.log ex; showSimpleAlert "Error" "An exception occured submitting your request" "Close"
 
         member this.HandleApiResult<'A> (result:Api.ApiResult<'A>) =
             match result with
