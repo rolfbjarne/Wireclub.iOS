@@ -1,1 +1,1 @@
-Clearer online states. Various Fixes. Better Error reporting for the user.
+Point to new API host. Better error notifications.
