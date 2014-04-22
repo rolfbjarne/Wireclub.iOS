@@ -1,1 +1,1 @@
-Fixed a bug when messaging someone who was not your friend.
+Clearer online states. Various Fixes. Better Error reporting for the user.
