@@ -127,13 +127,13 @@
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\lib\Newtonsoft.Json.dll</HintPath>
     </Reference>
+    <Reference Include="System.Web.Services" />
     <Reference Include="SQLite">
       <HintPath>..\Components\sqlite-net-1.0.1\lib\ios\SQLite.dll</HintPath>
     </Reference>
     <Reference Include="Xamarin.Mobile">
       <HintPath>..\Components\xamarin.mobile-0.7.1\lib\ios\Xamarin.Mobile.dll</HintPath>
     </Reference>
-    <Reference Include="System.Web.Services" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Resources\" />
@@ -211,6 +211,9 @@
     <InterfaceDefinition Include="..\Views\AsyncPickerViewController.xib">
       <Link>Resources\AsyncPickerViewController.xib</Link>
     </InterfaceDefinition>
+    <InterfaceDefinition Include="..\Views\GameViewController.xib">
+      <Link>Resources\GameViewController.xib</Link>
+    </InterfaceDefinition>
   </ItemGroup>
   <ItemGroup>
     <BundleResource Include="Resources\Images\PlaceholderChat.png" />
@@ -274,6 +277,9 @@
     </BundleResource>
     <BundleResource Include="..\Views\Resources\UIBarButtonFavoriteInactive%402x.png">
       <Link>Resources\UIBarButtonFavoriteInactive%402x.png</Link>
+    </BundleResource>
+    <BundleResource Include="..\Views\Resources\UIBarButtonGameItem%402x.png">
+      <Link>Resources\UIBarButtonGameItem%402x.png</Link>
     </BundleResource>
   </ItemGroup>
   <ItemGroup>

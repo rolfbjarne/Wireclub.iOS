@@ -162,6 +162,10 @@
     <Compile Include="UserBlogViewController.designer.cs">
       <DependentUpon>UserBlogViewController.cs</DependentUpon>
     </Compile>
+    <Compile Include="GameViewController.cs" />
+    <Compile Include="GameViewController.designer.cs">
+      <DependentUpon>GameViewController.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <InterfaceDefinition Include="FriendsViewController.xib" />
@@ -181,6 +185,7 @@
     <InterfaceDefinition Include="ChatsViewController.xib" />
     <InterfaceDefinition Include="NavigateInputAccessoryViewController.xib" />
     <InterfaceDefinition Include="AsyncPickerViewController.xib" />
+    <InterfaceDefinition Include="GameViewController.xib" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Resources\" />
@@ -204,5 +209,6 @@
     <BundleResource Include="Resources\UIUserProfileMale%402x.png" />
     <BundleResource Include="Resources\UIBarButtonFavoriteActive%402x.png" />
     <BundleResource Include="Resources\UIBarButtonFavoriteInactive%402x.png" />
+    <BundleResource Include="Resources\UIBarButtonGameItem%402x.png" />
   </ItemGroup>
 </Project>

@@ -16,6 +16,33 @@ open Wireclub.Boundary.Models
 open ChannelEvent
 
 
+[<Register ("GameViewController")>]
+type GameViewController (slug:string, name:string) =
+    inherit UIViewController ("GameViewController", null)
+
+    [<Outlet>]
+    member val WebView: UIWebView = null with get, set
+
+    override this.ViewDidLoad () =
+        this.Title <- name
+
+        this.WebView.ShouldStartLoad <- UIWebLoaderControl(fun webView request navigationType ->
+            if request.Headers.Keys |> Array.exists ((=) (NSObject.FromObject "x-auth-token")) = false then
+
+                printfn "[Game] loading %s" (request.Url.ToString())
+
+                let headers = new NSMutableDictionary (request.Headers)
+                headers.SetValueForKey(NSObject.FromObject (Api.userToken), new NSString("x-auth-token"))
+                let request = request.MutableCopy () :?> NSMutableUrlRequest
+
+                request.Headers <- headers
+                webView.LoadRequest request
+                false
+            else
+                true
+        )
+        this.WebView.LoadRequest(new NSUrlRequest(new NSUrl(Api.webUrl + "/mobile/chat/game/" + slug)))
+
 [<Register ("ChatRoomUsersViewController")>]
 type ChatRoomUsersViewController (users:UserProfile[]) =
     inherit UIViewController ("ChatRoomUsersViewController", null)
@@ -62,8 +89,13 @@ type ChatRoomViewController (room:Entity) as this =
     let events = System.Collections.Generic.HashSet<int64>()
     let users = ConcurrentDictionary<string, UserProfile>()
     let mutable startSequence = 0L
-    let mutable starred = false
     let nameplateImageSize = 21
+    let appsAllowed = [| "Slots" |]
+
+    let mutable gameController:GameViewController option = None
+
+    let mutable apps:string[] = [||]
+    let mutable starred = false
         
     let nameplate (user:UserProfile) =     
         sprintf
@@ -185,6 +217,18 @@ type ChatRoomViewController (room:Entity) as this =
                 ()
         )
 
+    let barButtons () =
+        [|
+            yield this.UserButton
+
+            if apps.Any(fun e -> appsAllowed.Contains(e)) then
+                yield this.GameButton
+
+            if starred then
+                yield this.UnstarButton
+            else
+                yield this.StarButton
+        |]
 
 
     member this.UserButton:UIBarButtonItem =
@@ -199,11 +243,10 @@ type ChatRoomViewController (room:Entity) as this =
                     (function 
                         | Api.ApiOk _ -> 
                             starred <- not starred
-                            this.NavigationItem.RightBarButtonItems <- [| this.UserButton; this.StarButton |]
+                            this.NavigationItem.RightBarButtonItems <- barButtons()
                         | error -> this.HandleApiFailure error 
                     )
             ))
-
 
     member this.StarButton:UIBarButtonItem =
         new UIBarButtonItem(UIImage.FromFile "UIBarButtonFavoriteInactive.png", UIBarButtonItemStyle.Bordered, new EventHandler(fun (s:obj) (e:EventArgs) -> 
@@ -212,10 +255,18 @@ type ChatRoomViewController (room:Entity) as this =
                     (function 
                         | Api.ApiOk _ -> 
                             starred <- not starred
-                            this.NavigationItem.RightBarButtonItems <- [| this.UserButton; this.UnstarButton |]
+                            this.NavigationItem.RightBarButtonItems <- barButtons()
                         | error -> this.HandleApiFailure error 
                     )
             ))
+
+    member this.GameButton:UIBarButtonItem =
+        new UIBarButtonItem(UIImage.FromFile "UIBarButtonGameItem.png", UIBarButtonItemStyle.Bordered, new EventHandler(fun (s:obj) (e:EventArgs) -> 
+                match gameController with
+                | Some controller -> this.NavigationController.PushViewController(controller, true)
+                | _ -> ()
+            ))
+
 
     [<Outlet>]
     member val WebView: UIWebView = null with get, set
@@ -237,7 +288,7 @@ type ChatRoomViewController (room:Entity) as this =
         this.AutomaticallyAdjustsScrollViewInsets <- false
         this.WebView.BackgroundColor <- UIColor.White
 
-        this.NavigationItem.RightBarButtonItems <- [| this.UserButton ; this.StarButton |]
+        this.NavigationItem.RightBarButtonItems <- barButtons()
 
         // Send message
         this.Text.ShouldReturn <- (fun _ ->
@@ -261,12 +312,12 @@ type ChatRoomViewController (room:Entity) as this =
                         startSequence <- result.Sequence
 
                         starred <- result.Channel.ViewerHasStarred
-                        this.NavigationItem.RightBarButtonItems <-
-                            [|
-                                yield this.UserButton
-                                if starred then yield this.UnstarButton
-                                else yield this.StarButton
-                            |]
+                        apps <- result.Channel.Apps
+
+                        if apps.Any(fun e -> appsAllowed.Contains(e)) then
+                            gameController <- Some (new GameViewController(result.Channel.Slug, apps.First()))
+
+                        this.NavigationItem.RightBarButtonItems <- barButtons()
 
                         result.Members |> Array.filter (fun e -> memberTypes.Contains e.Membership) |> Array.iter addUser
                         result.HistoricMembers |> Array.filter (fun e -> memberTypes.Contains e.Membership) |> Array.iter addUser
