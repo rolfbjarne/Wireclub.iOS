@@ -17,8 +17,10 @@ open ChannelEvent
 
 
 [<Register ("GameViewController")>]
-type GameViewController (slug:string, name:string) =
+type GameViewController (entity:Entity, name:string) =
     inherit UIViewController ("GameViewController", null)
+
+    let events = new List<ChannelEvent * string> ()
 
     [<Outlet>]
     member val WebView: UIWebView = null with get, set
@@ -41,7 +43,38 @@ type GameViewController (slug:string, name:string) =
             else
                 true
         )
-        this.WebView.LoadRequest(new NSUrlRequest(new NSUrl(Api.webUrl + "/mobile/chat/game/" + slug)))
+
+        this.WebView.LoadRequest(new NSUrlRequest(new NSUrl(Api.webUrl + "/mobile/chat/game/" + entity.Slug)))
+
+        #if DEBUG
+        let refresh = new UIRefreshControl()
+        refresh.ValueChanged.Add(fun e -> 
+            this.WebView.LoadRequest(new NSUrlRequest(new NSUrl(Api.webUrl + "/mobile/chat/game/" + entity.Slug)))
+            refresh.EndRefreshing()
+        )
+        this.WebView.ScrollView.AddSubview refresh
+        #endif
+
+        Async.Start(Utility.Timer.ticker (fun _ -> this.InvokeOnMainThread(fun _->  
+            if events.Count > 0 then
+                let eventsBuilder = new System.Text.StringBuilder()
+                for (event, json) in events do
+                    let json = sprintf "[%i,%i,%i,%s,'%s']" event.Sequence event.EventType event.Stamp json event.User
+                    eventsBuilder.AppendLine (sprintf "wireclub.Channel.processChannelEvents('%s', %s);" entity.Id json) |> ignore
+
+                printfn "processed %i" events.Count
+                this.WebView.EvaluateJavascript (eventsBuilder.ToString()) |> ignore
+                events.Clear()
+        )) 500)
+
+    member this.ProcessEvent(event:ChannelEvent) =
+        match event.Event with
+        | BingoRoundChanged json
+        | BingoRoundDraw json
+        | BingoRoundWon json
+        | AppEvent json
+        | CustomAppEvent json -> events.Add (event, json)
+        | _ -> ()
 
 [<Register ("ChatRoomUsersViewController")>]
 type ChatRoomUsersViewController (users:UserProfile[]) =
@@ -90,7 +123,7 @@ type ChatRoomViewController (room:Entity) as this =
     let users = ConcurrentDictionary<string, UserProfile>()
     let mutable startSequence = 0L
     let nameplateImageSize = 21
-    let appsAllowed = [| "Slots" |]
+    let appsAllowed = [| "Slots"; "Bingo" |]
 
     let mutable gameController:GameViewController option = None
 
@@ -161,6 +194,10 @@ type ChatRoomViewController (room:Entity) as this =
     let processEvent event addLine =
         let historic = event.Sequence < startSequence
         if events.Add event.Sequence then
+            match gameController with
+            | Some gameController -> gameController.ProcessEvent(event);
+            | _ -> ()
+
             match event with
             | { Event = Notification message } -> 
                 addLine (notificationLine message) false
@@ -315,7 +352,7 @@ type ChatRoomViewController (room:Entity) as this =
                         apps <- result.Channel.Apps
 
                         if apps.Any(fun e -> appsAllowed.Contains(e)) then
-                            gameController <- Some (new GameViewController(result.Channel.Slug, apps.First()))
+                            gameController <- Some (new GameViewController(room, apps.First()))
 
                         this.NavigationItem.RightBarButtonItems <- barButtons()
 
