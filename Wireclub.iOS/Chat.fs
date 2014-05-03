@@ -62,7 +62,6 @@ type GameViewController (entity:Entity, name:string) =
                     let json = sprintf "[%i,%i,%i,%s,'%s']" event.Sequence event.EventType event.Stamp json event.User
                     eventsBuilder.AppendLine (sprintf "wireclub.Channel.processChannelEvents('%s', %s);" entity.Id json) |> ignore
 
-                printfn "processed %i" events.Count
                 this.WebView.EvaluateJavascript (eventsBuilder.ToString()) |> ignore
                 events.Clear()
         )) 500)
@@ -123,7 +122,7 @@ type ChatRoomViewController (room:Entity) as this =
     let users = ConcurrentDictionary<string, UserProfile>()
     let mutable startSequence = 0L
     let nameplateImageSize = 21
-    let appsAllowed = [| "Slots"; "Bingo" |]
+    let appsAllowed = [| "Slots"; "Bingo"; "Blackjack" |]
 
     let mutable gameController:GameViewController option = None
 
