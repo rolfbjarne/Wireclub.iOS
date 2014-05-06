@@ -310,7 +310,7 @@ type EditProfileViewController (handle:nativeint) as controller =
     override this.GetHeightForRow (tableView, indexPath) =
         match indexPath.Section, indexPath.Row with
         | 0, 0 -> 74.0f
-        | 1, 0 -> if identity.Membership = MembershipTypePublic.Guest then tableView.RowHeight else 0.0f
+        | 1, 0 -> if identity.Membership = MembershipTypePublic.Pending then tableView.RowHeight else 0.0f
         | 3, 0 -> 74.0f
         | _ -> tableView.RowHeight
 
@@ -318,7 +318,7 @@ type EditProfileViewController (handle:nativeint) as controller =
     override this.WillDisplay (tableView, cell, indexPath) = 
         match indexPath.Section, indexPath.Row with
         | 1, 0 ->
-            if identity.Membership <> MembershipTypePublic.Guest then cell.Hidden <- true
+            if identity.Membership <> MembershipTypePublic.Pending then cell.Hidden <- true
         | _ -> ()
 
 
