@@ -167,8 +167,11 @@ type ChatRoomViewController (room:Entity) as this =
             let uri = new Uri(request.Url.AbsoluteString)
             match uri.Segments with
             | [|_; "users/"; slug |] ->
-                let user = users.Values.Single(fun e -> e.Slug = slug)
-                Navigation.navigate (sprintf "/users/%s" slug) (Some { Id = user.Id; Label = user.Name; Slug = user.Slug; Image = user.Avatar })
+                match users.Values |> Seq.tryFind (fun e -> e.Slug = slug) with
+                | Some user ->
+                    Navigation.navigate (sprintf "/users/%s" slug) (Some { Id = user.Id; Label = user.Name; Slug = user.Slug; Image = user.Avatar })
+                | _ ->
+                    Navigation.navigate (sprintf "/users/%s" slug) None
             | segments ->  Navigation.navigate (uri.ToString()) None
             false
     }
@@ -203,7 +206,8 @@ type ChatRoomViewController (room:Entity) as this =
 
             | { Event = Message (color, font, message); User = user } when (user <> identity.Id || historic) -> 
                 match users.TryGetValue event.User with
-                | true, user -> addLine (userMessageLine message user color (fontFamily font)) false
+                | true, user when user.Blocked = false ->
+                    addLine (userMessageLine message user color (fontFamily font)) false
                 | _ -> ()
 
             | { Event = Join user } -> 
