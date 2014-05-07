@@ -20,6 +20,7 @@ type ChatHistoryType =
 type Error() =
     [<PrimaryKey; AutoIncrement>]
     member val Id = 0 with get, set
+    [<MaxLength(Int32.MaxValue)>]
     member val Error = "" with get, set
     member val LastStamp = DateTime.UtcNow with get, set
 
