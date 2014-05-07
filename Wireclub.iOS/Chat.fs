@@ -71,7 +71,7 @@ type GameViewController (entity:Entity, name:string) =
         | BingoRoundChanged json
         | BingoRoundDraw json
         | BingoRoundWon json
-        | AppEvent json
+        | AppEvent (_, json)
         | CustomAppEvent json -> events.Add (event, json)
         | _ -> ()
 
