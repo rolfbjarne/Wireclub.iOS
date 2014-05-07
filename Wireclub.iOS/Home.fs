@@ -132,50 +132,47 @@ type EntryViewController () as controller =
     let loginController = lazy (Resources.loginStoryboard.Value.InstantiateInitialViewController() :?> UIViewController)
     let editProfileController = lazy (Resources.editProfileStoryboard.Value.InstantiateInitialViewController() :?> UIViewController)
 
+    let reloadNavigationItem (controller:UIViewController) =
+        Async.startWithContinuation 
+            (DB.fetchChatHistoryUnreadCount())
+            (function
+                | 0 ->
+                    rootController.TabBar.Items.[0].BadgeValue <- null
+                    controller.NavigationItem.LeftBarButtonItem <- null
+                | unread ->
+                    rootController.TabBar.Items.[0].BadgeValue <- string unread
+                    controller.NavigationItem.LeftBarButtonItem <-
+                        new UIBarButtonItem((sprintf "(%i)" unread), UIBarButtonItemStyle.Plain, new EventHandler(fun _ _ -> 
+                            controller.NavigationController.PopViewControllerAnimated true |> ignore
+                        ))
+            )
+
+    let handleNotifications (event:ChannelEvent.ChannelEvent) (entity:Entity) preview =
+        let read, historyType =
+            match controller.NavigationController.VisibleViewController with
+            | :? PrivateChatSessionViewController as controller -> controller.User.Id = entity.Id, DB.ChatHistoryType.PrivateChat
+            | :? ChatRoomViewController as controller -> controller.Room.Id = entity.Id, DB.ChatHistoryType.ChatRoom
+            | _ -> false, DB.ChatHistoryType.None
+        
+        Async.startWithContinuation
+            (async {
+                do! DB.createChatHistory (entity, historyType, (Some (preview, read)))
+                if historyType = DB.ChatHistoryType.PrivateChat then
+                    do! DB.createChatHistoryEvent entity historyType (JsonConvert.SerializeObject(event))
+             })
+            (fun _ -> 
+                rootController.ChatsController.Reload ()
+
+                match controller.NavigationController.VisibleViewController with
+                    | :? PrivateChatSessionViewController as controller -> reloadNavigationItem (controller :> UIViewController)
+                    | :? ChatRoomViewController as controller -> reloadNavigationItem (controller :> UIViewController)
+                    | _ -> ()
+            )
+
     let handleEvent channel (event:ChannelEvent.ChannelEvent) =
-        controller.InvokeOnMainThread (fun _ -> 
-            let handleNotifications (entity:Entity) preview =
-                let read, historyType =
-                    match controller.NavigationController.VisibleViewController with
-                    | :? PrivateChatSessionViewController as controller ->
-                        controller.User.Id = entity.Id, DB.ChatHistoryType.PrivateChat
-                    | :? ChatRoomViewController as controller ->
-                        controller.Room.Id = entity.Id, DB.ChatHistoryType.ChatRoom
-                    | _ -> false, DB.ChatHistoryType.None
-                
-                Async.startWithContinuation
-                    (async {
-                        do! DB.createChatHistory (entity, historyType, (Some (preview, read)))
-                        if historyType = DB.ChatHistoryType.PrivateChat then
-                            do! DB.createChatHistoryEvent entity historyType (JsonConvert.SerializeObject(event))
-                     })
-                    (fun _ -> 
-                        rootController.ChatsController.Reload ()
-
-                        let reloadNavigationItem (controller:UIViewController) =
-                            Async.startWithContinuation 
-                                (DB.fetchChatHistoryUnreadCount())
-                                (function
-                                    | 0 ->
-                                        rootController.TabBar.Items.[0].BadgeValue <- null
-                                        controller.NavigationItem.LeftBarButtonItem <- null
-                                    | unread ->
-                                        rootController.TabBar.Items.[0].BadgeValue <- string unread
-                                        controller.NavigationItem.LeftBarButtonItem <-
-                                            new UIBarButtonItem((sprintf "(%i)" unread), UIBarButtonItemStyle.Plain, new EventHandler(fun _ _ -> 
-                                                controller.NavigationController.PopViewControllerAnimated true |> ignore
-                                            ))
-                                )
-                        match controller.NavigationController.VisibleViewController with
-                            | :? PrivateChatSessionViewController as controller -> reloadNavigationItem (controller :> UIViewController)
-                            | :? ChatRoomViewController as controller -> reloadNavigationItem (controller :> UIViewController)
-                            | _ -> ()
-                    )
-
-            let stripHtml html = 
-                html |> String.stripHtml |> HttpUtility.HtmlDecode
+        controller.InvokeOnMainThread (fun _ ->             
+            let stripHtml html = html |> String.stripHtml |> HttpUtility.HtmlDecode
     
-
             match event with
             //Private chat event
             | { Event = PrivateMessage (color, font, message) }
@@ -183,10 +180,10 @@ type EntryViewController () as controller =
                 match ChatSessions.sessions.TryGetValue event.User with
                 | true, (user, controller) ->
                     controller.HandleChannelEvent event
-                    handleNotifications user (stripHtml message)
+                    handleNotifications event user (stripHtml message)
                 | _ -> ChatSessions.startById event.User (fun user controller -> 
                     controller.HandleChannelEvent event
-                    handleNotifications user (stripHtml message)
+                    handleNotifications event user (stripHtml message)
                 )
 
             | { Event = Notification message }
@@ -194,10 +191,10 @@ type EntryViewController () as controller =
                 match ChatRooms.rooms.TryGetValue channel with
                 | true, (room, controller) ->
                     controller.HandleChannelEvent event
-                    handleNotifications room (stripHtml message)
+                    handleNotifications event room (stripHtml message)
                 | _ -> ChatRooms.joinById channel (fun room controller ->
                     controller.HandleChannelEvent event
-                    handleNotifications room (stripHtml message)
+                    handleNotifications event room (stripHtml message)
                 )
             | _ ->
                 match ChatRooms.rooms.TryGetValue channel with
