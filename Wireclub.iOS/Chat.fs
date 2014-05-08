@@ -186,7 +186,8 @@ type ChatRoomViewController (room:Entity) as this =
                     | Api.ApiOk response -> 
                         this.Text.Text <- ""
                         match users.TryGetValue identity.Id with
-                        | true, user -> addLine (userFeedbackLine response.Payload user) true
+                        | true, user ->
+                            addLine (userFeedbackLine response.Payload user) true
                         | _ -> ()
                     | error -> this.HandleApiFailure error
                 )
@@ -307,7 +308,6 @@ type ChatRoomViewController (room:Entity) as this =
                 | _ -> ()
             ))
 
-
     [<Outlet>]
     member val WebView: UIWebView = null with get, set
 
@@ -399,6 +399,11 @@ type ChatRoomViewController (room:Entity) as this =
     member this.HandleChannelEvent = processor.Post
 
     member this.Room:Entity = room
+
+    member this.SetBlocked (userId, blocked) =
+        match users.TryGetValue userId with
+        | true, user -> users.[userId] <- { user with Blocked = blocked }
+        | _ -> ()
 
     override this.Dispose (bool) =
         cancelPoll.Cancel()

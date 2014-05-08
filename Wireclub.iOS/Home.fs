@@ -173,7 +173,9 @@ type EntryViewController () as controller =
         match event with
         | { Event = AppEvent (event, json) } ->
             match event with
-            | UserRelationshipChanged (id, blocked)-> printfn "UserRelationshipChanged: %s" json
+            | UserRelationshipChanged (id, blocked)-> 
+                for room, controller in ChatRooms.rooms.Values do
+                    controller.SetBlocked (id, blocked)
             | _ -> ()
         | _ -> ()
 
