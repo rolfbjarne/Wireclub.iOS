@@ -169,11 +169,21 @@ type EntryViewController () as controller =
                     | _ -> ()
             )
 
+    let handleAppEvent (event) =
+        match event with
+        | { Event = AppEvent (event, json) } ->
+            match event with
+            | UserRelationshipChanged (id, blocked)-> printfn "UserRelationshipChanged: %s" json
+            | _ -> ()
+        | _ -> ()
+
+        event
+
     let handleEvent channel (event:ChannelEvent.ChannelEvent) =
         controller.InvokeOnMainThread (fun _ ->             
             let stripHtml html = html |> String.stripHtml |> HttpUtility.HtmlDecode
     
-            match event with
+            match event |> handleAppEvent with
             //Private chat event
             | { Event = PrivateMessage (color, font, message) }
             | { Event = PrivateMessageSent (color, font, message) } ->
