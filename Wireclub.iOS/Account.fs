@@ -435,12 +435,12 @@ type LoginViewController (handle:nativeint) =
         this.NavigationItem.HidesBackButton <- true
 
         this.LoginButton.TouchUpInside.Add(fun _ ->
-            
-            // ## Disable UI
-            // ## Progress
+            this.LoginButton.Enabled <- false
             Async.startNetworkWithContinuation
                 (Account.login this.Email.Text this.Password.Text)
-                (function
+                (fun result ->
+                    this.LoginButton.Enabled <- true
+                    match result with
                     | Api.ApiOk result ->
                         NSUserDefaults.StandardUserDefaults.SetString (result.Token, "auth-token")
                         NSUserDefaults.StandardUserDefaults.Synchronize () |> ignore
