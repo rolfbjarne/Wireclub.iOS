@@ -23,7 +23,7 @@ type AppDelegate () =
 
     override this.FinishedLaunching (app, options) =
         NSUserDefaults.StandardUserDefaults.RegisterDefaults(
-            NSDictionary.FromObjectAndKey(NSObject.FromObject(Api.agent), NSObject.FromObject("UserAgent")))
+            NSDictionary.FromObjectAndKey(NSObject.FromObject("wireclub-app-ios-webview/" + NSBundle.MainBundle.InfoDictionary.["CFBundleVersion"].ToString()), NSObject.FromObject("UserAgent")))
 
         Api.agent <- "wireclub-app-ios/" + NSBundle.MainBundle.InfoDictionary.["CFBundleVersion"].ToString()
 
