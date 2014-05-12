@@ -5,7 +5,11 @@ namespace Wireclub.iOS
 open System
 open MonoTouch.UIKit
 open MonoTouch.Foundation
+
 open Newtonsoft.Json
+
+open Utility
+
 open Wireclub.iOS.DB
 
 
@@ -25,8 +29,10 @@ type AppDelegate () =
 
         Logger.log <-
             (fun ex -> 
+                let error = sprintf "%s\n%s" ex.Message ex.StackTrace 
+                printfn "%s" error
                 Async.StartWithContinuations (
-                    (DB.createError (Error(Error = sprintf "%s\n%s" ex.Message ex.StackTrace ))),
+                    (DB.createError (Error(Error = error ))),
                     (fun _ -> ()),
                     (fun _ -> ()),
                     (fun _ -> ()))

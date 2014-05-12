@@ -10,6 +10,8 @@ open System.Globalization
 open MonoTouch.Foundation
 open MonoTouch.UIKit
 
+open Utility
+
 open Wireclub.Boundary.Models
 
 type AlertDelegate (action: int -> unit) =
@@ -19,10 +21,7 @@ type AlertDelegate (action: int -> unit) =
 
 module Navigation =
     let mutable navigate: (string -> (Entity option) -> unit) = (fun _ _ -> failwith "No navigation handler attached")
-
-module Logger =
-    let mutable log: (Exception -> unit) = (fun _ -> failwith "No log handler attached")
-
+        
 module String =
     let stripHtml html =
         // Replace all tags with a space, otherwise words either side of a tag might be concatenated 
