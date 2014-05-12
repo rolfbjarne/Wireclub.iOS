@@ -317,6 +317,8 @@ type EntryViewController () as controller =
         let proceed animated =
             ChannelClient.init handleEvent
 
+            Async.Start(Utility.Timer.ticker (fun _ -> Async.Start (Error.report ()) ) (60 * 1000))
+
             match Api.userIdentity.Value.Membership with
             | MembershipTypePublic.Pending -> this.NavigationController.PushViewController (editProfileController.Value, true)
             | _ -> this.NavigationController.PushViewController(rootController, animated)
@@ -330,11 +332,7 @@ type EntryViewController () as controller =
         // User has an account but has not authenticated with the api
         | token, true -> 
             Async.startNetworkWithContinuation
-                (async {
-                    let! login = Account.loginToken token
-                    do! Error.report ()
-                    return login
-                })
+                (Account.loginToken token)
                 (function
                     | Api.ApiOk identity -> proceed true
                     | _ -> this.NavigationController.PushViewController (loginController.Value, true)
