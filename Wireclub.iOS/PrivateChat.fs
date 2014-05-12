@@ -63,9 +63,12 @@ type PrivateChatSessionViewController (user:Entity) as this =
         match text with
         | "" -> ()
         | _ ->
+            this.SendButton.Enabled <- false
             Async.startNetworkWithContinuation
                 (PrivateChat.send session.Value.UserId text)
-                (function
+                (fun result ->
+                    this.SendButton.Enabled <- true
+                    match result with
                     | Api.ApiOk response -> 
                         this.Text.Text <- ""
                         if events.Add response.Sequence then

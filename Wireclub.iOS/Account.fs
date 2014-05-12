@@ -243,6 +243,7 @@ type EditProfileViewController (handle:nativeint) as controller =
         | None -> ()
 
         this.SaveButton.TouchUpInside.Add(fun _ ->
+            this.SaveButton.Enabled <- false
             Async.startNetworkWithContinuation
                 (Settings.updateProfile
                     (this.Username.Text.Trim())
@@ -253,7 +254,9 @@ type EditProfileViewController (handle:nativeint) as controller =
                     (this.City.Text.Trim())
                     (this.About.Text.Trim())
                     )
-                (function
+                (fun result ->
+                    this.SaveButton.Enabled <- true
+                    match result with
                     | Api.ApiOk i -> 
                         Api.userIdentity <- Some i
                         if identity.Membership = MembershipTypePublic.Pending then
@@ -398,9 +401,12 @@ type SignupViewController (handle:nativeint) =
         ))
 
         this.SignupButton.TouchUpInside.Add(fun _ ->
+            this.SignupButton.Enabled <- false
             Async.startNetworkWithContinuation
                 (Account.signup this.Email.Text this.Password.Text)
-                (function
+                (fun result ->
+                    this.SignupButton.Enabled <- true
+                    match result with
                     | Api.ApiOk result ->
                         NSUserDefaults.StandardUserDefaults.SetString (result.Token, "auth-token")
                         NSUserDefaults.StandardUserDefaults.Synchronize () |> ignore

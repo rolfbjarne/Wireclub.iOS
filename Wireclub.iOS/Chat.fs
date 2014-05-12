@@ -180,9 +180,12 @@ type ChatRoomViewController (room:Entity) as this =
         match text with
         | "" -> ()
         | _ ->
+            this.SendButton.Enabled <- false
             Async.startNetworkWithContinuation
                 (Chat.send room.Slug text)
-                (this.HandleApiResult >> function
+                (this.HandleApiResult >> fun result ->
+                    this.SendButton.Enabled <- true
+                    match result with 
                     | Api.ApiOk response -> 
                         this.Text.Text <- ""
                         match users.TryGetValue identity.Id with
