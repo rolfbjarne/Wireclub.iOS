@@ -382,10 +382,24 @@ type EditProfileViewController (handle:nativeint) as controller =
 
 
 [<Register ("SignupViewController")>]
-type SignupViewController (handle:nativeint) =
+type SignupViewController (handle:nativeint) as controller =
     inherit UITableViewController (handle)
 
     let editProfileStoryboard = UIStoryboard.FromName ("EditProfile", null)
+
+    let signup () =
+        controller.SignupButton.Enabled <- false
+        Async.startNetworkWithContinuation
+            (Account.signup controller.Email.Text controller.Password.Text)
+            (fun result ->
+                controller.SignupButton.Enabled <- true
+                match result with
+                | Api.ApiOk result ->
+                    NSUserDefaults.StandardUserDefaults.SetString (result.Token, "auth-token")
+                    NSUserDefaults.StandardUserDefaults.Synchronize () |> ignore
+                    controller.NavigationController.PushViewController (editProfileStoryboard.InstantiateInitialViewController() :?> UIViewController, true)
+                | error -> controller.HandleApiFailure error
+            )
 
     [<Outlet>]
     member val Email: UITextField = null with get, set
@@ -400,27 +414,35 @@ type SignupViewController (handle:nativeint) =
             this.NavigationController.PopViewControllerAnimated (true) |> ignore
         ))
 
-        this.SignupButton.TouchUpInside.Add(fun _ ->
-            this.SignupButton.Enabled <- false
-            Async.startNetworkWithContinuation
-                (Account.signup this.Email.Text this.Password.Text)
-                (fun result ->
-                    this.SignupButton.Enabled <- true
-                    match result with
-                    | Api.ApiOk result ->
-                        NSUserDefaults.StandardUserDefaults.SetString (result.Token, "auth-token")
-                        NSUserDefaults.StandardUserDefaults.Synchronize () |> ignore
-                        this.NavigationController.PushViewController (editProfileStoryboard.InstantiateInitialViewController() :?> UIViewController, true)
-                    | error -> this.HandleApiFailure error
-                )
+        this.Email.EditingDidEndOnExit.Add(fun _-> this.Password.BecomeFirstResponder() |> ignore )
+
+        this.Password.EditingDidEndOnExit.Add(fun _ ->
+            this.Password.ResignFirstResponder() |> ignore
+            signup()
         )
 
+        this.SignupButton.TouchUpInside.Add(fun _ -> signup() )
+
 [<Register ("LoginViewController")>]
-type LoginViewController (handle:nativeint) =
+type LoginViewController (handle:nativeint) as controller =
     inherit UITableViewController (handle)
 
     let signupStoryboard = UIStoryboard.FromName ("Signup", null)
     let forgotPasswordStoryboard = UIStoryboard.FromName ("ForgotPassword", null)
+
+    let login () = 
+        controller.LoginButton.Enabled <- false
+        Async.startNetworkWithContinuation
+            (Account.login controller.Email.Text controller.Password.Text)
+            (fun result ->
+                controller.LoginButton.Enabled <- true
+                match result with
+                | Api.ApiOk result ->
+                    NSUserDefaults.StandardUserDefaults.SetString (result.Token, "auth-token")
+                    NSUserDefaults.StandardUserDefaults.Synchronize () |> ignore
+                    controller.NavigationController.PopViewControllerAnimated true |> ignore
+                | error -> controller.HandleApiFailure error
+            )
 
     [<Outlet>]
     member val Email: UITextField = null with get, set
@@ -440,20 +462,14 @@ type LoginViewController (handle:nativeint) =
         this.NavigationItem.Title <- "Login"
         this.NavigationItem.HidesBackButton <- true
 
-        this.LoginButton.TouchUpInside.Add(fun _ ->
-            this.LoginButton.Enabled <- false
-            Async.startNetworkWithContinuation
-                (Account.login this.Email.Text this.Password.Text)
-                (fun result ->
-                    this.LoginButton.Enabled <- true
-                    match result with
-                    | Api.ApiOk result ->
-                        NSUserDefaults.StandardUserDefaults.SetString (result.Token, "auth-token")
-                        NSUserDefaults.StandardUserDefaults.Synchronize () |> ignore
-                        this.NavigationController.PopViewControllerAnimated true |> ignore
-                    | error -> this.HandleApiFailure error
-                )
+        this.Email.EditingDidEndOnExit.Add(fun _-> this.Password.BecomeFirstResponder() |> ignore )
+
+        this.Password.EditingDidEndOnExit.Add(fun _ ->
+            this.Password.ResignFirstResponder() |> ignore
+            login()
         )
+
+        this.LoginButton.TouchUpInside.Add(fun _ -> login ())
 
         this.ForgotPasswordButton.TouchUpInside.Add(fun _ ->
             this.NavigationController.PushViewController (forgotPasswordStoryboard.InstantiateInitialViewController() :?> UIViewController, true)
