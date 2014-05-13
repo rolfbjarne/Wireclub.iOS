@@ -27,6 +27,7 @@ type PrivateChatSessionViewController (user:Entity) as this =
     let identity = match Api.userIdentity with | Some id -> id | None -> failwith "User must be logged in"
     let events = System.Collections.Generic.HashSet<int64>()
     let mutable session: SessionResponse option = None
+    let mutable loaded = false
     let nameplateImageSize = 50
 
     let nameplate slug image = 
@@ -129,43 +130,46 @@ type PrivateChatSessionViewController (user:Entity) as this =
         this.WebView.BackgroundColor <- Utility.grayLightAccent
 
         this.NavigationItem.Title <- user.Label
-        this.WebView.LoadRequest(new NSUrlRequest(new NSUrl(Api.webUrl + "/api/chat/privateChatTemplate")))
-        this.WebView.LoadFinished.Add(fun _ ->
-            this.WebView.Delegate <- webViewDelegate
-            this.WebView.SetBodyBackgroundColor (colorToCss Utility.grayLightAccent)
 
-            Async.startNetworkWithContinuation
-                (async {
-                    let! session = PrivateChat.session user.Id
-                    let! history = DB.fetchChatEventHistoryByEntity user.Id
-                    return session, history
-                })
-                (function
-                    | Api.ApiOk newSession, history ->
-                        session <- Some newSession
-
-                        let lines = new List<string>()
-                        for event in history.OrderBy(fun e -> e.LastStamp) do
-                            if String.IsNullOrEmpty event.EventJson = false then
-                                try
-                                    let event = JsonConvert.DeserializeObject<ChannelEvent>(event.EventJson)
-                                    processEvent event (fun l _ -> lines.Add l)
-                                with
-                                | ex -> printfn "%A %s" event ex.Message 
-
-                        addLines (lines.ToArray())
-                        processor.Start()
-
-                        // Send message
-                        this.Text.ShouldReturn <- (fun _ -> sendMessage this.Text.Text; false)
-                        this.SendButton.TouchUpInside.Add(fun args -> sendMessage this.Text.Text )
-                        this.Progress.StopAnimating ()
-
-                    | error, _ -> this.HandleApiFailure error
-                )
-        )
-    
     override this.ViewDidAppear animated = 
+        if loaded = false then
+            this.WebView.LoadRequest(new NSUrlRequest(new NSUrl(Api.webUrl + "/api/chat/privateChatTemplate")))
+            this.WebView.LoadFinished.Add(fun _ ->
+                this.WebView.Delegate <- webViewDelegate
+                this.WebView.SetBodyBackgroundColor (colorToCss Utility.grayLightAccent)
+
+                Async.startNetworkWithContinuation
+                    (async {
+                        let! session = PrivateChat.session user.Id
+                        let! history = DB.fetchChatEventHistoryByEntity user.Id
+                        return session, history
+                    })
+                    (function
+                        | Api.ApiOk newSession, history ->
+                            session <- Some newSession
+                            loaded <- true
+
+                            let lines = new List<string>()
+                            for event in history.OrderBy(fun e -> e.LastStamp) do
+                                if String.IsNullOrEmpty event.EventJson = false then
+                                    try
+                                        let event = JsonConvert.DeserializeObject<ChannelEvent>(event.EventJson)
+                                        processEvent event (fun l _ -> lines.Add l)
+                                    with
+                                    | ex -> printfn "%A %s" event ex.Message 
+
+                            addLines (lines.ToArray())
+                            processor.Start()
+
+                            // Send message
+                            this.Text.ShouldReturn <- (fun _ -> sendMessage this.Text.Text; false)
+                            this.SendButton.TouchUpInside.Add(fun args -> sendMessage this.Text.Text )
+                            this.Progress.StopAnimating ()
+
+                        | error, _ -> this.HandleApiFailure error
+                    )
+            )
+
         Async.startWithContinuation 
             (async {
                 do! DB.updateChatHistoryReadById user.Id

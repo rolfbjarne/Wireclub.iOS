@@ -130,6 +130,7 @@ type ChatRoomViewController (room:Entity) as this =
 
     let mutable apps:string[] = [||]
     let mutable starred = false
+    let mutable loaded = false
         
     let nameplate (user:UserProfile) =     
         sprintf
@@ -346,41 +347,42 @@ type ChatRoomViewController (room:Entity) as this =
             sendMessage identity this.Text.Text
         )
 
-        this.WebView.LoadRequest(new NSUrlRequest(new NSUrl(Api.webUrl + "/api/chat/chatRoomTemplate")))
-
-        this.WebView.LoadFinished.Add(fun _ ->
-            this.WebView.Delegate <- webViewDelegate
-            this.WebView.SetBodyBackgroundColor (colorToCss UIColor.White)
-
-            Async.startNetworkWithContinuation
-                (Chat.join room.Slug)
-                (function
-                    | Api.ApiOk (result, events) ->
-                        startSequence <- result.Sequence
-
-                        starred <- result.Channel.ViewerHasStarred
-                        apps <- result.Channel.Apps
-
-                        if apps.Any(fun e -> appsAllowed.Contains(e)) then
-                            gameController <- Some (new GameViewController(room, apps.First()))
-
-                        this.NavigationItem.RightBarButtonItems <- barButtons()
-
-                        result.Members |> Array.filter (fun e -> memberTypes.Contains e.Membership) |> Array.iter addUser
-                        result.HistoricMembers |> Array.filter (fun e -> memberTypes.Contains e.Membership) |> Array.iter addUser
-                        this.WebView.PreloadImages [ for user in users.Values do yield App.imageUrl user.Avatar nameplateImageSize ]
-                        let lines = new List<string>()
-                        for event in events do processEvent event (fun l _ -> lines.Add l)
-                        addLines (lines.ToArray())
-                        processor.Start()
-
-                        this.Progress.StopAnimating ()
-
-                    | error -> this.HandleApiFailure error 
-            )
-        )
-
     override this.ViewDidAppear animated = 
+        if loaded = false then
+            this.WebView.LoadRequest(new NSUrlRequest(new NSUrl(Api.webUrl + "/api/chat/chatRoomTemplate")))
+            this.WebView.LoadFinished.Add(fun _ ->
+                this.WebView.Delegate <- webViewDelegate
+                this.WebView.SetBodyBackgroundColor (colorToCss UIColor.White)
+
+                Async.startNetworkWithContinuation
+                    (Chat.join room.Slug)
+                    (function
+                        | Api.ApiOk (result, events) ->
+                            startSequence <- result.Sequence
+                            loaded <- true
+                            starred <- result.Channel.ViewerHasStarred
+                            apps <- result.Channel.Apps
+
+                            if apps.Any(fun e -> appsAllowed.Contains(e)) then
+                                gameController <- Some (new GameViewController(room, apps.First()))
+
+                            this.NavigationItem.RightBarButtonItems <- barButtons()
+
+                            result.Members |> Array.filter (fun e -> memberTypes.Contains e.Membership) |> Array.iter addUser
+                            result.HistoricMembers |> Array.filter (fun e -> memberTypes.Contains e.Membership) |> Array.iter addUser
+                            this.WebView.PreloadImages [ for user in users.Values do yield App.imageUrl user.Avatar nameplateImageSize ]
+                            let lines = new List<string>()
+                            for event in events do processEvent event (fun l _ -> lines.Add l)
+                            addLines (lines.ToArray())
+                            processor.Start()
+
+                            this.Progress.StopAnimating ()
+
+                        | error -> this.HandleApiFailure error 
+                )
+            )
+
+
         Async.startWithContinuation 
             (async {
                 do! DB.updateChatHistoryReadById room.Id
