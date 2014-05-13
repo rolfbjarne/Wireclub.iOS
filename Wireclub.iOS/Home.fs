@@ -69,9 +69,9 @@ type HomeViewController () as controller =
         // Set up the child controllers
         let frame = System.Drawing.RectangleF(0.0f, 0.0f, this.ContentView.Bounds.Width, this.ContentView.Bounds.Height)       
         for controller in controllers.Value do
+            controller.View.Frame <- frame
             this.AddChildViewController controller
             this.ContentView.AddSubview controller.View
-            controller.View.Frame <- frame
 
         this.TabBar.Delegate <- tabBarDelegate
         this.TabBar.SelectedItem <- this.TabBar.Items.First()

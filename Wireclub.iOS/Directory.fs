@@ -212,7 +212,7 @@ type ChatDirectoryViewController(rootController:RootViewContoller) as controller
         this.ContentView.AddSubview tableController.View
         this.RoomFilter.ValueChanged.Add(fun args -> tableController.TableView.ReloadData () )
 
-        tableController.View.Frame <- new RectangleF(0.f, 0.f, this.ContentView.Frame.Width, this.ContentView.Frame.Height - rootController.Tabs.Frame.Size.Height)
+        tableController.View.Frame <- new RectangleF(0.f, 0.f, this.ContentView.Frame.Width, this.ContentView.Frame.Height)
         tableController.TableView.Source <- tableSource
         tableController.RefreshControl <- new UIRefreshControl()
         tableController.RefreshControl.ValueChanged.Add(fun _ -> refresh tableController)
@@ -313,8 +313,7 @@ type FriendsViewController (rootController:RootViewContoller) as controller =
         this.AddChildViewController tableController
         this.ContentView.AddSubview tableController.View
 
-
-        tableController.View.Frame <- new RectangleF(0.f, 0.f, this.ContentView.Frame.Width, this.ContentView.Frame.Height - rootController.Tabs.Frame.Size.Height)
+        tableController.View.Frame <- new RectangleF(0.f, 0.f, this.ContentView.Frame.Width, this.ContentView.Frame.Height)
         tableController.TableView.Source <- tableSource
         tableController.RefreshControl <- new UIRefreshControl()
         tableController.RefreshControl.ValueChanged.Add(fun _ -> refresh tableController)
