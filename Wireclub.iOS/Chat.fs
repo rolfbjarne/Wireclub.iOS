@@ -7,6 +7,8 @@ open System.Drawing
 open System.Linq
 open System.Collections.Concurrent
 open System.Collections.Generic
+open System.Text.RegularExpressions
+
 open MonoTouch.Foundation
 open MonoTouch.UIKit
 open Wireclub.Models
@@ -141,8 +143,10 @@ type ChatRoomViewController (room:Entity) as this =
             user.Slug
             user.Name
 
+    let sanitize payload = Regex.Replace(payload, "src=\"\/\/static.wireclub.com\/", "src=\"http://static.wireclub.com/")
+
     let line = sprintf "<div class=message>%s <div class=body>%s</div></div>" 
-    let userMessageLine payload user color font = line (nameplate user) (sprintf "<span style='color: #%s; font-family: %s;'>%s</span>" color font payload)
+    let userMessageLine payload user color font = line (nameplate user) (sprintf "<span style='color: #%s; font-family: %s;'>%s</span>" color font (sanitize payload))
     let notificationLine payload = line String.Empty payload
     let userFeedbackLine payload user  = line (nameplate user) payload
 
