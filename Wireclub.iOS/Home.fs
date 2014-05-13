@@ -30,7 +30,7 @@ type HomeViewController () as controller =
             ([|
                 new ChatsViewController (controller) :> UIViewController
                 new FriendsViewController (controller) :> UIViewController
-                new ChatDirectoryViewController () :> UIViewController
+                new ChatDirectoryViewController (controller) :> UIViewController
                 Resources.menuStoryboard.Value.InstantiateInitialViewController() :?> UIViewController
             |])
 
