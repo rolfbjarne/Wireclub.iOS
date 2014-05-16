@@ -124,6 +124,7 @@ type EditProfileViewController (handle:nativeint) as controller =
                 controller.Region.Text <- region.Value.Name
         }
 
+    let defaultDate = DateTime.UtcNow.AddYears(-100)
 
     [<Outlet>]
     member val Birthday:UITextField = null with get, set
@@ -176,7 +177,11 @@ type EditProfileViewController (handle:nativeint) as controller =
         this.Birthday.InputAccessoryView <- accessoryBirthday.View
         this.Birthday.EditingDidBegin.Add(fun _ ->
             if String.IsNullOrEmpty(this.Birthday.Text.Trim()) = false then
-                pickerDate.Date <- NSDate.op_Implicit (DateTime.ParseExact(this.Birthday.Text, "M/d/yyyy", CultureInfo.CurrentCulture))
+                pickerDate.Date <-
+                    NSDate.op_Implicit (
+                        match DateTime.TryParse(this.Birthday.Text) with
+                        | true, date -> date
+                        | _ -> defaultDate)
         )
 
         // Country Picker
@@ -248,7 +253,7 @@ type EditProfileViewController (handle:nativeint) as controller =
                 (Settings.updateProfile
                     (this.Username.Text.Trim())
                     (match this.GenderSelect.SelectedSegment with | 0 -> GenderType.Male | 1 -> GenderType.Female | _ -> GenderType.Undefined)
-                    (DateTime.ParseExact(this.Birthday.Text, "M/d/yyyy", CultureInfo.CurrentCulture))
+                    (match DateTime.TryParse(this.Birthday.Text) with | true, date -> date | _ -> defaultDate)
                     (match country with | Some country -> country.Id | None _ -> String.Empty)
                     (match region with | Some region -> region.Name | None _ -> String.Empty)
                     (this.City.Text.Trim())
@@ -288,7 +293,11 @@ type EditProfileViewController (handle:nativeint) as controller =
                         regions <- r
                     | _ -> ()
 
-                    this.Username.Text <- identity.Name
+                    this.Username.Text <- 
+                        match identity.Name with
+                        | "Guest" -> String.Empty
+                        | _ -> identity.Name
+
                     this.GenderSelect.SelectedSegment <-
                         match profile.Gender with
                         | GenderType.Female -> 1
