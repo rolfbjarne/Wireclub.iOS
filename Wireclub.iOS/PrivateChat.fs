@@ -134,6 +134,7 @@ type PrivateChatSessionViewController (user:Entity) as this =
     override this.ViewDidAppear animated = 
         if loaded = false then
             this.WebView.LoadRequest(new NSUrlRequest(new NSUrl(Api.webUrl + "/api/chat/privateChatTemplate")))
+            this.WebView.LoadError.Add(fun error -> showSimpleAlert "Error" error.Error.Description "Close")
             this.WebView.LoadFinished.Add(fun _ ->
                 this.WebView.Delegate <- webViewDelegate
                 this.WebView.SetBodyBackgroundColor (colorToCss Utility.grayLightAccent)
