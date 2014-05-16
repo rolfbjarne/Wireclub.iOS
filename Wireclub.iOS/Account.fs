@@ -281,9 +281,13 @@ type EditProfileViewController (handle:nativeint) as controller =
                     return result, Api.ApiResult.Exception (Exception "No profile loaded"), Api.ApiResult.Exception (Exception "No profile loaded")
             })
             (function
-                | Api.ApiOk profile, Api.ApiOk c, Api.ApiOk r ->
-                    countries <- c
-                    regions <- r
+                | Api.ApiOk profile, c, r ->
+                    match c, r with
+                    | Api.ApiOk c, Api.ApiOk r ->
+                        countries <- c
+                        regions <- r
+                    | _ -> ()
+
                     this.Username.Text <- identity.Name
                     this.GenderSelect.SelectedSegment <-
                         match profile.Gender with
@@ -307,7 +311,8 @@ type EditProfileViewController (handle:nativeint) as controller =
                     this.City.Text <- profile.CityName
                     this.About.Text <- profile.Bio
 
-                | _ -> ()
+                | p, _, _ -> 
+                    this.HandleApiFailure p
             )
 
     override this.GetHeightForRow (tableView, indexPath) =
