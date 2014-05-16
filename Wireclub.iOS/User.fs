@@ -225,7 +225,7 @@ type UserViewController (handle:nativeint) =
                 (User.fetch user.Slug)
                 (function 
                     | Api.ApiOk profile ->
-                        this.ProfileLabel.Text <- sprintf "%i, %s" profile.Age profile.Gender
+                        this.ProfileLabel.Text <- sprintf "%s, %s" profile.Age profile.Gender
                         this.LocationLabel.Text <- profile.Location
                         this.TableView.ReloadData()
 
