@@ -1,1 +1,2 @@
-Point to new API host. Better error notifications.
+Bug fixes.
+Performance improvements.
