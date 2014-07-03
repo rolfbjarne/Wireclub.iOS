@@ -452,6 +452,7 @@ type LoginViewController (handle:nativeint) as controller =
                 controller.LoginButton.Enabled <- true
                 match result with
                 | Api.ApiOk result ->
+                    controller.Password.Text <- String.Empty
                     NSUserDefaults.StandardUserDefaults.SetString (result.Token, "auth-token")
                     NSUserDefaults.StandardUserDefaults.Synchronize () |> ignore
                     controller.NavigationController.PopViewControllerAnimated true |> ignore
