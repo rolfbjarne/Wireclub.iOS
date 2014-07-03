@@ -245,7 +245,7 @@ type ChatRoomViewController (room:Entity) as this =
             | { Event = Modifier } -> ()
             | _ -> ()
 
-            if events.Count > 200 then
+            if events.Count > 50 then
                 events.Clear()
 
     let processor = new MailboxProcessor<ChannelEvent>(fun inbox ->

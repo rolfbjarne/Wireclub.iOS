@@ -85,6 +85,9 @@ type PrivateChatSessionViewController (user:Entity) as this =
                 addLine (viewerLine message color (fontFamily font)) true
             | _ -> ()
 
+            if events.Count > 50 then
+                events.Clear()
+
     let processor = new MailboxProcessor<ChannelEvent>(fun inbox ->
         let rec loop () = async {
             let! event = inbox.Receive()
