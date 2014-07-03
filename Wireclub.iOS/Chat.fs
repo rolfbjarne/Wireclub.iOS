@@ -131,6 +131,7 @@ type ChatRoomViewController (room:Entity) as this =
     let mutable apps:string[] = [||]
     let mutable starred = false
     let mutable loaded = false
+    let mutable lastEvent = DateTime.UtcNow
         
     let nameplate (user:UserProfile) =     
         sprintf
@@ -205,6 +206,8 @@ type ChatRoomViewController (room:Entity) as this =
     let processEvent event addLine =
         let historic = event.Sequence < startSequence
         if events.Add event.Sequence then
+            lastEvent <- DateTime.UtcNow
+
             match gameController with
             | Some gameController -> gameController.ProcessEvent(event);
             | _ -> ()
@@ -242,6 +245,8 @@ type ChatRoomViewController (room:Entity) as this =
             | { Event = Modifier } -> ()
             | _ -> ()
 
+            if events.Count > 200 then
+                events.Clear()
 
     let processor = new MailboxProcessor<ChannelEvent>(fun inbox ->
         let rec loop () = async {
