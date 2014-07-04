@@ -269,7 +269,7 @@ type ChatRoomViewController (room:Entity) as controller =
 
     let showMore () =
         let alert = new UIAlertView (Title = room.Label)
-        alert.AddButton (if starred then "Unstar Room" else "Star Room") |> ignore
+        alert.AddButton (if starred then "Unfavorite Room" else "Favorite Room") |> ignore
         alert.AddButton "Leave Room" |> ignore
         alert.AddButton "Cancel" |> ignore
 
