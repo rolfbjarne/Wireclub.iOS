@@ -116,7 +116,7 @@ type ChatRoomUsersViewController (users:UserProfile[]) =
         ()
 
 [<Register ("ChatRoomViewController")>]
-type ChatRoomViewController (room:Entity) as this =
+type ChatRoomViewController (room:Entity) as controller =
     inherit UIViewController ("PrivateChatSessionViewController", null)
 
     let identity = match Api.userIdentity with | Some id -> id | None -> failwith "User must be logged in"
@@ -153,52 +153,38 @@ type ChatRoomViewController (room:Entity) as this =
     let userFeedbackLine payload user  = line (nameplate user) payload
 
     let addLine line forceScroll =
-        this.WebView.EvaluateJavascript(sprintf "wireclub.Mobile.addLine(%s)" (Newtonsoft.Json.JsonConvert.SerializeObject { Line = line })) |> ignore
-        this.WebView.EvaluateJavascript (sprintf "wireclub.Mobile.scrollToEnd(%b);" forceScroll) |> ignore
+        controller.WebView.EvaluateJavascript(sprintf "wireclub.Mobile.addLine(%s)" (Newtonsoft.Json.JsonConvert.SerializeObject { Line = line })) |> ignore
+        controller.WebView.EvaluateJavascript (sprintf "wireclub.Mobile.scrollToEnd(%b);" forceScroll) |> ignore
 
     let addLines lines =
-        this.WebView.EvaluateJavascript(sprintf "wireclub.Mobile.addLines(%s)" (Newtonsoft.Json.JsonConvert.SerializeObject (lines |> Array.map (fun e -> { Line = e })))) |> ignore
-        this.WebView.EvaluateJavascript "wireclub.Mobile.scrollToEnd(true);" |> ignore
+        controller.WebView.EvaluateJavascript(sprintf "wireclub.Mobile.addLines(%s)" (Newtonsoft.Json.JsonConvert.SerializeObject (lines |> Array.map (fun e -> { Line = e })))) |> ignore
+        controller.WebView.EvaluateJavascript "wireclub.Mobile.scrollToEnd(true);" |> ignore
 
     let placeKeyboard (sender:obj) (args:UIKeyboardEventArgs) =
-        this.ResizeViewToKeyboard args
-        this.WebView.EvaluateJavascript "wireclub.Mobile.scrollToEnd(true);" |> ignore
+        controller.ResizeViewToKeyboard args
+        controller.WebView.EvaluateJavascript "wireclub.Mobile.scrollToEnd(true);" |> ignore
 
     let mutable showObserver:NSObject = null
     let mutable hideObserver:NSObject = null
 
-    let webViewDelegate = {
-        new UIWebViewDelegate() with
-        override this.ShouldStartLoad (view, request, navigationType) =
-            let uri = new Uri(request.Url.AbsoluteString)
-            match uri.Segments with
-            | [|_; "users/"; slug |] ->
-                match users.Values |> Seq.tryFind (fun e -> e.Slug = slug) with
-                | Some user ->
-                    Navigation.navigate (sprintf "/users/%s" slug) (Some { Id = user.Id; Label = user.Name; Slug = user.Slug; Image = user.Avatar })
-                | _ ->
-                    Navigation.navigate (sprintf "/users/%s" slug) None
-            | segments ->  Navigation.navigate (uri.ToString()) None
-            false
-    }
 
     let sendMessage (identity:Models.User) text =
         match text with
         | "" -> ()
         | _ ->
-            this.SendButton.Enabled <- false
+            controller.SendButton.Enabled <- false
             Async.startNetworkWithContinuation
                 (Chat.send room.Slug text)
-                (this.HandleApiResult >> fun result ->
-                    this.SendButton.Enabled <- true
+                (controller.HandleApiResult >> fun result ->
+                    controller.SendButton.Enabled <- true
                     match result with 
                     | Api.ApiOk response -> 
-                        this.Text.Text <- ""
+                        controller.Text.Text <- ""
                         match users.TryGetValue identity.Id with
                         | true, user ->
                             addLine (userFeedbackLine response.Payload user) true
                         | _ -> ()
-                    | error -> this.HandleApiFailure error
+                    | error -> controller.HandleApiFailure error
                 )
 
     let addUser = (fun (user:UserProfile) -> users.AddOrUpdate (user.Id, user, System.Func<string,UserProfile,UserProfile>(fun _ _ -> user)) |> ignore)
@@ -251,7 +237,7 @@ type ChatRoomViewController (room:Entity) as this =
     let processor = new MailboxProcessor<ChannelEvent>(fun inbox ->
         let rec loop () = async {
             let! event = inbox.Receive()
-            this.InvokeOnMainThread(fun _ -> processEvent event addLine)
+            controller.InvokeOnMainThread(fun _ -> processEvent event addLine)
             return! loop ()
         }
 
@@ -263,8 +249,8 @@ type ChatRoomViewController (room:Entity) as this =
     let cancelPoll = new Threading.CancellationTokenSource()
 
     let keepAlive () =
-        this.InvokeOnMainThread(fun _ -> 
-            if this.NavigationController <> null && this.NavigationController.VisibleViewController = upcast this then
+        controller.InvokeOnMainThread(fun _ -> 
+            if controller.NavigationController <> null && controller.NavigationController.VisibleViewController = upcast controller then
                 Async.startWithContinuation
                     (Chat.keepAlive room.Slug)
                     (fun _ -> ())
@@ -273,17 +259,66 @@ type ChatRoomViewController (room:Entity) as this =
 
     let barButtons () =
         [|
-            yield this.UserButton
+            yield controller.UserButton
 
             if apps.Any(fun e -> appsAllowed.Contains(e)) then
-                yield this.GameButton
+                yield controller.GameButton
 
             if starred then
-                yield this.UnstarButton
+                yield controller.UnstarButton
             else
-                yield this.StarButton
+                yield controller.StarButton
         |]
 
+
+    let webViewDelegate = {
+        new UIWebViewDelegate() with
+        override this.ShouldStartLoad (view, request, navigationType) =
+            let uri = new Uri(request.Url.AbsoluteString)
+            match uri.Segments with
+            | [|_; "api/"; "chat/"; "chatRoomTemplate" |] -> true
+            | [|_; "users/"; slug |] ->
+                match users.Values |> Seq.tryFind (fun e -> e.Slug = slug) with
+                | Some user ->
+                    Navigation.navigate (sprintf "/users/%s" slug) (Some { Id = user.Id; Label = user.Name; Slug = user.Slug; Image = user.Avatar })
+                | _ ->
+                    Navigation.navigate (sprintf "/users/%s" slug) None
+                false
+            | segments -> 
+                Navigation.navigate (uri.ToString()) None
+                false
+
+        override this.LoadFailed (view, error) = showSimpleAlert "Error" error.Description "Close"
+
+        override this.LoadingFinished (view) = 
+            Async.startNetworkWithContinuation
+                (Chat.join room.Slug)
+                (function
+                | Api.ApiOk (result, events) ->
+                    startSequence <- result.Sequence
+                    loaded <- true
+                    starred <- result.Channel.ViewerHasStarred
+                    apps <- result.Channel.Apps
+
+                    if apps.Any(fun e -> appsAllowed.Contains(e)) then
+                        gameController <- Some (new GameViewController(room, apps.First()))
+
+                    controller.NavigationItem.RightBarButtonItems <- barButtons()
+
+                    result.Members |> Array.filter (fun e -> memberTypes.Contains e.Membership) |> Array.iter addUser
+                    result.HistoricMembers |> Array.filter (fun e -> memberTypes.Contains e.Membership) |> Array.iter addUser
+                    controller.WebView.PreloadImages [ for user in users.Values do yield App.imageUrl user.Avatar nameplateImageSize ]
+                    let lines = new List<string>()
+                    for event in events do processEvent event (fun l _ -> lines.Add l)
+                    addLines (lines.ToArray())
+                    controller.Progress.StopAnimating ()
+
+                    if loaded = false then
+                        processor.Start()
+
+                    lastEvent <- DateTime.UtcNow
+                | error -> controller.HandleApiFailure error)
+    }
 
     member this.UserButton:UIBarButtonItem =
         new UIBarButtonItem(UIImage.FromFile "UIButtonBarProfile.png", UIBarButtonItemStyle.Bordered, new EventHandler(fun (s:obj) (e:EventArgs) -> 
@@ -334,12 +369,14 @@ type ChatRoomViewController (room:Entity) as this =
     member val Progress: UIActivityIndicatorView = null with get, set
 
     override this.ViewDidLoad () =
+        this.WebView.BackgroundColor <- UIColor.White
+        this.WebView.Delegate <- webViewDelegate
+
         this.NavigationItem.Title <- room.Label
         this.NavigationItem.LeftItemsSupplementBackButton <- true
 
         // Prevents a 64px offset on a webviews scrollview
         this.AutomaticallyAdjustsScrollViewInsets <- false
-        this.WebView.BackgroundColor <- UIColor.White
 
         this.NavigationItem.RightBarButtonItems <- barButtons()
 
@@ -353,42 +390,11 @@ type ChatRoomViewController (room:Entity) as this =
         )
 
     override this.ViewDidAppear animated = 
-        if loaded = false then
+        // inital load
+        if loaded = false || (DateTime.UtcNow - lastEvent).TotalHours > 1.0 then
             this.WebView.LoadRequest(new NSUrlRequest(new NSUrl(Api.webUrl + "/api/chat/chatRoomTemplate")))
-            this.WebView.LoadError.Add(fun error -> showSimpleAlert "Error" error.Error.Description "Close")
-            this.WebView.LoadFinished.Add(fun _ ->
-                this.WebView.Delegate <- webViewDelegate
-                this.WebView.SetBodyBackgroundColor (colorToCss UIColor.White)
-
-                Async.startNetworkWithContinuation
-                    (Chat.join room.Slug)
-                    (function
-                        | Api.ApiOk (result, events) ->
-                            startSequence <- result.Sequence
-                            loaded <- true
-                            starred <- result.Channel.ViewerHasStarred
-                            apps <- result.Channel.Apps
-
-                            if apps.Any(fun e -> appsAllowed.Contains(e)) then
-                                gameController <- Some (new GameViewController(room, apps.First()))
-
-                            this.NavigationItem.RightBarButtonItems <- barButtons()
-
-                            result.Members |> Array.filter (fun e -> memberTypes.Contains e.Membership) |> Array.iter addUser
-                            result.HistoricMembers |> Array.filter (fun e -> memberTypes.Contains e.Membership) |> Array.iter addUser
-                            this.WebView.PreloadImages [ for user in users.Values do yield App.imageUrl user.Avatar nameplateImageSize ]
-                            let lines = new List<string>()
-                            for event in events do processEvent event (fun l _ -> lines.Add l)
-                            addLines (lines.ToArray())
-                            processor.Start()
-
-                            this.Progress.StopAnimating ()
-
-                        | error -> this.HandleApiFailure error 
-                )
-            )
-
-
+           
+        // mark things as read
         Async.startWithContinuation 
             (async {
                 do! DB.updateChatHistoryReadById room.Id
@@ -403,6 +409,7 @@ type ChatRoomViewController (room:Entity) as this =
                     ))
             )
     
+        // keyboard
         showObserver <- UIKeyboard.Notifications.ObserveWillShow(System.EventHandler<UIKeyboardEventArgs>(placeKeyboard))
         hideObserver <- UIKeyboard.Notifications.ObserveWillHide(System.EventHandler<UIKeyboardEventArgs>(placeKeyboard))
         this.Text.BecomeFirstResponder () |> ignore
