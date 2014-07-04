@@ -268,13 +268,15 @@ type ChatRoomViewController (room:Entity) as controller =
         |]
 
     let showMore () =
-        let alert = new UIAlertView (Title = room.Label)
-        alert.AddButton (if starred then "Unfavorite Room" else "Favorite Room") |> ignore
-        alert.AddButton "Leave Room" |> ignore
-        alert.AddButton "Cancel" |> ignore
+        let sheet = new UIActionSheet (Title = "Chat Room Options")
+        sheet.AddButton (if starred then "Unfavorite Room" else "Favorite Room") |> ignore
+        sheet.AddButton "Leave Room" |> ignore
+        sheet.AddButton "Cancel" |> ignore
+        sheet.DestructiveButtonIndex <- 1
+        sheet.CancelButtonIndex <- 2
 
-        alert.Show ()
-        alert.Dismissed.Add(fun args ->
+        sheet.ShowInView (controller.View)
+        sheet.Dismissed.Add(fun args ->
             match args.ButtonIndex with
             | 0 -> 
                 Async.startWithContinuation
