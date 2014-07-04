@@ -109,6 +109,23 @@ type PrivateChatSessionViewController (user:Entity) as this =
             false
     }
 
+    let showMore () =
+        let sheet = new UIActionSheet (Title = "Private Message Options")
+        sheet.AddButton "Close Chat" |> ignore
+        sheet.AddButton "Cancel" |> ignore
+        sheet.DestructiveButtonIndex <- 0
+        sheet.CancelButtonIndex <- 1
+
+        sheet.ShowInView (this.View)
+        sheet.Dismissed.Add(fun args ->
+            match args.ButtonIndex with
+            | 0 -> 
+                Async.startWithContinuation
+                    (DB.removeChatHistoryById user.Id)
+                    (fun _ -> Navigation.navigate "/home" None)
+            | _ -> ()
+        )
+
     static member val buttonImage = UIImage.FromFile "UIButtonBarProfile.png" with get
 
     [<Outlet>]
@@ -123,11 +140,21 @@ type PrivateChatSessionViewController (user:Entity) as this =
     [<Outlet>]
     member val Progress: UIActivityIndicatorView = null with get, set
 
-    override this.ViewDidLoad () =
-        this.NavigationItem.LeftItemsSupplementBackButton <- true
-        this.NavigationItem.RightBarButtonItem <- new UIBarButtonItem(PrivateChatSessionViewController.buttonImage, UIBarButtonItemStyle.Bordered, new EventHandler(fun (s:obj) (e:EventArgs) -> 
+    member this.UserButton:UIBarButtonItem =
+        new UIBarButtonItem(PrivateChatSessionViewController.buttonImage, UIBarButtonItemStyle.Bordered, new EventHandler(fun (s:obj) (e:EventArgs) -> 
             Navigation.navigate (sprintf "/users/%s" user.Slug) (Some user)
         ))
+
+    member this.MoreButton:UIBarButtonItem =
+        new UIBarButtonItem(UIImage.FromFile "UITabBarMoreTemplateSelected.png", UIBarButtonItemStyle.Bordered, new EventHandler(fun (s:obj) (e:EventArgs) -> showMore()))
+
+    override this.ViewDidLoad () =
+        this.NavigationItem.LeftItemsSupplementBackButton <- true
+        this.NavigationItem.RightBarButtonItems <-
+            [|
+                this.MoreButton
+                this.UserButton
+            |]
         // Prevents a 64px offset on a webviews scrollview
         this.AutomaticallyAdjustsScrollViewInsets <- false
         this.WebView.BackgroundColor <- Utility.grayLightAccent
