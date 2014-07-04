@@ -283,11 +283,18 @@ type ChatRoomViewController (room:Entity) as controller =
                         | Api.ApiOk _ -> starred <- not starred
                         | error -> controller.HandleApiFailure error 
                     )
-            | 1 -> () // TODO leave room
+            | 1 ->
+                Async.startNetworkWithContinuation
+                    (Chat.leave controller.Room.Slug)
+                    (function 
+                        | Api.ApiOk _ ->
+                            Async.startWithContinuation
+                                (DB.removeChatHistoryById room.Id)
+                                (fun _ -> Navigation.navigate "/home" None)
+                        | error -> controller.HandleApiFailure error 
+                    )
             | _ -> ()
         )
-
-
 
     let webViewDelegate = {
         new UIWebViewDelegate() with

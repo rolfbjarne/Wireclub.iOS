@@ -168,3 +168,10 @@ let fetchChatHistory () =
 let fetchChatEventHistoryByEntity entityId =
     db.Table<ChatHistoryEvent>().Where(fun e -> e.EntityId = entityId).OrderByDescending(fun s -> s.LastStamp).Take(100).ToListAsync() 
     |> Async.AwaitTask
+
+
+let removeChatHistoryById (id) = async {
+    let! history = fetchChatHistoryById id
+    do! db.DeleteAsync(history) |> Async.AwaitTask |> Async.Ignore
+}
+
