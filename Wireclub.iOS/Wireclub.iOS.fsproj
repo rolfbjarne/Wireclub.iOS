@@ -3,10 +3,10 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">iPhoneSimulator</Platform>
-    <ProductVersion>10.0.0</ProductVersion>
+    <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{86B121C0-1F33-4E4A-B684-04EFD9E7CE78}</ProjectGuid>
-    <ProjectTypeGuids>{6BC8ED88-2882-458C-8E55-DFD12B67127B};{4925A630-B079-445D-BCD4-3A9C94FE9307}</ProjectTypeGuids>
+    <ProjectTypeGuids>{6BC8ED88-2882-458C-8E55-DFD12B67127B};{F2A71F9B-5D33-465A-A702-920D77279786}</ProjectTypeGuids>
     <OutputType>Exe</OutputType>
     <RootNamespace>Wireclub.iOS</RootNamespace>
     <IPhoneResourcePrefix>Resources</IPhoneResourcePrefix>
@@ -287,6 +287,12 @@
     </BundleResource>
     <BundleResource Include="..\Views\Resources\UIBarButtonGameItem%402x.png">
       <Link>Resources\UIBarButtonGameItem%402x.png</Link>
+    </BundleResource>
+    <BundleResource Include="..\Views\Resources\UITabBarMoreTemplate%402x.png">
+      <Link>Resources\UITabBarMoreTemplate%402x.png</Link>
+    </BundleResource>
+    <BundleResource Include="..\Views\Resources\UITabBarMoreTemplateSelected%402x.png">
+      <Link>Resources\UITabBarMoreTemplateSelected%402x.png</Link>
     </BundleResource>
   </ItemGroup>
   <ItemGroup>

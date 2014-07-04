@@ -259,16 +259,34 @@ type ChatRoomViewController (room:Entity) as controller =
 
     let barButtons () =
         [|
+            yield controller.MoreButton
+
             yield controller.UserButton
 
             if apps.Any(fun e -> appsAllowed.Contains(e)) then
                 yield controller.GameButton
-
-            if starred then
-                yield controller.UnstarButton
-            else
-                yield controller.StarButton
         |]
+
+    let showMore () =
+        let alert = new UIAlertView (Title = room.Label)
+        alert.AddButton (if starred then "Unstar Room" else "Star Room") |> ignore
+        alert.AddButton "Leave Room" |> ignore
+        alert.AddButton "Cancel" |> ignore
+
+        alert.Show ()
+        alert.Dismissed.Add(fun args ->
+            match args.ButtonIndex with
+            | 0 -> 
+                Async.startWithContinuation
+                    ((if starred then Chat.unstar else Chat.star) controller.Room.Slug)
+                    (function 
+                        | Api.ApiOk _ -> starred <- not starred
+                        | error -> controller.HandleApiFailure error 
+                    )
+            | 1 -> () // TODO leave room
+            | _ -> ()
+        )
+
 
 
     let webViewDelegate = {
@@ -325,29 +343,8 @@ type ChatRoomViewController (room:Entity) as controller =
                 this.NavigationController.PushViewController(new ChatRoomUsersViewController(users.Values |> Seq.toArray), true)
             ))
 
-    member this.UnstarButton:UIBarButtonItem =
-        new UIBarButtonItem(UIImage.FromFile "UIBarButtonFavoriteActive.png", UIBarButtonItemStyle.Bordered, new EventHandler(fun (s:obj) (e:EventArgs) -> 
-                Async.startWithContinuation
-                    (Chat.unstar this.Room.Slug)
-                    (function 
-                        | Api.ApiOk _ -> 
-                            starred <- not starred
-                            this.NavigationItem.RightBarButtonItems <- barButtons()
-                        | error -> this.HandleApiFailure error 
-                    )
-            ))
-
-    member this.StarButton:UIBarButtonItem =
-        new UIBarButtonItem(UIImage.FromFile "UIBarButtonFavoriteInactive.png", UIBarButtonItemStyle.Bordered, new EventHandler(fun (s:obj) (e:EventArgs) -> 
-                Async.startWithContinuation
-                    (Chat.star this.Room.Slug)
-                    (function 
-                        | Api.ApiOk _ -> 
-                            starred <- not starred
-                            this.NavigationItem.RightBarButtonItems <- barButtons()
-                        | error -> this.HandleApiFailure error 
-                    )
-            ))
+    member this.MoreButton:UIBarButtonItem =
+        new UIBarButtonItem(UIImage.FromFile "UITabBarMoreTemplateSelected.png", UIBarButtonItemStyle.Bordered, new EventHandler(fun (s:obj) (e:EventArgs) -> showMore()))
 
     member this.GameButton:UIBarButtonItem =
         new UIBarButtonItem(UIImage.FromFile "UIBarButtonGameItem.png", UIBarButtonItemStyle.Bordered, new EventHandler(fun (s:obj) (e:EventArgs) -> 
