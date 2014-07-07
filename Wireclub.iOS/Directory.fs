@@ -112,6 +112,7 @@ type ChatsViewController (rootController:RootViewContoller) as controller =
 
             match session.Type with
             | DB.ChatHistoryType.ChatRoom ->
+                ChatRooms.leave session.EntityId
                 Async.startNetworkWithContinuation
                     (Chat.leave session.Slug)
                     (function 
@@ -123,6 +124,7 @@ type ChatsViewController (rootController:RootViewContoller) as controller =
                     )
             | DB.ChatHistoryType.PrivateChat
             | _ -> 
+                ChatSessions.leave session.EntityId
                 Async.startWithContinuation
                     (DB.removeChatHistoryById session.EntityId)
                     (removeRow)

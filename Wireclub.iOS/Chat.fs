@@ -292,7 +292,10 @@ type ChatRoomViewController (room:Entity) as controller =
                         | Api.ApiOk _ ->
                             Async.startWithContinuation
                                 (DB.removeChatHistoryById room.Id)
-                                (fun _ -> Navigation.navigate "/home" None)
+                                (fun _ ->
+                                    controller.Leave room.Id
+                                    Navigation.navigate "/home" None
+                                )
                         | error -> controller.HandleApiFailure error 
                     )
             | _ -> ()
@@ -361,6 +364,8 @@ type ChatRoomViewController (room:Entity) as controller =
                 | Some controller -> this.NavigationController.PushViewController(controller, true)
                 | _ -> ()
             ))
+
+    member val Leave:(string -> unit) = (fun (slug:string) -> ()) with get, set
 
     [<Outlet>]
     member val WebView: UIWebView = null with get, set
@@ -439,11 +444,18 @@ type ChatRoomViewController (room:Entity) as controller =
 module ChatRooms =
     let rooms = ConcurrentDictionary<string, Entity * ChatRoomViewController>()
 
+    let leave id =
+        match rooms.TryRemove id with
+        | false, _ -> printfn "key does not exist for leaving a room"
+        | _ -> ()
+    
     let join (room:Entity) =
         let _, controller =
+            let controllerAdd = new ChatRoomViewController (room)
+            controllerAdd.Leave <- leave
             rooms.AddOrUpdate (
                     room.Id,
-                    (fun _ -> room, new ChatRoomViewController (room)),
+                    (fun _ -> room, controllerAdd),
                     (fun _ room -> room)
                 )
         Async.Start (DB.createChatHistory (room, DB.ChatHistoryType.ChatRoom, None))
@@ -466,8 +478,4 @@ module ChatRooms =
             )
         ()
 
-    let leave slug =
-        match rooms.TryRemove slug with
-        | _ -> ()
-    
                   

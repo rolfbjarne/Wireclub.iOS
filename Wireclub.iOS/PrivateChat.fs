@@ -122,11 +122,16 @@ type PrivateChatSessionViewController (user:Entity) as this =
             | 0 -> 
                 Async.startWithContinuation
                     (DB.removeChatHistoryById user.Id)
-                    (fun _ -> Navigation.navigate "/home" None)
+                    (fun _ ->
+                        this.Leave user.Id
+                        Navigation.navigate "/home" None
+                    )
             | _ -> ()
         )
 
     static member val buttonImage = UIImage.FromFile "UIButtonBarProfile.png" with get
+
+    member val Leave:(string -> unit) = (fun (slug:string) -> ()) with get, set
 
     [<Outlet>]
     member val WebView: UIWebView = null with get, set
@@ -233,11 +238,18 @@ module ChatSessions =
 
     let sessions = ConcurrentDictionary<string, Entity * PrivateChatSessionViewController>()
 
+    let leave id =
+        match sessions.TryRemove id with
+        | _ -> ()
+
     let start (user:Entity) =
         let _, controller =
+            let controllerAdd = new PrivateChatSessionViewController (user) 
+            controllerAdd.Leave <- leave
+
             sessions.AddOrUpdate (
                 user.Id,
-                (fun _ -> user, new PrivateChatSessionViewController (user) ),
+                (fun _ -> user, controllerAdd ),
                 (fun _ x -> x)
             )
 
@@ -263,11 +275,3 @@ module ChatSessions =
                 | error -> printfn "Failed to start PM session: %A" error
             )
         ()
-
-
-    let leave slug =
-        match sessions.TryRemove slug with
-        | _ -> ()
-    
-
-                  
