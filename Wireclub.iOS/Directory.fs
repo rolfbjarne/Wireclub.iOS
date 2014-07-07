@@ -93,6 +93,41 @@ type ChatsViewController (rootController:RootViewContoller) as controller =
             | [||] when loaded -> controller.Table.Frame.Height
             | _ -> tableView.RowHeight
     
+        override this.CanEditRow (tableView, index) = true
+
+        override this.TitleForDeleteConfirmation (tableView, index) = "Leave"
+
+        override this.CommitEditingStyle (tableView, style, index) = 
+            let session = chats.[index.Row]
+            let removeRow _ =
+                Async.startWithContinuation
+                    (DB.fetchChatHistory ())
+                    (fun sessions ->
+                        chats <- Seq.toArray sessions
+                        if chats.Count() > 0 then
+                            tableView.DeleteRows([| index |], UITableViewRowAnimation.Automatic)
+                        else
+                            tableView.ReloadData()
+                    )
+
+            match session.Type with
+            | DB.ChatHistoryType.ChatRoom ->
+                Async.startNetworkWithContinuation
+                    (Chat.leave session.Slug)
+                    (function 
+                        | Api.ApiOk _ ->
+                            Async.startWithContinuation
+                                (DB.removeChatHistoryById session.EntityId)
+                                (removeRow)
+                        | error -> controller.HandleApiFailure error 
+                    )
+            | DB.ChatHistoryType.PrivateChat
+            | _ -> 
+                Async.startWithContinuation
+                    (DB.removeChatHistoryById session.EntityId)
+                    (removeRow)
+
+
         override this.RowSelected(tableView, indexPath) =
             match chats with
             | [||] when loaded -> ()
@@ -143,6 +178,7 @@ type ChatsViewController (rootController:RootViewContoller) as controller =
     override controller.ViewDidLoad () =
         base.ViewDidLoad ()
         controller.Table.Source <- tableSource
+        controller.Table.AllowsMultipleSelectionDuringEditing <- false
 
     override this.ViewDidAppear (animated) =
         base.ViewDidAppear (animated)
