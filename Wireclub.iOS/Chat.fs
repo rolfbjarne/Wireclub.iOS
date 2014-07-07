@@ -323,7 +323,6 @@ type ChatRoomViewController (room:Entity) as controller =
                 (function
                 | Api.ApiOk (result, events) ->
                     startSequence <- result.Sequence
-                    loaded <- true
                     starred <- result.Channel.ViewerHasStarred
                     apps <- result.Channel.Apps
 
@@ -341,6 +340,7 @@ type ChatRoomViewController (room:Entity) as controller =
                     controller.Progress.StopAnimating ()
 
                     if loaded = false then
+                        loaded <- true
                         processor.Start()
 
                     lastEvent <- DateTime.UtcNow
@@ -397,7 +397,7 @@ type ChatRoomViewController (room:Entity) as controller =
 
     override this.ViewDidAppear animated = 
         // inital load
-        if loaded = false || (DateTime.UtcNow - lastEvent).TotalHours > 1.0 then
+        if loaded = false || (DateTime.UtcNow - lastEvent).TotalMilliseconds > (1000. * 60. * 60.) then
             this.WebView.LoadRequest(new NSUrlRequest(new NSUrl(Api.webUrl + "/api/chat/chatRoomTemplate")))
            
         // mark things as read
