@@ -161,8 +161,6 @@ type EntryViewController () as controller =
                     do! DB.createChatHistoryEvent entity historyType (JsonConvert.SerializeObject(event))
              })
             (fun _ -> 
-                rootController.ChatsController.Reload ()
-
                 match controller.NavigationController.VisibleViewController with
                     | :? PrivateChatSessionViewController as controller -> reloadNavigationItem (controller :> UIViewController)
                     | :? ChatRoomViewController as controller -> reloadNavigationItem (controller :> UIViewController)

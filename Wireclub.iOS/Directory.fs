@@ -169,18 +169,21 @@ type ChatsViewController (rootController:RootViewContoller) as controller =
     member val Table: UITableView = null with get, set
 
     member this.Reload () =
-        Async.startWithContinuation
-            (DB.fetchChatHistory ())
-            (fun sessions ->
-                chats <- Seq.toArray sessions
-                loaded <- true
-                this.Table.ReloadData()
-            )
+        if controller.Table.Editing = false then
+            Async.startWithContinuation
+                (DB.fetchChatHistory ())
+                (fun sessions ->
+                    chats <- Seq.toArray sessions
+                    loaded <- true
+                    this.Table.ReloadData()
+                )
 
     override controller.ViewDidLoad () =
         base.ViewDidLoad ()
         controller.Table.Source <- tableSource
         controller.Table.AllowsMultipleSelectionDuringEditing <- false
+
+        Async.Start(Utility.Timer.ticker (fun _ -> controller.InvokeOnMainThread(fun _->  controller.Reload() )) (5 * 1000))
 
     override this.ViewDidAppear (animated) =
         base.ViewDidAppear (animated)
