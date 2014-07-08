@@ -70,7 +70,6 @@ module Main =
                 UIApplication.Main(args, null, "AppDelegate")
             with
             | ex ->
-                let reportError = DB.createError (Error(Error = ex.Message)) |> Async.StartAsTask
-                reportError.Wait()
+                DB.createError (Error(Error = ex.Message))
             0
         #endif
