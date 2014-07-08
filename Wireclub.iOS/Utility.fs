@@ -150,8 +150,12 @@ module Utility =
                 Logger.log ex
                 showSimpleAlert "Error" "An error occured parsing your request" "Close"
             | Api.Exception ex ->
-                Logger.log ex
-                showSimpleAlert "Error" "An exception occured submitting your request" "Close"
+                    match ex.InnerException with
+                    | :? System.Net.WebException when Reachability.internetConnectionStatus () = Reachability.NetworkStatus.NotReachable -> 
+                        showSimpleAlert "Not Connected" "You are not connected to the internet" "Close"
+                    | _ ->
+                        Logger.log ex
+                        showSimpleAlert "Error" "An exception occured submitting your request" "Close"
 
         member this.HandleApiResult<'A> (result:Api.ApiResult<'A>) =
             match result with

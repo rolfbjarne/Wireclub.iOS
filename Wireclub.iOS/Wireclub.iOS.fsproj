@@ -152,9 +152,9 @@
     <None Include="RELEASE-NOTES.txt" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Reachability.fs" />
     <Compile Include="Utility.fs" />
     <Compile Include="Toast.fs" />
-    <Compile Include="Reachability.fs" />
     <Compile Include="Resources.fs" />
     <Compile Include="DB.fs" />
     <Compile Include="Dialog.fs" />
