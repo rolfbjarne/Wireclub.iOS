@@ -199,12 +199,16 @@ module Async =
             (showNetworkIndicator computation)
             (continuation)
 
-    let startInBackgroundWithContinuation compuation continuation =
+    let startInBackgroundWithContinuation computation continuation =
         let current = System.Threading.SynchronizationContext.Current
         Async.Start <| async {
-            let result = compuation ()
-            do! Async.SwitchToContext(current)
-            continuation (result)
+            try
+                let result = computation ()
+                do! Async.SwitchToContext(current)
+                continuation (result)
+            with ex ->
+                printf "Error in background: %A" ex
+                Logger.log ex
         }
 
 module Image =
