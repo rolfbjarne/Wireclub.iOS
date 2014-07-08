@@ -120,8 +120,8 @@ type PrivateChatSessionViewController (user:Entity) as this =
         sheet.Dismissed.Add(fun args ->
             match args.ButtonIndex with
             | 0 -> 
-                Async.startWithContinuation
-                    (DB.removeChatHistoryById user.Id)
+                Async.startInBackgroundWithContinuation
+                    (fun _ -> DB.removeChatHistoryById user.Id)
                     (fun _ ->
                         this.Leave user.Id
                         Navigation.navigate "/home" None
@@ -177,7 +177,7 @@ type PrivateChatSessionViewController (user:Entity) as this =
                 Async.startNetworkWithContinuation
                     (async {
                         let! session = PrivateChat.session user.Id
-                        let! history = DB.fetchChatEventHistoryByEntity user.Id
+                        let history = DB.fetchChatEventHistoryByEntity user.Id
                         return session, history
                     })
                     (function
@@ -206,12 +206,11 @@ type PrivateChatSessionViewController (user:Entity) as this =
                     )
             )
 
-        Async.startWithContinuation 
-            (async {
-                do! DB.updateChatHistoryReadById user.Id
-                let! unread = DB.fetchChatHistoryUnreadCount ()
-                return unread
-            })
+        Async.startInBackgroundWithContinuation 
+            (fun _ ->
+                DB.updateChatHistoryReadById user.Id
+                DB.fetchChatHistoryUnreadCount ()
+            )
             (function
                 | 0 -> this.NavigationItem.LeftBarButtonItem <- null
                 | unread ->

@@ -133,8 +133,8 @@ type EntryViewController () as controller =
     let editProfileController = lazy (Resources.editProfileStoryboard.Value.InstantiateInitialViewController() :?> UIViewController)
 
     let reloadNavigationItem (controller:UIViewController) =
-        Async.startWithContinuation 
-            (DB.fetchChatHistoryUnreadCount())
+        Async.startInBackgroundWithContinuation 
+            (fun _ -> DB.fetchChatHistoryUnreadCount())
             (function
                 | 0 ->
                     rootController.TabBar.Items.[0].BadgeValue <- null
@@ -158,8 +158,8 @@ type EntryViewController () as controller =
             (async {
                 do! DB.createChatHistory (entity, historyType, (Some (preview, read)))
                 if historyType = DB.ChatHistoryType.PrivateChat then
-                    do! DB.createChatHistoryEvent entity historyType (JsonConvert.SerializeObject(event))
-             })
+                    DB.createChatHistoryEvent entity historyType (JsonConvert.SerializeObject(event))
+            })
             (fun _ -> 
                 match controller.NavigationController.VisibleViewController with
                     | :? PrivateChatSessionViewController as controller -> reloadNavigationItem (controller :> UIViewController)
@@ -292,11 +292,11 @@ type EntryViewController () as controller =
             | "/logout", _ ->
                 NSUserDefaults.StandardUserDefaults.RemoveObject("auth-token")
                 NSUserDefaults.StandardUserDefaults.Synchronize () |> ignore
-                Async.startWithContinuation
-                    (async {
-                        do! DB.deleteAll<DB.ChatHistory>()
-                        do! DB.deleteAll<DB.ChatHistoryEvent>()
-                    })
+                Async.startInBackgroundWithContinuation
+                    (fun _ ->
+                        DB.deleteAll<DB.ChatHistory>()
+                        DB.deleteAll<DB.ChatHistoryEvent>()
+                    )
                     (fun _ -> ())
                 Account.logout ()
                 ChannelClient.close()

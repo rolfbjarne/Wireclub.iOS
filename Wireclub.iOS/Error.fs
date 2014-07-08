@@ -20,11 +20,11 @@ open Wireclub.Boundary.Models
 module Error =
     let report () = async {
         try
-            let! errors = DB.fetchErrors ()
+            let errors = DB.fetchErrors ()
             if errors.Any() then
                 let! result = App.reportErrors [ for error in errors do yield error.Error ]
                 match result with
-                | Api.ApiOk _ -> do! DB.clearErrors()
+                | Api.ApiOk _ -> DB.clearErrors()
                 | _ -> ()
         with
         | ex -> ()

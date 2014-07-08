@@ -100,8 +100,8 @@ type ChatsViewController (rootController:RootViewContoller) as controller =
         override this.CommitEditingStyle (tableView, style, index) = 
             let session = chats.[index.Row]
             let removeRow _ =
-                Async.startWithContinuation
-                    (DB.fetchChatHistory ())
+                Async.startInBackgroundWithContinuation
+                    (fun _ -> DB.fetchChatHistory ())
                     (fun sessions ->
                         chats <- Seq.toArray sessions
                         if chats.Count() > 0 then
@@ -117,16 +117,16 @@ type ChatsViewController (rootController:RootViewContoller) as controller =
                     (Chat.leave session.Slug)
                     (function 
                         | Api.ApiOk _ ->
-                            Async.startWithContinuation
-                                (DB.removeChatHistoryById session.EntityId)
+                            Async.startInBackgroundWithContinuation
+                                (fun _ -> DB.removeChatHistoryById session.EntityId)
                                 (removeRow)
                         | error -> controller.HandleApiFailure error 
                     )
             | DB.ChatHistoryType.PrivateChat
             | _ -> 
                 ChatSessions.leave session.EntityId
-                Async.startWithContinuation
-                    (DB.removeChatHistoryById session.EntityId)
+                Async.startInBackgroundWithContinuation
+                    (fun _ -> DB.removeChatHistoryById session.EntityId)
                     (removeRow)
 
 
@@ -152,12 +152,11 @@ type ChatsViewController (rootController:RootViewContoller) as controller =
                     controller.NavigationController.PushViewController(newController, true)
 
                 
-                Async.startWithContinuation 
-                    (async {
-                        do! DB.updateChatHistoryReadById entity.Id
-                        let! unread = DB.fetchChatHistoryUnreadCount ()
-                        return unread
-                    })
+                Async.startInBackgroundWithContinuation 
+                    (fun _ ->
+                        DB.updateChatHistoryReadById entity.Id
+                        DB.fetchChatHistoryUnreadCount ()
+                    )
                     (function
                         | 0 -> rootController.Tabs.Items.[0].BadgeValue <- null
                         | unread -> rootController.Tabs.Items.[0].BadgeValue <- string unread
@@ -170,8 +169,8 @@ type ChatsViewController (rootController:RootViewContoller) as controller =
 
     member this.Reload () =
         if controller.Table.Editing = false then
-            Async.startWithContinuation
-                (DB.fetchChatHistory ())
+            Async.startInBackgroundWithContinuation
+                (fun _ -> DB.fetchChatHistory ())
                 (fun sessions ->
                     chats <- Seq.toArray sessions
                     loaded <- true

@@ -31,11 +31,9 @@ type AppDelegate () =
             (fun ex -> 
                 let error = sprintf "%s\n%s" ex.Message ex.StackTrace 
                 printfn "%s" error
-                Async.StartWithContinuations (
-                    (DB.createError (Error(Error = error ))),
-                    (fun _ -> ()),
-                    (fun _ -> ()),
-                    (fun _ -> ()))
+                Async.startInBackgroundWithContinuation 
+                    (fun _ -> DB.createError (Error(Error = error )))
+                    (fun _ -> ())
             )
                     
         window.RootViewController <- navigationController

@@ -290,8 +290,8 @@ type ChatRoomViewController (room:Entity) as controller =
                     (Chat.leave controller.Room.Slug)
                     (function 
                         | Api.ApiOk _ ->
-                            Async.startWithContinuation
-                                (DB.removeChatHistoryById room.Id)
+                            Async.startInBackgroundWithContinuation
+                                (fun _ -> DB.removeChatHistoryById room.Id)
                                 (fun _ ->
                                     controller.Leave room.Id
                                     Navigation.navigate "/home" None
@@ -406,12 +406,11 @@ type ChatRoomViewController (room:Entity) as controller =
             this.WebView.LoadRequest(new NSUrlRequest(new NSUrl(Api.webUrl + "/api/chat/chatRoomTemplate")))
            
         // mark things as read
-        Async.startWithContinuation 
-            (async {
-                do! DB.updateChatHistoryReadById room.Id
-                let! unread = DB.fetchChatHistoryUnreadCount ()
-                return unread
-            })
+        Async.startInBackgroundWithContinuation 
+            (fun _ ->
+                DB.updateChatHistoryReadById room.Id
+                DB.fetchChatHistoryUnreadCount ()
+            )
             (function
                 | 0 -> this.NavigationItem.LeftBarButtonItem <- null
                 | unread ->
@@ -462,8 +461,8 @@ module ChatRooms =
         controller
 
     let joinById id continuation =
-        Async.startWithContinuation
-            (DB.fetchChatHistoryById id)
+        Async.startInBackgroundWithContinuation
+            (fun _ -> DB.fetchChatHistoryById id)
             (function
                 | null -> ()
                 | room ->
