@@ -104,10 +104,7 @@ type ChatsViewController (rootController:RootViewContoller) as controller =
                     (fun _ -> DB.fetchChatHistory ())
                     (fun sessions ->
                         chats <- Seq.toArray sessions
-                        if chats.Count() > 0 then
-                            tableView.DeleteRows([| index |], UITableViewRowAnimation.Automatic)
-                        else
-                            tableView.ReloadData()
+                        tableView.ReloadData()
                     )
 
             match session.Type with
