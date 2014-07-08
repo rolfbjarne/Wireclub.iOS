@@ -195,6 +195,14 @@ module Async =
             (showNetworkIndicator computation)
             (continuation)
 
+    let startInBackgroundWithContinuation compuation continuation =
+        let current = System.Threading.SynchronizationContext.Current
+        Async.Start <| async {
+            let result = compuation ()
+            do! Async.SwitchToContext(current)
+            continuation (result)
+        }
+
 module Image =
     open System
     open System.IO
