@@ -22,10 +22,10 @@ type AppDelegate () =
     let navigationController = new UINavigationController(entryController)
 
     override this.FinishedLaunching (app, options) =
-        NSUserDefaults.StandardUserDefaults.RegisterDefaults(
-            NSDictionary.FromObjectAndKey(NSObject.FromObject("wireclub-app-ios-webview/" + NSBundle.MainBundle.InfoDictionary.["CFBundleVersion"].ToString()), NSObject.FromObject("UserAgent")))
-
         Api.agent <- "wireclub-app-ios/" + NSBundle.MainBundle.InfoDictionary.["CFBundleVersion"].ToString()
+
+        NSUserDefaults.StandardUserDefaults.RegisterDefaults(
+            NSDictionary.FromObjectAndKey(NSObject.FromObject(Api.agent), NSObject.FromObject("UserAgent")))
 
         Logger.log <-
             (fun ex -> 
@@ -58,6 +58,14 @@ type AppDelegate () =
 #endif
 
         true
+
+        override this.RegisteredForRemoteNotifications(app, deviceToken) =
+            match deviceToken.Description with
+            | null | "" -> ()
+            | token -> () //TODO: Post to server token.Trim('<').Trim('>')
+
+        override this.ReceivedRemoteNotification(app, userInfo) =
+            ()
 
 module Main =
     [<EntryPoint>]

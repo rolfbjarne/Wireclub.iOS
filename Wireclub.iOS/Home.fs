@@ -319,6 +319,8 @@ type EntryViewController () as controller =
         let proceed animated =
             ChannelClient.init handleEvent
 
+            UIApplication.SharedApplication.RegisterForRemoteNotificationTypes(UIRemoteNotificationType.Alert ||| UIRemoteNotificationType.Sound ||| UIRemoteNotificationType.Badge)
+
             Async.Start(Utility.Timer.ticker (fun _ -> Async.Start (Error.report ()) ) (60 * 1000))
 
             match Api.userIdentity.Value.Membership with
