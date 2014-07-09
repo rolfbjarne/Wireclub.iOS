@@ -202,17 +202,21 @@ type EntryViewController () as controller =
                 | true, (room, controller) ->
                     controller.HandleChannelEvent event
                     handleNotifications event room (stripHtml message)
-                | _ -> ChatRooms.joinById channel (fun room controller ->
-                    controller.HandleChannelEvent event
-                    handleNotifications event room (stripHtml message)
-                )
+                | _ -> ()
+                    //TODO: There is race when leaving the chat room and recieving events of the left chat room it needs to be figured out
+                    //ChatRooms.joinById channel (fun room controller ->
+                    //    controller.HandleChannelEvent event
+                    //    handleNotifications event room (stripHtml message)
+                    //)
             | _ ->
                 match ChatRooms.rooms.TryGetValue channel with
                 | true, (room, controller) ->
                     controller.HandleChannelEvent event
-                | _ -> ChatRooms.joinById channel (fun room controller ->
-                    controller.HandleChannelEvent event
-                )
+                | _ -> ()
+                    //TODO: There is race when leaving the chat room and recieving events of the left chat room it needs to be figured out
+                    //ChatRooms.joinById channel (fun room controller ->
+                    //    controller.HandleChannelEvent event
+                    //)
         )
 
     let resolvableHosts =
