@@ -252,7 +252,9 @@ module ChatSessions =
                 (fun _ x -> x)
             )
 
-        Async.Start (DB.createChatHistory (user, DB.ChatHistoryType.PrivateChat, None))
+        Async.startInBackgroundWithContinuation
+            (fun _ -> DB.createChatHistory user DB.ChatHistoryType.PrivateChat)
+            (fun _ -> ())
         controller
 
     let startById id continuation =

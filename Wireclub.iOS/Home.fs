@@ -156,7 +156,7 @@ type EntryViewController () as controller =
         
         Async.startWithContinuation
             (async {
-                do! DB.createChatHistory (entity, historyType, (Some (preview, read)))
+                do! DB.updateChatHistory (entity, historyType, (Some (preview, read)))
                 if historyType = DB.ChatHistoryType.PrivateChat then
                     DB.createChatHistoryEvent entity historyType (JsonConvert.SerializeObject(event))
             })

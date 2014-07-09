@@ -457,7 +457,10 @@ module ChatRooms =
                     (fun _ -> room, controllerAdd),
                     (fun _ room -> room)
                 )
-        Async.Start (DB.createChatHistory (room, DB.ChatHistoryType.ChatRoom, None))
+
+        Async.startInBackgroundWithContinuation
+            (fun _ -> DB.createChatHistory room DB.ChatHistoryType.ChatRoom)
+            (fun _ -> ())
         controller
 
     let joinById id continuation =

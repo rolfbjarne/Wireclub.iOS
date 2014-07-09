@@ -94,28 +94,29 @@ let createChatHistoryEvent (entity:Entity) historyType eventJson =
         //TODO batch this
         write (fun db -> for event in toClear do db.Delete(event) |> ignore)
 
-let createChatHistory = 
+let createChatHistory (entity:Entity) (historyType:ChatHistoryType) = 
+    match db.Table<ChatHistory>().Where(fun x -> x.EntityId = entity.Id).FirstOrDefault() with
+    | null -> 
+        write (fun db ->
+            db.Insert
+                (ChatHistory(
+                    EntityId = entity.Id,
+                    Label = entity.Label,
+                    Slug = entity.Slug,
+                    Image = entity.Image,
+                    Last = "",
+                    Read = true,
+                    Type = historyType
+                )) |> ignore
+        )
+    | existing -> ()
+
+let updateChatHistory = 
     let processor = MailboxProcessor<(Entity * ChatHistoryType * (string * bool) option) * AsyncReplyChannel<unit>>.Start(fun inbox ->
         let rec loop () = async {
             let! (entity, historyType, last), channel = inbox.Receive()
-            let existing = db.Table<ChatHistory>().Where(fun x -> x.EntityId = entity.Id).FirstOrDefault()
-
-            match existing with
-            | null -> 
-                write (fun db ->
-                    db.Insert
-                        (ChatHistory(
-                            EntityId = entity.Id,
-                            Label = entity.Label,
-
-                            Slug = entity.Slug,
-                            Image = entity.Image,
-                            Last = "",
-                            Read = true,
-                            Type = historyType
-                        )) |> ignore
-                )
-
+            match db.Table<ChatHistory>().Where(fun x -> x.EntityId = entity.Id).FirstOrDefault() with
+            | null -> ()
             | existing -> 
                 match last with
                 | Some (_, read) when existing.Type = ChatHistoryType.ChatRoom && existing.Read = false && read = false -> () //if it's a chatoom and unread leave it on the first unread
