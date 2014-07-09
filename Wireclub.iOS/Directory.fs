@@ -105,6 +105,12 @@ type ChatsViewController (rootController:RootViewContoller) as controller =
                     (fun sessions ->
                         chats <- Seq.toArray sessions
                         tableView.ReloadData()
+                        Async.startInBackgroundWithContinuation 
+                            (fun _ -> DB.fetchChatHistoryUnreadCount())
+                            (function
+                            | 0 -> rootController.Tabs.Items.[0].BadgeValue <- null
+                            | unread -> rootController.Tabs.Items.[0].BadgeValue <- string unread
+                            )
                     )
 
             match session.Type with
