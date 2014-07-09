@@ -288,15 +288,13 @@ type ChatRoomViewController (room:Entity) as controller =
             | 1 ->
                 Async.startNetworkWithContinuation
                     (Chat.leave controller.Room.Slug)
-                    (function 
-                        | Api.ApiOk _ ->
-                            Async.startInBackgroundWithContinuation
-                                (fun _ -> DB.removeChatHistoryById room.Id)
-                                (fun _ ->
-                                    controller.Leave room.Id
-                                    Navigation.navigate "/home" None
-                                )
-                        | error -> controller.HandleApiFailure error 
+                    (fun _ -> 
+                        Async.startInBackgroundWithContinuation
+                            (fun _ -> DB.removeChatHistoryById room.Id)
+                            (fun _ ->
+                                controller.Leave room.Id
+                                Navigation.navigate "/home" None
+                            )
                     )
             | _ -> ()
         )
@@ -347,6 +345,18 @@ type ChatRoomViewController (room:Entity) as controller =
                         processor.Start()
 
                     lastEvent <- DateTime.UtcNow
+                | Api.HttpError (code, _) when code = 404 ->
+                    let alert = new UIAlertView (Title = "Room Deleted", Message = "This room no longer exists.")
+                    alert.AddButton "Leave" |> ignore
+                    alert.Show ()
+                    alert.Clicked.Add(fun _ -> 
+                        Async.startInBackgroundWithContinuation
+                            (fun _ -> DB.removeChatHistoryById room.Id)
+                            (fun _ ->
+                                controller.Leave room.Id
+                                Navigation.navigate "/home" None
+                            )
+                    )
                 | error -> controller.HandleApiFailure error)
     }
 
