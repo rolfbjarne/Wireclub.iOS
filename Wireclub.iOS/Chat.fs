@@ -412,7 +412,7 @@ type ChatRoomViewController (room:Entity) as controller =
 
     override this.ViewDidAppear animated = 
         // inital load
-        if loaded = false || (DateTime.UtcNow - lastEvent).TotalMilliseconds > (1000. * 60. * 60.) then
+        if loaded = false || (DateTime.UtcNow - lastEvent).TotalMilliseconds > (1000. * 60. * 20.) then
             this.WebView.LoadRequest(new NSUrlRequest(new NSUrl(Api.webUrl + "/api/chat/chatRoomTemplate")))
            
         // mark things as read
