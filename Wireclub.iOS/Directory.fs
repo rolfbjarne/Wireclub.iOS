@@ -112,12 +112,10 @@ type ChatsViewController (rootController:RootViewContoller) as controller =
                 ChatRooms.leave session.EntityId
                 Async.startNetworkWithContinuation
                     (Chat.leave session.Slug)
-                    (function 
-                        | Api.ApiOk _ ->
-                            Async.startInBackgroundWithContinuation
-                                (fun _ -> DB.removeChatHistoryById session.EntityId)
-                                (removeRow)
-                        | error -> controller.HandleApiFailure error 
+                    (fun _ -> 
+                        Async.startInBackgroundWithContinuation
+                            (fun _ -> DB.removeChatHistoryById session.EntityId)
+                            (removeRow)
                     )
             | DB.ChatHistoryType.PrivateChat
             | _ -> 
