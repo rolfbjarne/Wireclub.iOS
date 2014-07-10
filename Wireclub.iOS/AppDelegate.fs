@@ -12,6 +12,9 @@ open Utility
 
 open Wireclub.iOS.DB
 
+type PushNotification =
+| Unknown
+| PrivateChat of string
 
 [<Register ("AppDelegate")>]
 type AppDelegate () =
@@ -20,6 +23,18 @@ type AppDelegate () =
     let window = new UIWindow (UIScreen.MainScreen.Bounds)
     let entryController = new EntryViewController()
     let navigationController = new UINavigationController(entryController)
+
+    let parsePushNotification (info:NSDictionary) =
+        match info.TryGetValue(NSObject.FromObject "aps") with
+        | true, null -> Unknown
+        | true, aps when aps.GetType() = typeof<NSDictionary> ->
+            let aps = aps :?> NSDictionary
+            match aps.TryGetValue(NSObject.FromObject "u") with
+            | true, null -> Unknown
+            | true, u -> PrivateChat (u.ToString())
+            | _ -> Unknown
+        | _ -> Unknown
+
 
     override this.FinishedLaunching (app, options) =
         Api.agent <- "wireclub-app-ios/" + NSBundle.MainBundle.InfoDictionary.["CFBundleVersion"].ToString()
@@ -38,6 +53,14 @@ type AppDelegate () =
                     
         window.RootViewController <- navigationController
         window.MakeKeyAndVisible ()
+
+        if options <> null then
+            match options.TryGetValue(NSObject.FromObject UIApplication.LaunchOptionsRemoteNotificationKey) with
+            | true, userInfo ->
+                match parsePushNotification (userInfo :?> NSDictionary) with
+                | PrivateChat id -> ()
+                | _ -> ()
+            | _ -> ()
 
 #if DEBUG
         let rec tick () = async {
@@ -80,7 +103,14 @@ type AppDelegate () =
                         (fun _ -> ())
 
         override this.ReceivedRemoteNotification(app, userInfo) =
-            ()
+            match app.ApplicationState with 
+            | UIApplicationState.Active -> () 
+            | UIApplicationState.Background
+            | UIApplicationState.Inactive -> 
+                match parsePushNotification userInfo with
+                | PrivateChat id -> ()
+                | _ -> ()
+            | _ -> ()
 
 module Main =
     [<EntryPoint>]
