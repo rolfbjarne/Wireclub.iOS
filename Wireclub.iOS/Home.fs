@@ -306,7 +306,9 @@ type EntryViewController () as controller =
                 match NSUserDefaults.StandardUserDefaults.StringForKey "device-token" with
                 | null | "" -> ()
                 | deviceToken ->
-                    Async.startWithContinuation (Settings.deleteDevice deviceToken) (fun _ -> ())
+                    Async.startWithContinuation
+                        (Settings.deleteDevice deviceToken)
+                        (fun _ -> NSUserDefaults.StandardUserDefaults.RemoveObject("device-token"))
                 Account.logout ()
                 ChannelClient.close()
 
