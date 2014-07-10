@@ -302,6 +302,11 @@ type EntryViewController () as controller =
                         DB.deleteAll<DB.ChatHistoryEvent>()
                     )
                     (fun _ -> ())
+
+                match NSUserDefaults.StandardUserDefaults.StringForKey "device-token" with
+                | null | "" -> ()
+                | deviceToken ->
+                    Async.startWithContinuation (Settings.deleteDevice deviceToken) (fun _ -> ())
                 Account.logout ()
                 ChannelClient.close()
 
