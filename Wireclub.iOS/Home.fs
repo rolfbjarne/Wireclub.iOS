@@ -327,8 +327,7 @@ type EntryViewController () as controller =
             | MembershipTypePublic.Pending -> this.NavigationController.PushViewController (editProfileController.Value, true)
             | _ -> this.NavigationController.PushViewController(rootController, animated)
 
-        let defaults = NSUserDefaults.StandardUserDefaults
-        match defaults.StringForKey "auth-token", System.String.IsNullOrEmpty Api.userId with
+        match NSUserDefaults.StandardUserDefaults.StringForKey "auth-token", System.String.IsNullOrEmpty Api.userId with
         // User has not entered an account
         | null, _ -> 
             this.NavigationController.PushViewController (loginController.Value, false)
