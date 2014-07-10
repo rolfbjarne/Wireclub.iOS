@@ -59,10 +59,25 @@ type AppDelegate () =
 
         true
 
-        override this.RegisteredForRemoteNotifications(app, deviceToken) =
-            match deviceToken.Description with
+        override this.RegisteredForRemoteNotifications(app, pushToken) =
+            match pushToken.Description with
             | null | "" -> ()
-            | token -> () //TODO: Post to server token.Trim('<').Trim('>')
+            | pushToken -> 
+                let pushToken = pushToken.Trim('<').Trim('>')
+                match NSUserDefaults.StandardUserDefaults.StringForKey "device-token" with
+                | null | "" -> 
+                    Async.startWithContinuation
+                        (Settings.registerDevice pushToken)
+                        (function
+                            | Api.ApiOk result ->
+                                NSUserDefaults.StandardUserDefaults.SetString(result, "device-token")
+                                NSUserDefaults.StandardUserDefaults.Synchronize() |> ignore
+                            | _ -> ()
+                        )
+                | deviceToken ->
+                    Async.startWithContinuation
+                        (Settings.updateDevicePushToken deviceToken pushToken)
+                        (fun _ -> ())
 
         override this.ReceivedRemoteNotification(app, userInfo) =
             ()
