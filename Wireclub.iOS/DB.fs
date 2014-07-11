@@ -48,86 +48,96 @@ type ChatHistoryEvent() =
     member val EventJson = "" with get, set
 
 let db = new SQLiteConnection(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "db"))
-let write computation =  
+let dbLock computation =  
     lock db (fun _ -> computation db) 
 
 let init () =
-    db.CreateTable<ChatHistory> () |> ignore
-    db.CreateTable<ChatHistoryEvent> () |> ignore
-    db.CreateTable<Error> () |> ignore
+    dbLock (fun db ->
+        db.CreateTable<ChatHistory> () |> ignore
+        db.CreateTable<ChatHistoryEvent> () |> ignore
+        db.CreateTable<Error> () |> ignore
+    )
 
 init ()
 
 let deleteAll<'T when 'T : (new : unit -> 'T)>() = 
-    let toDelete = db.Table<'T>().ToList()
-    write (fun db -> for event in toDelete do db.Delete(event) |> ignore )
+    dbLock (fun db ->
+        let toDelete = db.Table<'T>().ToList()
+        for event in toDelete do db.Delete(event) |> ignore
+    )
     
 let fetchErrors () =
-    db.Table<Error>().ToList() 
+    dbLock (fun db ->
+        db.Table<Error>().ToList()
+    )
 
 let createError (error:Error) =
-    write (fun db -> db.Insert (error) |> ignore)
-
-    #if DEBUG
-    let errors = fetchErrors()
-    printfn "Errors: %A" (errors.Select(fun (e:Error) -> e.Error).ToArray())
-    #endif
+    dbLock (fun db ->
+        db.Insert (error) |> ignore
+        #if DEBUG
+        let errors = db.Table<Error>().ToList()
+        printfn "Errors: %A" (errors.Select(fun (e:Error) -> e.Error).ToArray())
+        #endif
+    )
 
 let clearErrors () =
-    let errors = db.Table<Error>().ToList()
-    write (fun db -> for error in errors.Take(100) do db.Delete(error) |> ignore)
+    dbLock (fun db ->
+        let errors = db.Table<Error>().ToList()
+        for error in errors.Take(100) do db.Delete(error) |> ignore
+    )
 
 let createChatHistoryEvent (entity:Entity) historyType eventJson =
-    write (fun db ->
+    dbLock (fun db ->
         db.Insert
             (ChatHistoryEvent(
                 EntityId = entity.Id,
                 Type = historyType,
                 EventJson = eventJson
-            )) 
-        |> ignore)
+            )) |> ignore
 
-    let count = db.Table<ChatHistoryEvent>().Count()
-    if count > 500 then
-        let toClear = db.Table<ChatHistoryEvent>().OrderBy(fun s -> s.LastStamp).Take(100).ToList()
+        let count = db.Table<ChatHistoryEvent>().Count()
+        if count > 500 then
+            let toClear = db.Table<ChatHistoryEvent>().OrderBy(fun s -> s.LastStamp).Take(100).ToList()
+            for event in toClear do db.Delete(event) |> ignore
+        )
 
-        //TODO batch this
-        write (fun db -> for event in toClear do db.Delete(event) |> ignore)
 
 let createChatHistory (entity:Entity) (historyType:ChatHistoryType) = 
-    match db.Table<ChatHistory>().Where(fun x -> x.EntityId = entity.Id).FirstOrDefault() with
-    | null -> 
-        write (fun db ->
-            db.Insert
-                (ChatHistory(
-                    EntityId = entity.Id,
-                    Label = entity.Label,
-                    Slug = entity.Slug,
-                    Image = entity.Image,
-                    Last = "",
-                    Read = true,
-                    Type = historyType
-                )) |> ignore
-        )
-    | existing -> ()
+    dbLock (fun db ->
+        match db.Table<ChatHistory>().Where(fun x -> x.EntityId = entity.Id).FirstOrDefault() with
+        | null -> 
+                db.Insert
+                    (ChatHistory(
+                        EntityId = entity.Id,
+                        Label = entity.Label,
+                        Slug = entity.Slug,
+                        Image = entity.Image,
+                        Last = "",
+                        Read = true,
+                        Type = historyType
+                    )) |> ignore
+        | existing -> ()
+    )
 
 let updateChatHistory = 
     let processor = MailboxProcessor<(Entity * ChatHistoryType * (string * bool) option) * AsyncReplyChannel<unit>>.Start(fun inbox ->
         let rec loop () = async {
             let! (entity, historyType, last), channel = inbox.Receive()
-            match db.Table<ChatHistory>().Where(fun x -> x.EntityId = entity.Id).FirstOrDefault() with
-            | null -> ()
-            | existing -> 
-                match last with
-                | Some (_, read) when existing.Type = ChatHistoryType.ChatRoom && existing.Read = false && read = false -> () //if it's a chatoom and unread leave it on the first unread
-                | Some (last, read) ->
-                    existing.Last <- last
-                    existing.LastStamp <- DateTime.UtcNow
-                    existing.Read <- read
-                | _ -> ()
+            dbLock (fun db ->
+                match db.Table<ChatHistory>().Where(fun x -> x.EntityId = entity.Id).FirstOrDefault() with
+                | null -> ()
+                | existing -> 
+                    match last with
+                    | Some (_, read) when existing.Type = ChatHistoryType.ChatRoom && existing.Read = false && read = false -> () //if it's a chatoom and unread leave it on the first unread
+                    | Some (last, read) ->
+                        existing.Last <- last
+                        existing.LastStamp <- DateTime.UtcNow
+                        existing.Read <- read
+                    | _ -> ()
 
-                write (fun db -> db.Update existing |> ignore)
-            
+                    db.Update existing |> ignore
+                )
+
             channel.Reply(())
 
             return! loop ()
@@ -139,25 +149,37 @@ let updateChatHistory =
     fun message -> processor.PostAndAsyncReply(fun replyChannel -> message, replyChannel)
 
 let fetchChatHistoryById (id) =
-    db.Table<ChatHistory>().Where(fun x -> x.EntityId = id).FirstOrDefault()
+    dbLock(fun db ->
+        db.Table<ChatHistory>().Where(fun x -> x.EntityId = id).FirstOrDefault()
+    )
 
 let updateChatHistoryReadById (id) =
-    let history = fetchChatHistoryById id
-    match history with
-    | null -> ()
-    | history ->
-        history.Read <- true
-        write (fun db -> db.Update history |> ignore)
+    dbLock (fun db -> 
+        let history = db.Table<ChatHistory>().Where(fun x -> x.EntityId = id).FirstOrDefault()
+        match history with
+        | null -> ()
+        | history ->
+            history.Read <- true
+            db.Update history |> ignore
+    )
 
 let fetchChatHistoryUnreadCount () =
-    db.Table<ChatHistory>().Where(fun s -> s.Read = false).Count()
+    dbLock (fun db -> 
+        db.Table<ChatHistory>().Where(fun s -> s.Read = false).Count()
+    )
 
 let fetchChatHistory () = 
-    db.Table<ChatHistory>().OrderByDescending(fun s -> s.LastStamp).Take(100).ToList() 
+    dbLock (fun db -> 
+        db.Table<ChatHistory>().OrderByDescending(fun s -> s.LastStamp).Take(100).ToList()
+    )
 
 let fetchChatEventHistoryByEntity entityId =
-    db.Table<ChatHistoryEvent>().Where(fun e -> e.EntityId = entityId).OrderByDescending(fun s -> s.LastStamp).Take(100).ToList() 
+    dbLock (fun db -> 
+        db.Table<ChatHistoryEvent>().Where(fun e -> e.EntityId = entityId).OrderByDescending(fun s -> s.LastStamp).Take(100).ToList() 
+    )
 
 let removeChatHistoryById (id) =
-    let history = fetchChatHistoryById id
-    write (fun db -> db.Delete(history) |> ignore)
+    dbLock (fun db -> 
+        let history = db.Table<ChatHistory>().Where(fun x -> x.EntityId = id).FirstOrDefault()
+        db.Delete(history) |> ignore
+    )
