@@ -42,6 +42,14 @@ type AppDelegate () =
         NSUserDefaults.StandardUserDefaults.RegisterDefaults(
             NSDictionary.FromObjectAndKey(NSObject.FromObject(Api.agent), NSObject.FromObject("UserAgent")))
 
+        if options <> null then
+            match options.TryGetValue(NSObject.FromObject UIApplication.LaunchOptionsRemoteNotificationKey) with
+            | true, userInfo ->
+                match parsePushNotification (userInfo :?> NSDictionary) with
+                | PrivateChat id -> entryController.NavigateOnLoad <- Some (("/privateChat/session/" + id), None)
+                | _ -> ()
+            | _ -> ()
+
         Logger.log <-
             (fun ex -> 
                 let error = sprintf "%s\n%s" ex.Message ex.StackTrace 
@@ -53,14 +61,6 @@ type AppDelegate () =
                     
         window.RootViewController <- navigationController
         window.MakeKeyAndVisible ()
-
-        if options <> null then
-            match options.TryGetValue(NSObject.FromObject UIApplication.LaunchOptionsRemoteNotificationKey) with
-            | true, userInfo ->
-                match parsePushNotification (userInfo :?> NSDictionary) with
-                | PrivateChat id -> ()
-                | _ -> ()
-            | _ -> ()
 
 #if DEBUG
         let rec tick () = async {
@@ -108,7 +108,7 @@ type AppDelegate () =
             | UIApplicationState.Background
             | UIApplicationState.Inactive -> 
                 match parsePushNotification userInfo with
-                | PrivateChat id -> ()
+                | PrivateChat id -> Navigation.navigate ("/privateChat/session/" + id) None
                 | _ -> ()
             | _ -> ()
 

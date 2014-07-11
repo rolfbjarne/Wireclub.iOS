@@ -237,6 +237,8 @@ type EntryViewController () as controller =
         | "https" when supportsChrome -> openExternal (new UriBuilder(uri, Scheme = "googlechromes"))
         | _ -> openExternal (new UriBuilder(uri))
 
+    member val NavigateOnLoad:(string * (Entity option)) option = None with get, set
+
     override this.ViewDidLoad () =
         base.ViewDidLoad ()
 
@@ -283,6 +285,12 @@ type EntryViewController () as controller =
                 this.NavigationController.PopToViewController (rootController, false) |> ignore // Straight yolo
                 let controller = ChatSessions.start data
                 this.NavigationController.PushViewController (controller, true)
+
+            | Routes.ChatSession id, None ->
+                ChatSessions.startById id (fun user controller -> 
+                    this.NavigationController.PopToViewController (rootController, false) |> ignore // Straight yolo
+                    this.NavigationController.PushViewController (controller, true)
+                )
 
             | Routes.YouTube video, _ ->
                 new Uri (sprintf "https://www.youtube.com/watch?v=%s" video) |> openExternal
@@ -332,7 +340,14 @@ type EntryViewController () as controller =
 
             match Api.userIdentity.Value.Membership with
             | MembershipTypePublic.Pending -> this.NavigationController.PushViewController (editProfileController.Value, true)
-            | _ -> this.NavigationController.PushViewController(rootController, animated)
+            | _ ->
+                match this.NavigateOnLoad with
+                | Some (url, entity) ->
+                    this.NavigationController.PushViewController(rootController, false)
+                    Navigation.navigate url entity
+                | _ ->
+                    this.NavigationController.PushViewController(rootController, animated)
+                
 
         match NSUserDefaults.StandardUserDefaults.StringForKey "auth-token", System.String.IsNullOrEmpty Api.userId with
         // User has not entered an account
