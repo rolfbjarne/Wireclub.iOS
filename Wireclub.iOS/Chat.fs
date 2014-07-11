@@ -132,7 +132,6 @@ type ChatRoomViewController (room:Entity) as controller =
 
     let mutable apps:string[] = [||]
     let mutable starred = false
-    let mutable loaded = false
     let mutable lastEvent = DateTime.UtcNow
     let mutable active = true
         
@@ -318,7 +317,11 @@ type ChatRoomViewController (room:Entity) as controller =
             | _ -> ()
         )
 
-    let webViewDelegate = {
+    let mutable loaded = false
+    let shouldLoad () =
+        loaded = false || (DateTime.UtcNow - lastEvent).TotalMilliseconds > (1000. * 60. * 20.) 
+
+    member val WebViewDelegate = {
         new UIWebViewDelegate() with
         override this.ShouldStartLoad (view, request, navigationType) =
             let uri = new Uri(request.Url.AbsoluteString)
@@ -409,14 +412,18 @@ type ChatRoomViewController (room:Entity) as controller =
     member val Progress: UIActivityIndicatorView = null with get, set
 
     member this.ViewDidBecomeActive notification = 
-        inactiveBufferFlush ()
+        if shouldLoad () then
+            active <- true
+            this.WebView.LoadRequest(new NSUrlRequest(new NSUrl(Api.webUrl + "/api/chat/chatRoomTemplate")))
+        else
+            inactiveBufferFlush ()
 
     member this.ViewWillResignActive notification =
         active <- false
 
     override this.ViewDidLoad () =
         this.WebView.BackgroundColor <- UIColor.White
-        this.WebView.Delegate <- webViewDelegate
+        this.WebView.Delegate <- this.WebViewDelegate
 
         this.NavigationItem.Title <- room.Label
         this.NavigationItem.LeftItemsSupplementBackButton <- true
@@ -437,7 +444,7 @@ type ChatRoomViewController (room:Entity) as controller =
 
     override this.ViewDidAppear animated = 
         // inital load
-        if loaded = false || (DateTime.UtcNow - lastEvent).TotalMilliseconds > (1000. * 60. * 20.) then
+        if shouldLoad () then
             this.WebView.LoadRequest(new NSUrlRequest(new NSUrl(Api.webUrl + "/api/chat/chatRoomTemplate")))
            
         // mark things as read
