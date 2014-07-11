@@ -111,6 +111,15 @@ type AppDelegate () =
                 | PrivateChat id -> Navigation.navigate ("/privateChat/session/" + id) None
                 | _ -> ()
             | _ -> ()
+         
+
+         override this.OnResignActivation (app) =
+            printfn "[AppState] Inactive"
+            //TODO: /settings/setMobile
+
+         override this.OnActivated (app) =
+            printfn "[AppState] Active"
+            //TODO: /home/presense
 
 module Main =
     [<EntryPoint>]
