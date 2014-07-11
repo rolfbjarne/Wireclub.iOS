@@ -17,6 +17,8 @@ open Wireclub.Boundary.Chat
 open Wireclub.Boundary.Models
 open ChannelEvent
 
+open Utility
+
 
 [<Register ("GameViewController")>]
 type GameViewController (entity:Entity, name:string) =
@@ -132,6 +134,7 @@ type ChatRoomViewController (room:Entity) as controller =
     let mutable starred = false
     let mutable loaded = false
     let mutable lastEvent = DateTime.UtcNow
+    let mutable active = true
         
     let nameplate (user:UserProfile) =     
         sprintf
@@ -166,6 +169,8 @@ type ChatRoomViewController (room:Entity) as controller =
 
     let mutable showObserver:NSObject = null
     let mutable hideObserver:NSObject = null
+    let mutable activeObserver:NSObject = null
+    let mutable inactiveObserver:NSObject = null
 
 
     let sendMessage (identity:Models.User) text =
@@ -189,7 +194,10 @@ type ChatRoomViewController (room:Entity) as controller =
 
     let addUser = (fun (user:UserProfile) -> users.AddOrUpdate (user.Id, user, System.Func<string,UserProfile,UserProfile>(fun _ _ -> user)) |> ignore)
 
+    let inactiveBuffer = new List<ChannelEvent>()
+
     let processEvent event addLine =
+        if active = false then inactiveBuffer.Add(event) else
         let historic = event.Sequence < startSequence
         if events.Add event.Sequence then
             lastEvent <- DateTime.UtcNow
@@ -233,6 +241,17 @@ type ChatRoomViewController (room:Entity) as controller =
 
             if events.Count > 50 then
                 events.Clear()
+
+    let inactiveBufferFlush () =
+        Async.startWithContinuation
+            (Async.Sleep(1000))
+            (fun _ ->
+                active <- true
+                let lines = new List<string>()
+                for event in inactiveBuffer do processEvent event (fun l _ -> lines.Add l)
+                inactiveBuffer.Clear()
+                addLines (lines.ToArray())
+            )
 
     let processor = new MailboxProcessor<ChannelEvent>(fun inbox ->
         let rec loop () = async {
@@ -389,6 +408,12 @@ type ChatRoomViewController (room:Entity) as controller =
     [<Outlet>]
     member val Progress: UIActivityIndicatorView = null with get, set
 
+    member this.ViewDidBecomeActive notification = 
+        inactiveBufferFlush ()
+
+    member this.ViewWillResignActive notification =
+        active <- false
+
     override this.ViewDidLoad () =
         this.WebView.BackgroundColor <- UIColor.White
         this.WebView.Delegate <- webViewDelegate
@@ -432,11 +457,17 @@ type ChatRoomViewController (room:Entity) as controller =
         // keyboard
         showObserver <- UIKeyboard.Notifications.ObserveWillShow(System.EventHandler<UIKeyboardEventArgs>(placeKeyboard))
         hideObserver <- UIKeyboard.Notifications.ObserveWillHide(System.EventHandler<UIKeyboardEventArgs>(placeKeyboard))
+        activeObserver <- NSNotificationCenter.DefaultCenter.AddObserver(UIApplication.DidBecomeActiveNotification, this.ViewDidBecomeActive)
+        inactiveObserver <- NSNotificationCenter.DefaultCenter.AddObserver(UIApplication.WillResignActiveNotification, this.ViewWillResignActive)
+
+
         this.Text.BecomeFirstResponder () |> ignore
     
     override this.ViewDidDisappear animated =
         showObserver.Dispose ()
         hideObserver.Dispose ()
+        activeObserver.Dispose()
+        inactiveObserver.Dispose()
 
     member this.HandleChannelEvent = processor.Post
 
