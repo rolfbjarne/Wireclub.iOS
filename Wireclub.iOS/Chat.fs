@@ -133,7 +133,6 @@ type ChatRoomViewController (room:Entity) as controller =
     let mutable apps:string[] = [||]
     let mutable starred = false
     let mutable lastEvent = DateTime.UtcNow
-    let mutable active = true
         
     let nameplate (user:UserProfile) =     
         sprintf
@@ -194,6 +193,7 @@ type ChatRoomViewController (room:Entity) as controller =
     let addUser = (fun (user:UserProfile) -> users.AddOrUpdate (user.Id, user, System.Func<string,UserProfile,UserProfile>(fun _ _ -> user)) |> ignore)
 
     let inactiveBuffer = new List<ChannelEvent>()
+    let mutable active = true
 
     let processEvent event addLine =
         if active = false then inactiveBuffer.Add(event) else

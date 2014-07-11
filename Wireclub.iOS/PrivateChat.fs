@@ -59,6 +59,8 @@ type PrivateChatSessionViewController (user:Entity) as this =
         
     let mutable showObserver:NSObject = null
     let mutable hideObserver:NSObject = null
+    let mutable activeObserver:NSObject = null
+    let mutable inactiveObserver:NSObject = null
 
     let sendMessage text =
         match text with
@@ -76,7 +78,11 @@ type PrivateChatSessionViewController (user:Entity) as this =
                             addLine (viewerLine response.Feedback response.Color (fontFamily response.Font)) true
                     | error -> this.HandleApiFailure error)
 
+    let inactiveBuffer = new List<ChannelEvent>()
+    let mutable active = true
+
     let processEvent event addLine = 
+        if active = false then inactiveBuffer.Add(event) else
         if events.Add event.Sequence then
             match event with
             | { Event = PrivateMessage (color, font, message) } -> 
@@ -87,6 +93,17 @@ type PrivateChatSessionViewController (user:Entity) as this =
 
             if events.Count > 50 then
                 events.Clear()
+
+    let inactiveBufferFlush () =
+        Async.startWithContinuation
+            (Async.Sleep(1000))
+            (fun _ ->
+                active <- true
+                let lines = new List<string>()
+                for event in inactiveBuffer do processEvent event (fun l _ -> lines.Add l)
+                inactiveBuffer.Clear()
+                addLines (lines.ToArray())
+            )
 
     let processor = new MailboxProcessor<ChannelEvent>(fun inbox ->
         let rec loop () = async {
@@ -152,6 +169,13 @@ type PrivateChatSessionViewController (user:Entity) as this =
 
     member this.MoreButton:UIBarButtonItem =
         new UIBarButtonItem(UIImage.FromFile "UITabBarMoreTemplateSelected.png", UIBarButtonItemStyle.Bordered, new EventHandler(fun (s:obj) (e:EventArgs) -> showMore()))
+
+
+    member this.ViewDidBecomeActive notification = 
+        inactiveBufferFlush ()
+
+    member this.ViewWillResignActive notification =
+        active <- false
 
     override this.ViewDidLoad () =
         this.NavigationItem.LeftItemsSupplementBackButton <- true
