@@ -114,12 +114,16 @@ type AppDelegate () =
          
 
          override this.OnResignActivation (app) =
-            printfn "[AppState] Inactive"
-            //TODO: /settings/setMobile
+            if Api.userIdentity <> None then
+                Async.startWithContinuation
+                    (PrivateChat.setMobile ())
+                    (fun _ -> ())
 
          override this.OnActivated (app) =
-            printfn "[AppState] Active"
-            //TODO: /home/presense
+            if Api.userIdentity <> None then
+                Async.startWithContinuation
+                    (PrivateChat.updatePresence ())
+                    (fun result -> printfn "%A" result)
 
 module Main =
     [<EntryPoint>]
