@@ -287,10 +287,16 @@ type EntryViewController () as controller =
                 this.NavigationController.PushViewController (controller, true)
 
             | Routes.ChatSession id, None ->
-                ChatSessions.startById id (fun user controller -> 
-                    this.NavigationController.PopToViewController (rootController, false) |> ignore // Straight yolo
-                    this.NavigationController.PushViewController (controller, true)
-                )
+                let navigate controller =
+                    if this.NavigationController.TopViewController <> controller then
+                        this.NavigationController.PopToViewController (rootController, false) |> ignore
+                        this.NavigationController.PushViewController (controller, true)
+
+                match ChatSessions.sessions.TryGetValue(id) with
+                | true, (entity, controller) ->
+                    navigate controller
+                | false, _ ->
+                    ChatSessions.startById id (fun user controller -> navigate controller)
 
             | Routes.YouTube video, _ ->
                 new Uri (sprintf "https://www.youtube.com/watch?v=%s" video) |> openExternal
