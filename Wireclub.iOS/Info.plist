@@ -17,7 +17,7 @@
 	<key>CFBundleShortVersionString</key>
 	<string>1.0.10</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.wireclub.app</string>
+	<string>com.wiredev.app</string>
 	<key>CFBundleVersion</key>
 	<string>1.0.10</string>
 	<key>XSAppIconAssets</key>
