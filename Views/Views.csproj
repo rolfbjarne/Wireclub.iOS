@@ -166,6 +166,10 @@
     <Compile Include="GameViewController.designer.cs">
       <DependentUpon>GameViewController.cs</DependentUpon>
     </Compile>
+    <Compile Include="CreditsViewController.cs" />
+    <Compile Include="CreditsViewController.designer.cs">
+      <DependentUpon>CreditsViewController.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <InterfaceDefinition Include="FriendsViewController.xib" />
@@ -186,6 +190,7 @@
     <InterfaceDefinition Include="NavigateInputAccessoryViewController.xib" />
     <InterfaceDefinition Include="AsyncPickerViewController.xib" />
     <InterfaceDefinition Include="GameViewController.xib" />
+    <InterfaceDefinition Include="CreditsViewController.xib" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Resources\" />

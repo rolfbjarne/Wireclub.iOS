@@ -308,6 +308,10 @@ type EntryViewController () as controller =
                 else
                     this.NavigationController.PopToViewController (this, false) |> ignore
                     this.NavigationController.PushViewController(rootController, true)
+
+            | "/credits", _ ->
+                this.NavigationController.PopToViewController (this, false) |> ignore
+                this.NavigationController.PushViewController(new CreditsViewController(), true)
             | "/logout", _ ->
                 NSUserDefaults.StandardUserDefaults.RemoveObject("auth-token")
                 NSUserDefaults.StandardUserDefaults.Synchronize () |> ignore

@@ -162,6 +162,7 @@
     <Compile Include="Dialog.fs" />
     <Compile Include="Error.fs" />
     <Compile Include="User.fs" />
+    <Compile Include="Credits.fs" />
     <Compile Include="PrivateChat.fs" />
     <Compile Include="Chat.fs" />
     <Compile Include="Directory.fs" />
@@ -222,6 +223,9 @@
     </InterfaceDefinition>
     <InterfaceDefinition Include="..\Views\GameViewController.xib">
       <Link>Resources\GameViewController.xib</Link>
+    </InterfaceDefinition>
+    <InterfaceDefinition Include="..\Views\CreditsViewController.xib">
+      <Link>Resources\CreditsViewController.xib</Link>
     </InterfaceDefinition>
   </ItemGroup>
   <ItemGroup>
