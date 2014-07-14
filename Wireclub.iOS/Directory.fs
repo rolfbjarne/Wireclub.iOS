@@ -298,6 +298,9 @@ type FriendsViewController (rootController:RootViewContoller) as controller =
                 | OnlineStateType.Visible ->
                     cell.DetailTextLabel.Text <- "Online"
                     cell.DetailTextLabel.TextColor <- UIColor.DarkTextColor
+                | OnlineStateType.Mobile -> 
+                    cell.DetailTextLabel.Text <- "Mobile"
+                    cell.DetailTextLabel.TextColor <- UIColor.DarkTextColor
                 | _ -> 
                     cell.DetailTextLabel.Text <- "Offline"
                     cell.DetailTextLabel.TextColor <- UIColor.Gray
@@ -336,7 +339,15 @@ type FriendsViewController (rootController:RootViewContoller) as controller =
             (PrivateChat.online())
             (function
                 | Api.ApiOk response ->
-                    friends <- response.Friends.OrderBy(fun e -> e.State).ToArray()
+                    friends <- response.Friends.OrderBy(fun e -> 
+                        match e.State with
+                        | OnlineStateType.Visible -> 1
+                        | OnlineStateType.Idle -> 2
+                        | OnlineStateType.Mobile -> 3
+                        | OnlineStateType.Invisible 
+                        | OnlineStateType.Offline
+                        | _ -> 4
+                    ).ToArray()
                     loaded <- true
                     tableController.TableView.ReloadData ()
                     tableController.RefreshControl.EndRefreshing()
