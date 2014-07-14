@@ -205,19 +205,27 @@ type PrivateChatSessionViewController (user:Entity) as this =
                         return session, history
                     })
                     (function
-                        | Api.ApiOk newSession, history ->
+                        | Api.ApiOk (newSession, historyRemote), historyLocal ->
                             session <- Some newSession
                             loaded <- true
 
-                            let lines = new List<string>()
-                            for event in history.OrderBy(fun e -> e.LastStamp) do
-                                if String.IsNullOrEmpty event.EventJson = false then
-                                    try
-                                        let event = JsonConvert.DeserializeObject<ChannelEvent>(event.EventJson)
-                                        processEvent event (fun l _ -> lines.Add l)
-                                    with
-                                    | ex -> printfn "%A %s" event ex.Message 
+                            let history =
+                                [
+                                    for event in historyRemote do yield Some event
+                                    for event in historyLocal do
+                                        if String.IsNullOrEmpty event.EventJson = false then
+                                            yield
+                                                try
+                                                    Some (JsonConvert.DeserializeObject<ChannelEvent>(event.EventJson))
+                                                with
+                                                | ex ->
+                                                    printfn "%A %s" event ex.Message
+                                                    None
 
+                                ] |> List.choose id
+
+                            let lines = new List<string>()
+                            for event in history.OrderBy(fun e -> e.Sequence) do processEvent event (fun l _ -> lines.Add l)
                             addLines (lines.ToArray())
                             processor.Start()
 
@@ -245,11 +253,16 @@ type PrivateChatSessionViewController (user:Entity) as this =
 
         showObserver <- UIKeyboard.Notifications.ObserveWillShow(System.EventHandler<UIKeyboardEventArgs>(placeKeyboard))
         hideObserver <- UIKeyboard.Notifications.ObserveWillHide(System.EventHandler<UIKeyboardEventArgs>(placeKeyboard))
+        activeObserver <- NSNotificationCenter.DefaultCenter.AddObserver(UIApplication.DidBecomeActiveNotification, this.ViewDidBecomeActive)
+        inactiveObserver <- NSNotificationCenter.DefaultCenter.AddObserver(UIApplication.WillResignActiveNotification, this.ViewWillResignActive)
+
         this.Text.BecomeFirstResponder () |> ignore
     
     override this.ViewDidDisappear animated =
         showObserver.Dispose ()
         hideObserver.Dispose ()
+        activeObserver.Dispose()
+        inactiveObserver.Dispose()
 
     member this.HandleChannelEvent = processor.Post
 
@@ -287,7 +300,7 @@ module ChatSessions =
         Async.startNetworkWithContinuation
             (PrivateChat.session id)
             (function
-                | Api.ApiOk newSession ->
+                | Api.ApiOk (newSession, _) ->
                     let user =
                         {
                             Id = newSession.UserId
