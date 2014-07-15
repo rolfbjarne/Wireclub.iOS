@@ -27,7 +27,7 @@ open Utility
 type CreditsViewController () as controller =
     inherit UIViewController ("CreditsViewController", null)
 
-    let mutable products:(string * string * string * string) list = []
+    let mutable products:(string * string * string * string * SKProduct) list = []
 
     let localizedPrice (product:SKProduct) =
         let formatter = new NSNumberFormatter()
@@ -41,7 +41,7 @@ type CreditsViewController () as controller =
         new UITableViewSource() with
 
             override this.GetCell(tableView, indexPath) =
-                let (id, name, desc, price) = products.[indexPath.Row]
+                let (id, name, desc, price, product) = products.[indexPath.Row]
                 let cell = 
                     match tableView.DequeueReusableCell "credits-product-cell" with
                     | null -> new UITableViewCell (UITableViewCellStyle.Subtitle, "credits-product-cell")
@@ -62,9 +62,19 @@ type CreditsViewController () as controller =
 
             override this.RowSelected(tableView, indexPath) =
                 tableView.DeselectRow (indexPath, false)
-                let user = products.[indexPath.Row]
-                //TODO: the things to buy
-                ()
+                let (id, name, desc, price, product) = products.[indexPath.Row]
+                let alert = new UIAlertView (Title = sprintf "Purchase %s" name, Message = sprintf "Would you like to purchase %s for %s" name price)
+                alert.AddButton "Confirm" |> ignore
+                alert.AddButton "Cancel" |> ignore
+                alert.Clicked.Add(fun args ->
+                    match args.ButtonIndex with
+                    | 0 ->
+                        let payment = SKMutablePayment.PaymentWithProduct product
+                        payment.Quantity <- 1
+                        SKPaymentQueue.DefaultQueue.AddPayment(payment)
+                    | _ -> ()
+                )
+                alert.Show ()
     }
 
     let products = { 
@@ -77,7 +87,8 @@ type CreditsViewController () as controller =
                                 product.ProductIdentifier,
                                 product.LocalizedTitle,
                                 product.LocalizedDescription,
-                                (localizedPrice product)
+                                (localizedPrice product),
+                                product
                             )
                     ]
 
