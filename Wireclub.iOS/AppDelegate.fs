@@ -4,6 +4,7 @@ namespace Wireclub.iOS
 
 open System
 open MonoTouch.UIKit
+open MonoTouch.StoreKit
 open MonoTouch.Foundation
 
 open Newtonsoft.Json
@@ -23,6 +24,26 @@ type AppDelegate () =
     let window = new UIWindow (UIScreen.MainScreen.Bounds)
     let entryController = new EntryViewController()
     let navigationController = new UINavigationController(entryController)
+
+    let transactionObserver = {
+        new SKPaymentTransactionObserver() with
+            override this.UpdatedTransactions(queue, transactions) =
+                printfn "UpdatedTransactions"
+                for transaction in transactions do
+                    match transaction.TransactionState with
+                    | SKPaymentTransactionState.Purchasing -> printfn "[StoreKit] Purchasing"
+                    | SKPaymentTransactionState.Purchased -> printfn "[StoreKit] Purchased"
+                    | SKPaymentTransactionState.Failed ->
+                        printfn "[StoreKit] Failed %s" transaction.Error.LocalizedDescription
+                        SKPaymentQueue.DefaultQueue.FinishTransaction(transaction)
+                    | SKPaymentTransactionState.Restored ->
+                        //TODO: in theory this should never happen since we are only dealing with consumables
+                        printfn "[StoreKit] Restored"
+                        SKPaymentQueue.DefaultQueue.FinishTransaction(transaction)
+                    | state -> Logger.log(Exception (sprintf "[StoreKit] Uknown Transaction type: %A" state))
+
+                ()
+            }
 
     let parsePushNotification (info:NSDictionary) =
         match info.TryGetValue(NSObject.FromObject "aps") with
@@ -58,6 +79,9 @@ type AppDelegate () =
                     (fun _ -> DB.createError (Error(Error = error )))
                     (fun _ -> ())
             )
+
+
+        SKPaymentQueue.DefaultQueue.AddTransactionObserver(transactionObserver)
                     
         window.RootViewController <- navigationController
         window.MakeKeyAndVisible ()
