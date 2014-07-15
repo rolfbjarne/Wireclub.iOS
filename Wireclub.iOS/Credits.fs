@@ -54,19 +54,17 @@ type CreditsViewController () =
     member val Table: UITableView = null with get, set
 
     override this.ViewDidLoad () =
-        let ids =
-            NSSet.MakeNSObjectSet<NSString>(
-                [|
-                    new NSString("wiredev.credits.1075")
-                    new NSString("wiredev.credits.12000")
-                    new NSString("wiredev.credits.2200")
-                    new NSString("wiredev.credits.500")
-                    new NSString("wiredev.credits.5750")
-                    new NSString("wiredev.credits.24500")
-                |]
+        Async.startNetworkWithContinuation
+            (async { return Api.ApiOk [| "wiredev.credits.1075";"wiredev.credits.12000"; "wiredev.credits.2200";"wiredev.credits.500";"wiredev.credits.5750";"wiredev.credits.24500" |]  })
+            (function 
+                | Api.ApiOk result ->
+                    
+                    let request = new SKProductsRequest(NSSet.MakeNSObjectSet<NSString>(result.Select(fun s -> new NSString(s)).ToArray()), Delegate = productsRequestDelegate)
+                    request.Start()
+
+
+                | error -> this.HandleApiFailure error
             )
-        let request = new SKProductsRequest(ids, Delegate = productsRequestDelegate)
-        request.Start()
 
 
 
