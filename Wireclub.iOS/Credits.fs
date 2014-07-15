@@ -107,10 +107,16 @@ type CreditsViewController () as controller =
         this.Table.Source <- source
 
         Async.startNetworkWithContinuation
-            (async { return Api.ApiOk [| "wiredev.credits.1075";"wiredev.credits.12000"; "wiredev.credits.2200";"wiredev.credits.500";"wiredev.credits.5750";"wiredev.credits.24500" |]  })
+            (Credits.bundles())
             (function 
-                | Api.ApiOk result ->                    
-                    let request = new SKProductsRequest(NSSet.MakeNSObjectSet<NSString>(result.Select(fun s -> new NSString(s)).ToArray()), Delegate = products)
+                | Api.ApiOk result ->     
+                    let ids = 
+                        [
+                            for bundle in result.Bundles do
+                                yield bundle.AppStoreId
+                        ]
+                               
+                    let request = new SKProductsRequest(NSSet.MakeNSObjectSet<NSString>(ids.Select(fun s -> new NSString(s)).ToArray()), Delegate = products)
                     request.Start()
                 | error -> this.HandleApiFailure error
             )
