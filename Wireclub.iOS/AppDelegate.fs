@@ -3,6 +3,7 @@
 namespace Wireclub.iOS
 
 open System
+open System.Collections.Generic
 open MonoTouch.UIKit
 open MonoTouch.StoreKit
 open MonoTouch.Foundation
@@ -35,14 +36,17 @@ type AppDelegate () =
                     | SKPaymentTransactionState.Purchased ->
                         printfn "[StoreKit] Purchased"
 
-                        let data = NSData.FromUrl(NSBundle.MainBundle.AppStoreReceiptUrl)
-                        if data <> null then
-                            Async.startNetworkWithContinuation
-                                (Credits.appStorePurchase (data.GetBase64EncodedString NSDataBase64EncodingOptions.None))
-                                (function
-                                    | Api.ApiOk _ -> SKPaymentQueue.DefaultQueue.FinishTransaction(transaction)
-                                    | error -> ()
-                                )
+                        if Api.userIdentity <> None then
+                            let data = NSData.FromUrl(NSBundle.MainBundle.AppStoreReceiptUrl)
+                            if data <> null then
+                                Async.startNetworkWithContinuation
+                                    (Credits.appStorePurchase (transaction.TransactionIdentifier) (data.GetBase64EncodedString NSDataBase64EncodingOptions.None))
+                                    (function
+                                        | Api.ApiOk _ -> SKPaymentQueue.DefaultQueue.FinishTransaction(transaction)
+                                        | error -> ()
+                                    )
+                        else
+                            Credits.transactionsAdd transaction
 
                     | SKPaymentTransactionState.Failed ->
                         printfn "[StoreKit] Failed %s" transaction.Error.LocalizedDescription

@@ -11,6 +11,7 @@ open System.Web
 
 open MonoTouch.Foundation
 open MonoTouch.UIKit
+open MonoTouch.StoreKit
 
 open Wireclub.Models
 open Wireclub.Boundary
@@ -348,6 +349,18 @@ type EntryViewController () as controller =
             UIApplication.SharedApplication.RegisterForRemoteNotificationTypes(UIRemoteNotificationType.Alert ||| UIRemoteNotificationType.Sound ||| UIRemoteNotificationType.Badge)
 
             Async.Start(Utility.Timer.ticker (fun _ -> Async.Start (Error.report ()) ) (60 * 1000))
+
+            for transaction in Credits.transactionsFetch () do
+                let data = NSData.FromUrl(NSBundle.MainBundle.AppStoreReceiptUrl)
+                if data <> null then
+                    Async.startNetworkWithContinuation
+                        (Credits.appStorePurchase (transaction.TransactionIdentifier) (data.GetBase64EncodedString NSDataBase64EncodingOptions.None))
+                        (function
+                            | Api.ApiOk _ -> SKPaymentQueue.DefaultQueue.FinishTransaction(transaction)
+                            | error -> ()
+                        )
+            
+            Credits.transactionsClear()
 
             match Api.userIdentity.Value.Membership with
             | MembershipTypePublic.Pending -> this.NavigationController.PushViewController (editProfileController.Value, true)

@@ -22,6 +22,19 @@ open ChannelEvent
 
 open Utility
 
+module Credits =
+    let transactions = new List<SKPaymentTransaction>()
+
+    let transactionsFetch () =
+        lock transactions (fun _ -> new List<SKPaymentTransaction>(transactions))
+
+    let transactionsAdd item =
+        lock transactions (fun _ -> transactions.Add item)
+
+    let transactionsClear () =
+        lock transactions (fun _ -> transactions.Clear() )
+
+    
 
 [<Register ("CreditsViewController")>]
 type CreditsViewController () as controller =
