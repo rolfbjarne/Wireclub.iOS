@@ -171,14 +171,8 @@ type EntryViewController () as controller =
 
     let handleAppEvent (event) =
         match event with
-        | { Event = AppEvent (event, json) } ->
-            match event with
-            | UserRelationshipChanged (id, blocked)-> 
-                for room, controller in ChatRooms.rooms.Values do
-                    controller.SetBlocked (id, blocked)
-            | _ -> ()
+        | { Event = AppEvent (event, json) } -> NSNotificationCenter.DefaultCenter.PostNotificationName("Wireclub.AppEvent", new NSAppEventType(event))
         | _ -> ()
-
         event
 
     let handleEvent channel (event:ChannelEvent.ChannelEvent) =
