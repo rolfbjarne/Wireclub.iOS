@@ -113,11 +113,22 @@ type CreditsViewController () as controller =
             override this.RequestFailed (request, error) = Logger.log (Exception( error.Description))
         }
 
+    let mutable appEventObserver:NSObject = null
+
+    member this.OnAppEvent (notification:NSNotification) =
+        notification.HandleAppEvent
+            (function
+                | CreditsBalanceChanged (balance) -> printfn "balance %i" balance
+                | _ -> ()
+            )
+
+
     [<Outlet>]
     member val Table: UITableView = null with get, set
 
     override this.ViewDidLoad () =
         this.Table.Source <- source
+        appEventObserver <- NSNotificationCenter.DefaultCenter.AddObserver("Wireclub.AppEvent", this.OnAppEvent)
 
         Async.startNetworkWithContinuation
             (Credits.bundles())
