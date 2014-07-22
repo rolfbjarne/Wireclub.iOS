@@ -123,7 +123,7 @@ type ChatRoomViewController (room:Entity) as controller =
 
     let identity = match Api.userIdentity with | Some id -> id | None -> failwith "User must be logged in"
     let events = System.Collections.Generic.HashSet<int64>()
-    let users = ConcurrentDictionary<string, UserProfile>()
+    let users = ConcurrentDictionary<string, UserProfile * bool>()
     let mutable startSequence = 0L
     let nameplateImageSize = 21
     let appsAllowed = [| "Slots"; "Bingo"; "Blackjack" |]
@@ -184,13 +184,15 @@ type ChatRoomViewController (room:Entity) as controller =
                     | Api.ApiOk response -> 
                         controller.Text.Text <- ""
                         match users.TryGetValue identity.Id with
-                        | true, user ->
+                        | true, (user, _) ->
                             addLine (userFeedbackLine response.Payload user) true
                         | _ -> ()
                     | error -> controller.HandleApiFailure error
                 )
 
-    let addUser = (fun (user:UserProfile) -> users.AddOrUpdate (user.Id, user, System.Func<string,UserProfile,UserProfile>(fun _ _ -> user)) |> ignore)
+    let addUser (userProfile:UserProfile * bool) =
+        let user, historic = userProfile
+        users.AddOrUpdate (user.Id, userProfile, System.Func<string,UserProfile * bool, UserProfile *bool>(fun _ _ -> userProfile)) |> ignore
 
     let inactiveBuffer = new List<ChannelEvent>()
     let mutable active = true
@@ -211,19 +213,19 @@ type ChatRoomViewController (room:Entity) as controller =
 
             | { Event = Message (color, font, message); User = user } when (user <> identity.Id || historic) -> 
                 match users.TryGetValue event.User with
-                | true, user when user.Blocked = false ->
+                | true, (user, _) when user.Blocked = false ->
                     addLine (userMessageLine message user color (fontFamily font)) false
                 | _ -> ()
 
             | { Event = Join user } -> 
                 if historic = false then
-                    addUser user
+                    addUser(user, false)
                 if users.Count < 25 then
                     addLine (userMessageLine "joined the room" user "#000" (fontFamily 0)) false
 
             | { Event = Leave user } -> 
                 match users.TryGetValue event.User with
-                | true, user -> 
+                | true, (user, _) -> 
                     if users.Count < 25 then
                         addLine (userMessageLine "left the room" user "#000" (fontFamily 0)) false
                     if historic = false then
@@ -328,8 +330,8 @@ type ChatRoomViewController (room:Entity) as controller =
             match uri.Segments with
             | [|_; "api/"; "chat/"; "chatRoomTemplate" |] -> true
             | [|_; "users/"; slug |] ->
-                match users.Values |> Seq.tryFind (fun e -> e.Slug = slug) with
-                | Some user ->
+                match users.Values |> Seq.tryFind (fun (user, _) -> user.Slug = slug) with
+                | Some (user, _) ->
                     Navigation.navigate (sprintf "/users/%s" slug) (Some { Id = user.Id; Label = user.Name; Slug = user.Slug; Image = user.Avatar })
                 | _ ->
                     Navigation.navigate (sprintf "/users/%s" slug) None
@@ -354,9 +356,9 @@ type ChatRoomViewController (room:Entity) as controller =
 
                     controller.NavigationItem.RightBarButtonItems <- barButtons()
 
-                    result.Members |> Array.filter (fun e -> memberTypes.Contains e.Membership) |> Array.iter addUser
-                    result.HistoricMembers |> Array.filter (fun e -> memberTypes.Contains e.Membership) |> Array.iter addUser
-                    controller.WebView.PreloadImages [ for user in users.Values do yield App.imageUrl user.Avatar nameplateImageSize ]
+                    result.Members |> Array.filter (fun e -> memberTypes.Contains e.Membership) |> Array.iter (fun u -> addUser (u,false))
+                    result.HistoricMembers |> Array.filter (fun e -> memberTypes.Contains e.Membership) |> Array.iter (fun u -> addUser (u,true))
+                    controller.WebView.PreloadImages [ for user, _ in users.Values do yield App.imageUrl user.Avatar nameplateImageSize ]
                     let lines = new List<string>()
                     for event in events do processEvent event (fun l _ -> lines.Add l)
                     addLines (lines.ToArray())
@@ -384,7 +386,14 @@ type ChatRoomViewController (room:Entity) as controller =
 
     member this.UserButton:UIBarButtonItem =
         new UIBarButtonItem(UIImage.FromFile "UIButtonBarProfile.png", UIBarButtonItemStyle.Bordered, new EventHandler(fun (s:obj) (e:EventArgs) -> 
-                this.NavigationController.PushViewController(new ChatRoomUsersViewController(users.Values |> Seq.toArray), true)
+                let users =
+                    [|
+                        for (user, historic) in users.Values do
+                            if historic = false then
+                                yield user
+
+                    |]
+                this.NavigationController.PushViewController(new ChatRoomUsersViewController(users), true)
             ))
 
     member this.MoreButton:UIBarButtonItem =
@@ -482,7 +491,7 @@ type ChatRoomViewController (room:Entity) as controller =
 
     member this.SetBlocked (userId, blocked) =
         match users.TryGetValue userId with
-        | true, user -> users.[userId] <- { user with Blocked = blocked }
+        | true, (user, historic) -> users.[userId] <- ({ user with Blocked = blocked }, historic)
         | _ -> ()
 
     override this.Dispose (bool) =
