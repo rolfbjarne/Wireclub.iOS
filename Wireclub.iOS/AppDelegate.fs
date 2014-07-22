@@ -39,6 +39,7 @@ type AppDelegate () =
     override this.FinishedLaunching (app, options) =
         Api.agent <- "wireclub-app-ios/" + NSBundle.MainBundle.InfoDictionary.["CFBundleVersion"].ToString()
 
+        Api.client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", Api.agent) |> ignore
         NSUserDefaults.StandardUserDefaults.RegisterDefaults(
             NSDictionary.FromObjectAndKey(NSObject.FromObject(Api.agent), NSObject.FromObject("UserAgent")))
 
