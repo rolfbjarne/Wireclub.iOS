@@ -115,9 +115,10 @@ type AppDelegate () =
 
          override this.OnResignActivation (app) =
             if Api.userIdentity <> None then
+                let task = UIApplication.SharedApplication.BeginBackgroundTask(fun _ -> ())
                 Async.startWithContinuation
                     (PrivateChat.setMobile ())
-                    (fun _ -> ())
+                    (fun _ -> UIApplication.SharedApplication.EndBackgroundTask(task))
 
          override this.OnActivated (app) =
             if Api.userIdentity <> None then
