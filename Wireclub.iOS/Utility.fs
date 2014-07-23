@@ -12,7 +12,13 @@ open MonoTouch.UIKit
 
 open Utility
 
+open ChannelEvent
+
 open Wireclub.Boundary.Models
+
+type NSAppEventType (event:AppEventType) =
+    inherit NSObject ()
+    member val Event = event with get, set
 
 type AlertDelegate (action: int -> unit) =
     inherit UIAlertViewDelegate ()
@@ -136,6 +142,13 @@ module Utility =
     let wireclubBlue = cssToColor "#3287D6"
     let lighterText = cssToColor "#999"
     let dialogBorder = cssToColor "#666"
+
+    type NSNotification with
+        member this.HandleAppEvent(handle) =
+            match this.Object with
+            | null -> ()
+            | :? NSAppEventType as event -> handle event.Event
+            | event -> Logger.log(Exception(sprintf "Not a valid event type %s" (event.GetType().ToString())))
 
     type UIViewController with
         member this.HandleApiFailure<'A> (result:Api.ApiResult<'A>) =

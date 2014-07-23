@@ -1,10 +1,12 @@
 // WARNING
 //
-// This file has been generated automatically by Xamarin Studio to store outlets and
-// actions made in the UI designer. If it is removed, they will be lost.
-// Manual changes to this file may not be handled correctly.
+// This file has been generated automatically by Xamarin Studio from the outlets and
+// actions declared in your storyboard file.
+// Manual changes to this file will not be maintained.
 //
+using System;
 using MonoTouch.Foundation;
+using MonoTouch.UIKit;
 using System.CodeDom.Compiler;
 
 namespace Views
@@ -41,58 +43,9 @@ namespace Views
 
 		[Outlet]
 		MonoTouch.UIKit.UITextField Username { get; set; }
-		
+
 		void ReleaseDesignerOutlets ()
 		{
-			if (About != null) {
-				About.Dispose ();
-				About = null;
-			}
-
-			if (Birthday != null) {
-				Birthday.Dispose ();
-				Birthday = null;
-			}
-
-			if (City != null) {
-				City.Dispose ();
-				City = null;
-			}
-
-			if (Country != null) {
-				Country.Dispose ();
-				Country = null;
-			}
-
-			if (GenderSelect != null) {
-				GenderSelect.Dispose ();
-				GenderSelect = null;
-			}
-
-			if (ProfileImage != null) {
-				ProfileImage.Dispose ();
-				ProfileImage = null;
-			}
-
-			if (ProfileImageProgress != null) {
-				ProfileImageProgress.Dispose ();
-				ProfileImageProgress = null;
-			}
-
-			if (Region != null) {
-				Region.Dispose ();
-				Region = null;
-			}
-
-			if (SaveButton != null) {
-				SaveButton.Dispose ();
-				SaveButton = null;
-			}
-
-			if (Username != null) {
-				Username.Dispose ();
-				Username = null;
-			}
 		}
 	}
 }

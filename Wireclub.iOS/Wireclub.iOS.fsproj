@@ -125,6 +125,8 @@
     <MtouchI18n>
     </MtouchI18n>
     <MtouchArch>ARMv7</MtouchArch>
+    <IpaPackageName>
+    </IpaPackageName>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -161,6 +163,7 @@
     <Compile Include="Dialog.fs" />
     <Compile Include="Error.fs" />
     <Compile Include="User.fs" />
+    <Compile Include="Credits.fs" />
     <Compile Include="PrivateChat.fs" />
     <Compile Include="Chat.fs" />
     <Compile Include="Directory.fs" />
@@ -221,6 +224,9 @@
     </InterfaceDefinition>
     <InterfaceDefinition Include="..\Views\GameViewController.xib">
       <Link>Resources\GameViewController.xib</Link>
+    </InterfaceDefinition>
+    <InterfaceDefinition Include="..\Views\CreditsViewController.xib">
+      <Link>Resources\CreditsViewController.xib</Link>
     </InterfaceDefinition>
   </ItemGroup>
   <ItemGroup>
@@ -294,6 +300,24 @@
     </BundleResource>
     <BundleResource Include="..\Views\Resources\UITabBarMoreTemplateSelected%402x.png">
       <Link>Resources\UITabBarMoreTemplateSelected%402x.png</Link>
+    </BundleResource>
+    <BundleResource Include="..\Views\purchase-5.png">
+      <Link>Resources\purchase-5.png</Link>
+    </BundleResource>
+    <BundleResource Include="..\Views\purchase-10.png">
+      <Link>Resources\purchase-10.png</Link>
+    </BundleResource>
+    <BundleResource Include="..\Views\purchase-20.png">
+      <Link>Resources\purchase-20.png</Link>
+    </BundleResource>
+    <BundleResource Include="..\Views\purchase-50.png">
+      <Link>Resources\purchase-50.png</Link>
+    </BundleResource>
+    <BundleResource Include="..\Views\purchase-100.png">
+      <Link>Resources\purchase-100.png</Link>
+    </BundleResource>
+    <BundleResource Include="..\Views\purchase-200.png">
+      <Link>Resources\purchase-200.png</Link>
     </BundleResource>
   </ItemGroup>
   <ItemGroup>

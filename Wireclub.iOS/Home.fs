@@ -11,6 +11,7 @@ open System.Web
 
 open MonoTouch.Foundation
 open MonoTouch.UIKit
+open MonoTouch.StoreKit
 
 open Wireclub.Models
 open Wireclub.Boundary
@@ -170,14 +171,8 @@ type EntryViewController () as controller =
 
     let handleAppEvent (event) =
         match event with
-        | { Event = AppEvent (event, json) } ->
-            match event with
-            | UserRelationshipChanged (id, blocked)-> 
-                for room, controller in ChatRooms.rooms.Values do
-                    controller.SetBlocked (id, blocked)
-            | _ -> ()
+        | { Event = AppEvent (event, json) } -> NSNotificationCenter.DefaultCenter.PostNotificationName("Wireclub.AppEvent", new NSAppEventType(event))
         | _ -> ()
-
         event
 
     let handleEvent channel (event:ChannelEvent.ChannelEvent) =
@@ -308,6 +303,10 @@ type EntryViewController () as controller =
                 else
                     this.NavigationController.PopToViewController (this, false) |> ignore
                     this.NavigationController.PushViewController(rootController, true)
+
+            | "/credits", _ ->
+                this.NavigationController.PopToViewController (rootController, false) |> ignore
+                this.NavigationController.PushViewController(new CreditsViewController(), true)
             | "/logout", _ ->
                 NSUserDefaults.StandardUserDefaults.RemoveObject("auth-token")
                 NSUserDefaults.StandardUserDefaults.Synchronize () |> ignore
@@ -344,6 +343,18 @@ type EntryViewController () as controller =
             UIApplication.SharedApplication.RegisterForRemoteNotificationTypes(UIRemoteNotificationType.Alert ||| UIRemoteNotificationType.Sound ||| UIRemoteNotificationType.Badge)
 
             Async.Start(Utility.Timer.ticker (fun _ -> Async.Start (Error.report ()) ) (60 * 1000))
+
+            for transaction in Credits.transactionsFetch () do
+                let data = NSData.FromUrl(NSBundle.MainBundle.AppStoreReceiptUrl)
+                if data <> null then
+                    Async.startNetworkWithContinuation
+                        (Credits.appStorePurchase (transaction.TransactionIdentifier) (data.GetBase64EncodedString NSDataBase64EncodingOptions.None))
+                        (function
+                            | Api.ApiOk _ -> SKPaymentQueue.DefaultQueue.FinishTransaction(transaction)
+                            | error -> ()
+                        )
+            
+            Credits.transactionsClear()
 
             match Api.userIdentity.Value.Membership with
             | MembershipTypePublic.Pending -> this.NavigationController.PushViewController (editProfileController.Value, true)

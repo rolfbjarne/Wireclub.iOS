@@ -574,6 +574,7 @@ type MegaMenuViewController (handle:nativeint) =
     override this.RowSelected (tableView, indexPath) =
         match indexPath.Section, indexPath.Row with
         | 1, 0 ->  Navigation.navigate "/logout" None
+        | 0, 1 ->  Navigation.navigate "/credits" None
         | _ -> ()
 
 

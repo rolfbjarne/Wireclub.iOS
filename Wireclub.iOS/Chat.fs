@@ -169,6 +169,7 @@ type ChatRoomViewController (room:Entity) as controller =
     let mutable hideObserver:NSObject = null
     let mutable activeObserver:NSObject = null
     let mutable inactiveObserver:NSObject = null
+    let mutable appEventObserver:NSObject = null
 
 
     let sendMessage (identity:Models.User) text =
@@ -430,6 +431,13 @@ type ChatRoomViewController (room:Entity) as controller =
     member this.ViewWillResignActive notification =
         active <- false
 
+    member this.OnAppEvent (notification:NSNotification) =
+        notification.HandleAppEvent
+            (function
+                | UserRelationshipChanged (id, blocked)-> controller.SetBlocked (id, blocked)
+                | _ -> ()
+            )
+
     override this.ViewDidLoad () =
         this.WebView.BackgroundColor <- UIColor.White
         this.WebView.Delegate <- this.WebViewDelegate
@@ -450,6 +458,8 @@ type ChatRoomViewController (room:Entity) as controller =
         this.SendButton.TouchUpInside.Add(fun args ->
             sendMessage identity this.Text.Text
         )
+
+        appEventObserver <- NSNotificationCenter.DefaultCenter.AddObserver("Wireclub.AppEvent", this.OnAppEvent)
 
     override this.ViewDidAppear animated = 
         // inital load
