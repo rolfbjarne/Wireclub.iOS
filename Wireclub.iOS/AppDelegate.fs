@@ -42,7 +42,16 @@ type AppDelegate () =
                                 Async.startNetworkWithContinuation
                                     (Credits.appStorePurchase (transaction.TransactionIdentifier) (data.GetBase64EncodedString NSDataBase64EncodingOptions.None))
                                     (function
-                                        | Api.ApiOk _ -> SKPaymentQueue.DefaultQueue.FinishTransaction(transaction)
+                                        | Api.ApiOk bundle ->
+                                            SKPaymentQueue.DefaultQueue.FinishTransaction(transaction)
+
+                                            let alert =
+                                                new UIAlertView (
+                                                    Title = sprintf "Purchase Complete",
+                                                    Message = sprintf "%i credits have been added to your account." bundle.CurrentUserCredits
+                                                )
+                                            alert.AddButton "Awesome!" |> ignore
+                                            alert.Show ()
                                         | error -> ()
                                     )
                         else

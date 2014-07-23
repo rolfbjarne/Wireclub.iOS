@@ -73,18 +73,10 @@ type CreditsViewController () as controller =
             override this.RowSelected(tableView, indexPath) =
                 tableView.DeselectRow (indexPath, false)
                 let (id, name, desc, price, product, bundle) = products.[indexPath.Row]
-                let alert = new UIAlertView (Title = sprintf "Purchase %s" name, Message = sprintf "Would you like to purchase %s for %s" name price)
-                alert.AddButton "Confirm" |> ignore
-                alert.AddButton "Cancel" |> ignore
-                alert.Clicked.Add(fun args ->
-                    match args.ButtonIndex with
-                    | 0 ->
-                        let payment = SKMutablePayment.PaymentWithProduct product
-                        payment.Quantity <- 1
-                        SKPaymentQueue.DefaultQueue.AddPayment(payment)
-                    | _ -> ()
-                )
-                alert.Show ()
+
+                let payment = SKMutablePayment.PaymentWithProduct product
+                payment.Quantity <- 1
+                SKPaymentQueue.DefaultQueue.AddPayment(payment)
     }
 
     let products = { 
@@ -119,10 +111,13 @@ type CreditsViewController () as controller =
     member this.OnAppEvent (notification:NSNotification) =
         notification.HandleAppEvent
             (function
-                | CreditsBalanceChanged (balance) -> printfn "balance %i" balance
+                | CreditsBalanceChanged (balance) -> this.SetBalance (balance)  
                 | _ -> ()
             )
 
+    member this.SetBalance (balance:int) =
+        this.NavigationItem.RightBarButtonItem <- 
+            new UIBarButtonItem(sprintf "Your Credits: %i" balance, UIBarButtonItemStyle.Bordered, new EventHandler(fun (s:obj) (e:EventArgs) -> ()))
 
     [<Outlet>]
     member val Table: UITableView = null with get, set
@@ -134,7 +129,8 @@ type CreditsViewController () as controller =
         Async.startNetworkWithContinuation
             (Credits.bundles())
             (function 
-                | Api.ApiOk result ->     
+                | Api.ApiOk result ->  
+                    this.SetBalance (result.Credits)   
                     bundles <- result.Bundles
                     let ids = 
                         [
