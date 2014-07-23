@@ -34,13 +34,12 @@ module Credits =
     let transactionsClear () =
         lock transactions (fun _ -> transactions.Clear() )
 
-    
-
 [<Register ("CreditsViewController")>]
 type CreditsViewController () as controller =
     inherit UIViewController ("CreditsViewController", null)
 
-    let mutable products:(string * string * string * string * SKProduct) list = []
+    let mutable products:(string * string * string * string * SKProduct * CreditBundle) list = []
+    let mutable bundles:CreditBundle [] = [||]
 
     let localizedPrice (product:SKProduct) =
         let formatter = new NSNumberFormatter()
@@ -54,7 +53,7 @@ type CreditsViewController () as controller =
         new UITableViewSource() with
 
             override this.GetCell(tableView, indexPath) =
-                let (id, name, desc, price, product) = products.[indexPath.Row]
+                let (id, name, desc, price, product, bundle) = products.[indexPath.Row]
                 let cell = 
                     match tableView.DequeueReusableCell "credits-product-cell" with
                     | null -> new UITableViewCell (UITableViewCellStyle.Subtitle, "credits-product-cell")
@@ -66,16 +65,14 @@ type CreditsViewController () as controller =
 
                 let size = (new NSString(price)).StringSize(font)
                 cell.AccessoryView <- new UILabel(new RectangleF(0.f, 0.f, size.Width, controller.Table.RowHeight), Text = price, Font = font)
-                //TODO: load credits images
-                //Image.loadImageForCell (App.imageUrl user.Avatar 100) Image.placeholder cell tableView
+                cell.ImageView.Image <- UIImage.FromFile(sprintf "purchase-%i.png" (int bundle.Price))
                 cell
 
-            override this.RowsInSection(tableView, section) =
-                products.Length
+            override this.RowsInSection(tableView, section) = products.Length
 
             override this.RowSelected(tableView, indexPath) =
                 tableView.DeselectRow (indexPath, false)
-                let (id, name, desc, price, product) = products.[indexPath.Row]
+                let (id, name, desc, price, product, bundle) = products.[indexPath.Row]
                 let alert = new UIAlertView (Title = sprintf "Purchase %s" name, Message = sprintf "Would you like to purchase %s for %s" name price)
                 alert.AddButton "Confirm" |> ignore
                 alert.AddButton "Cancel" |> ignore
@@ -96,14 +93,18 @@ type CreditsViewController () as controller =
                 products <-
                     [
                         for product in response.Products do
-                            yield (
-                                product.ProductIdentifier,
-                                product.LocalizedTitle,
-                                product.LocalizedDescription,
-                                (localizedPrice product),
-                                product
-                            )
-                    ]
+                            match bundles |> Seq.tryFind(fun p -> p.AppStoreId = product.ProductIdentifier) with
+                            | Some bundle ->
+                                yield (
+                                    product.ProductIdentifier,
+                                    product.LocalizedTitle,
+                                    product.LocalizedDescription,
+                                    (localizedPrice product),
+                                    product,
+                                    bundle
+                                )
+                            | _ -> ()
+                    ] |> List.sortBy(fun (_, _, _, _, _, bundle) -> bundle.RegularCredits)
 
                 for product in response.InvalidProducts do
                     Logger.log (Exception(sprintf "[StoreKit] InvalidProduct - %s" product))
@@ -134,9 +135,10 @@ type CreditsViewController () as controller =
             (Credits.bundles())
             (function 
                 | Api.ApiOk result ->     
+                    bundles <- result.Bundles
                     let ids = 
                         [
-                            for bundle in result.Bundles do
+                            for bundle in bundles do
                                 yield bundle.AppStoreId
                         ]
                                

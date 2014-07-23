@@ -217,5 +217,11 @@
     <BundleResource Include="Resources\UIBarButtonGameItem%402x.png" />
     <BundleResource Include="Resources\UITabBarMoreTemplate%402x.png" />
     <BundleResource Include="Resources\UITabBarMoreTemplateSelected%402x.png" />
+    <BundleResource Include="purchase-5.png" />
+    <BundleResource Include="purchase-10.png" />
+    <BundleResource Include="purchase-20.png" />
+    <BundleResource Include="purchase-50.png" />
+    <BundleResource Include="purchase-100.png" />
+    <BundleResource Include="purchase-200.png" />
   </ItemGroup>
 </Project>

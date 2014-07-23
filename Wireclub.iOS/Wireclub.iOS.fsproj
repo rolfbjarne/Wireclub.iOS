@@ -300,6 +300,24 @@
     <BundleResource Include="..\Views\Resources\UITabBarMoreTemplateSelected%402x.png">
       <Link>Resources\UITabBarMoreTemplateSelected%402x.png</Link>
     </BundleResource>
+    <BundleResource Include="..\Views\purchase-5.png">
+      <Link>Resources\purchase-5.png</Link>
+    </BundleResource>
+    <BundleResource Include="..\Views\purchase-10.png">
+      <Link>Resources\purchase-10.png</Link>
+    </BundleResource>
+    <BundleResource Include="..\Views\purchase-20.png">
+      <Link>Resources\purchase-20.png</Link>
+    </BundleResource>
+    <BundleResource Include="..\Views\purchase-50.png">
+      <Link>Resources\purchase-50.png</Link>
+    </BundleResource>
+    <BundleResource Include="..\Views\purchase-100.png">
+      <Link>Resources\purchase-100.png</Link>
+    </BundleResource>
+    <BundleResource Include="..\Views\purchase-200.png">
+      <Link>Resources\purchase-200.png</Link>
+    </BundleResource>
   </ItemGroup>
   <ItemGroup>
     <ImageAsset Include="Resources\Images.xcassets\AppIcons.appiconset\Contents.json" />
