@@ -105,6 +105,7 @@ type UserViewController (handle:nativeint) =
     let mutable isBlocked = false
     let mutable isFriend = false
     let mutable image = Image.placeholderMale 
+    let mutable isSelf = false
 
     member val Entity: Entity option = None with get, set
 
@@ -227,12 +228,20 @@ type UserViewController (handle:nativeint) =
                     | Api.ApiOk profile ->
                         this.ProfileLabel.Text <- sprintf "%s, %s" profile.Age profile.Gender
                         this.LocationLabel.Text <- profile.Location
+                        isSelf <- profile.Id = Api.userId
                         this.TableView.ReloadData()
 
                         this.BlockButton.Hidden <- profile.Blocked
                         this.UnblockButton.Hidden <- not profile.Blocked
                         this.FriendButton.Hidden <- profile.Friend
                         this.UnfriendButton.Hidden <- not profile.Friend
+
+                        if isSelf then
+                            this.ChatButton.Hidden <- true
+                            this.BlockButton.Hidden <- true
+                            this.UnblockButton.Hidden <- true
+                            this.FriendButton.Hidden <- true
+                            this.UnfriendButton.Hidden <- true
 
                     | error -> this.HandleApiFailure error
                 )
@@ -246,5 +255,5 @@ type UserViewController (handle:nativeint) =
     override this.GetHeightForRow(tableView, indexPath) =
         match indexPath.Section, indexPath.Row with
         | 0, 0 -> match image with | null -> 320.f | image -> image.Size.Height
+        | 1, _ when isSelf -> 0.0f //HACK does not look good with the single bar but simpler than any other solution I found to hiding these rows
         | _ -> tableView.RowHeight
-
