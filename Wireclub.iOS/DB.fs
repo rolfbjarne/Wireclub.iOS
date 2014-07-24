@@ -180,6 +180,7 @@ let fetchChatEventHistoryByEntity entityId =
 
 let removeChatHistoryById (id) =
     dbLock (fun db -> 
-        let history = db.Table<ChatHistory>().Where(fun x -> x.EntityId = id).FirstOrDefault()
-        db.Delete(history) |> ignore
+        match db.Table<ChatHistory>().Where(fun x -> x.EntityId = id).FirstOrDefault() with
+        | null -> ()
+        | history -> db.Delete(history) |> ignore
     )
