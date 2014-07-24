@@ -1,6 +1,4 @@
-Push notifications for when you recieve PMs
-You can now leave Chatrooms
-Fixed a bug where the app would need to be restarted when timing out and returning to a chatroom.
-Fixed a bug where the app would need to be restarted when timing out in the app.
+In app Purchases
+Added Games Tab
 General Bug Fixes
 Improved App Stability
