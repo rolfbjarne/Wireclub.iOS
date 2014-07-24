@@ -7,12 +7,16 @@ open System.Drawing
 open System.Linq
 open System.Collections.Concurrent
 open System.Collections.Generic
+open System.Text.RegularExpressions
+
 open MonoTouch.Foundation
 open MonoTouch.UIKit
+
 open Wireclub.Models
 open Wireclub.Boundary 
 open Wireclub.Boundary.Chat
 open Wireclub.Boundary.Models
+
 open ChannelEvent
 open Newtonsoft.Json
 
@@ -30,6 +34,8 @@ type PrivateChatSessionViewController (user:Entity) as this =
     let mutable loaded = false
     let nameplateImageSize = 50
 
+    let sanitize payload = Regex.Replace(payload, "src=\"\/\/static.wireclub.com\/", "src=\"http://static.wireclub.com/")
+
     let nameplate slug image = 
         let userUrl = sprintf "%s/users/%s" Api.baseUrl slug
         sprintf
@@ -42,8 +48,8 @@ type PrivateChatSessionViewController (user:Entity) as this =
 
     let message color font payload = sprintf "<span style='color: #%s; font-family: %s;'>%s</span>" color font payload
     let line css nameplate message = sprintf "<div class='message %s'>%s <div class=body-wrap><div class=body>%s</div></div></div>" css nameplate message 
-    let partnerLine payload color font = line "partner" (nameplate user.Slug user.Image) (message color font payload) 
-    let viewerLine payload color font = line "viewer" (nameplate identity.Slug identity.Avatar) (message color font payload) 
+    let partnerLine payload color font = line "partner" (nameplate user.Slug user.Image) (message color font (sanitize payload)) 
+    let viewerLine payload color font = line "viewer" (nameplate identity.Slug identity.Avatar) (message color font (sanitize payload)) 
 
     let addLine line forceScroll =
         this.WebView.EvaluateJavascript(sprintf "wireclub.Mobile.addLine(%s)" (Newtonsoft.Json.JsonConvert.SerializeObject { Line = line })) |> ignore
