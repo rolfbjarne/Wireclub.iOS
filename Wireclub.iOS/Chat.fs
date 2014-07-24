@@ -33,19 +33,25 @@ type GameViewController (entity:Entity, name:string) =
         this.Title <- name
 
         this.WebView.ShouldStartLoad <- UIWebLoaderControl(fun webView request navigationType ->
-            if request.Headers.Keys |> Array.exists ((=) (NSObject.FromObject "x-auth-token")) = false then
-
-                printfn "[Game] loading %s" (request.Url.ToString())
-
-                let headers = new NSMutableDictionary (request.Headers)
-                headers.SetValueForKey(NSObject.FromObject (Api.userToken), new NSString("x-auth-token"))
-                let request = request.MutableCopy () :?> NSMutableUrlRequest
-
-                request.Headers <- headers
-                webView.LoadRequest request
+            let uri = new Uri(request.Url.AbsoluteString)
+            match uri.Segments with
+            | [|_; "credits"; |] ->
+                Navigation.navigate  "/credits" None
                 false
-            else
-                true
+            | _ -> 
+                if request.Headers.Keys |> Array.exists ((=) (NSObject.FromObject "x-auth-token")) = false then
+
+                    printfn "[Game] loading %s" (request.Url.ToString())
+
+                    let headers = new NSMutableDictionary (request.Headers)
+                    headers.SetValueForKey(NSObject.FromObject (Api.userToken), new NSString("x-auth-token"))
+                    let request = request.MutableCopy () :?> NSMutableUrlRequest
+
+                    request.Headers <- headers
+                    webView.LoadRequest request
+                    false
+                else
+                    true
         )
 
         this.WebView.LoadRequest(new NSUrlRequest(new NSUrl(Api.webUrl + "/mobile/chat/game/" + entity.Slug)))
