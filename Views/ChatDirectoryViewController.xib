@@ -22,8 +22,8 @@
                     <segments>
                         <segment title="Official"/>
                         <segment title="User"/>
-                        <segment title="Starred"/>
                         <segment title="Games"/>
+                        <segment title="Starred"/>
                     </segments>
                 </segmentedControl>
                 <view contentMode="scaleToFill" id="bKS-Yi-sLx">

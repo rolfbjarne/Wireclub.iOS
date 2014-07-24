@@ -200,8 +200,8 @@ type ChatDirectoryViewController(rootController:RootViewContoller) as controller
             match directory, controller.RoomFilter.SelectedSegment with
             | Some directory, 0 -> directory.Official 
             | Some directory, 1 -> directory.Member
-            | Some directory, 2 -> directory.Personal
-            | Some directory, 3 -> directory.Games
+            | Some directory, 2 -> directory.Games
+            | Some directory, 3 -> directory.Personal
             | _, _ -> [||]
 
         match rooms with
