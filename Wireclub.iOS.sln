@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{4925A630-B079-445d-BCD4-3A9C94FE9307}") = "Wireclub.iOS", "Wireclub.iOS\Wireclub.iOS.fsproj", "{86B121C0-1F33-4E4A-B684-04EFD9E7CE78}"
+Project("{f2a71f9b-5d33-465a-a702-920d77279786}") = "Wireclub.iOS", "Wireclub.iOS\Wireclub.iOS.fsproj", "{86B121C0-1F33-4E4A-B684-04EFD9E7CE78}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Views", "Views\Views.csproj", "{CC0D1094-1815-436E-87C7-5FA44A09A561}"
 EndProject
@@ -10,11 +10,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{590EEF39-8
 		notes.braden.txt = notes.braden.txt
 	EndProjectSection
 EndProject
-Project("{4925A630-B079-445d-BCD4-3A9C94FE9307}") = "Wireclub.Boundary.iOS", "..\NEXT\Wireclub.Boundary\Wireclub.Boundary.iOS.fsproj", "{F83837F7-71B9-4EEB-85B8-276B8767DA2B}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "websocket-sharp-ios", "..\websocket-sharp\websocket-sharp\websocket-sharp-ios.csproj", "{D476C912-8459-4A6B-AA01-CE3EFDD89CFF}"
 EndProject
-Project("{4925A630-B079-445d-BCD4-3A9C94FE9307}") = "Wireclub.AppClient.iOS", "..\wireclub.appclient\Wireclub.AppClient\Wireclub.AppClient.iOS.fsproj", "{0AA0452B-6D60-4FA3-A54C-0BAF2A672111}"
+Project("{f2a71f9b-5d33-465a-a702-920d77279786}") = "Wireclub.AppClient.iOS", "..\wireclub.appclient\Wireclub.AppClient\Wireclub.AppClient.iOS.fsproj", "{0AA0452B-6D60-4FA3-A54C-0BAF2A672111}"
+EndProject
+Project("{f2a71f9b-5d33-465a-a702-920d77279786}") = "Wireclub.Boundary.iOS", "..\wireclub.boundary\Wireclub.Boundary\Wireclub.Boundary.iOS.fsproj", "{F83837F7-71B9-4EEB-85B8-276B8767DA2B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
