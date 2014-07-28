@@ -1,4 +1,4 @@
 In app Purchases
 Added Games Tab
-General Bug Fixes
+Many Bug Fixes
 Improved App Stability
