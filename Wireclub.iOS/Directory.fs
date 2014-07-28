@@ -169,7 +169,7 @@ type ChatsViewController (rootController:RootViewContoller) as controller =
     member val Table: UITableView = null with get, set
 
     member this.Reload () =
-        if controller.Table.Editing = false then
+        if controller.Table.Editing = false && Api.userIdentity.IsSome then
             Async.startInBackgroundWithContinuation
                 (fun _ -> DB.fetchChatHistory ())
                 (fun sessions ->
@@ -341,25 +341,26 @@ type FriendsViewController (rootController:RootViewContoller) as controller =
     }
 
     let refresh (tableController:UITableViewController) =
-        Async.startNetworkWithContinuation
-            (PrivateChat.online())
-            (function
-                | Api.ApiOk response ->
-                    friends <- response.Friends.OrderBy(fun e -> 
-                        match e.State with
-                        | OnlineStateType.Visible -> 1
-                        | OnlineStateType.Idle -> 2
-                        | OnlineStateType.Mobile -> 3
-                        | OnlineStateType.Invisible 
-                        | OnlineStateType.Offline
-                        | _ -> 4
-                    ).ToArray()
-                    loaded <- true
-                    tableController.TableView.ReloadData ()
-                    tableController.RefreshControl.EndRefreshing()
-                    rootController.SetOnlineStatus (response.State)
-                | error -> controller.HandleApiFailure error
-            )
+        if Api.userIdentity.IsSome then
+            Async.startNetworkWithContinuation
+                (PrivateChat.online())
+                (function
+                    | Api.ApiOk response ->
+                        friends <- response.Friends.OrderBy(fun e -> 
+                            match e.State with
+                            | OnlineStateType.Visible -> 1
+                            | OnlineStateType.Idle -> 2
+                            | OnlineStateType.Mobile -> 3
+                            | OnlineStateType.Invisible 
+                            | OnlineStateType.Offline
+                            | _ -> 4
+                        ).ToArray()
+                        loaded <- true
+                        tableController.TableView.ReloadData ()
+                        tableController.RefreshControl.EndRefreshing()
+                        rootController.SetOnlineStatus (response.State)
+                    | error -> controller.HandleApiFailure error
+                )
 
     [<Outlet>]
     member val ContentView: UIView = null with get, set
