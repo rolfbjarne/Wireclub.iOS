@@ -333,6 +333,8 @@ type EntryViewController () as controller =
 
         Navigation.navigate <- navigate
 
+        Async.Start(Utility.Timer.ticker (fun _ -> Async.Start (Error.report ()) ) (60 * 1000))
+
         printfn "[Entry:Load]"
 
     override this.ViewDidAppear (animated) =
@@ -341,8 +343,6 @@ type EntryViewController () as controller =
             ChannelClient.init handleEvent
 
             UIApplication.SharedApplication.RegisterForRemoteNotificationTypes(UIRemoteNotificationType.Alert ||| UIRemoteNotificationType.Sound ||| UIRemoteNotificationType.Badge)
-
-            Async.Start(Utility.Timer.ticker (fun _ -> Async.Start (Error.report ()) ) (60 * 1000))
 
             for transaction in Credits.transactionsFetch () do
                 let data = NSData.FromUrl(NSBundle.MainBundle.AppStoreReceiptUrl)
