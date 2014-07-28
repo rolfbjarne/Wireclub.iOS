@@ -325,6 +325,8 @@ type EntryViewController () as controller =
                         (fun _ -> NSUserDefaults.StandardUserDefaults.RemoveObject("device-token"))
                 Account.logout ()
                 ChannelClient.close()
+                ChatRooms.rooms.Clear()
+                ChatSessions.sessions.Clear()
 
                 this.NavigationController.PopToRootViewController(true) |> ignore
                 rootController <- new HomeViewController()
