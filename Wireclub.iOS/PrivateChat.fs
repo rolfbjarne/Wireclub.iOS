@@ -213,7 +213,6 @@ type PrivateChatSessionViewController (user:Entity) as this =
                     (function
                         | Api.ApiOk (newSession, historyRemote), historyLocal ->
                             session <- Some newSession
-                            loaded <- true
 
                             let history =
                                 [
@@ -233,12 +232,15 @@ type PrivateChatSessionViewController (user:Entity) as this =
                             let lines = new List<string>()
                             for event in history.OrderBy(fun e -> e.Sequence) do processEvent event (fun l _ -> lines.Add l)
                             addLines (lines.ToArray())
-                            processor.Start()
 
                             // Send message
                             this.Text.ShouldReturn <- (fun _ -> sendMessage this.Text.Text; false)
                             this.SendButton.TouchUpInside.Add(fun args -> sendMessage this.Text.Text )
                             this.Progress.StopAnimating ()
+
+                            if loaded = false then
+                                loaded <- true
+                                processor.Start()
 
                         | error, _ -> this.HandleApiFailure error
                     )
