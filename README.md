@@ -5,10 +5,9 @@ The Wireclub iOS app was built in the F# programming language using Xamarin's iO
 
 It depends on a couple libraries:
 
+https://github.com/wireclub/wireclub.boundary (exposed models from the API)
 https://github.com/wireclub/wireclub.appclient (base api for different mobile clients)
 https://github.com/sta/websocket-sharp (realtime events for chat)
-
-We are still waiting to open source the domain models to make all the source code available. (F# as well)
 
 Wireclub iOS App:
 
