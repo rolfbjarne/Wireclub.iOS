@@ -47,7 +47,7 @@ let onReachabilityChanged = new Event<NetworkReachabilityFlags> ()
 
 let checkReachability (reachability: NetworkReachability) =
     reachability.SetCallback (fun flags -> onReachabilityChanged.Trigger flags) |> ignore
-    reachability.Schedule (CFRunLoop.Current, CFRunLoop.ModeDefault) |> ignore
+    reachability.Schedule (CFRunLoop.Current, CFRunLoop.ModeDefault.ToString()) |> ignore
     reachability
 
 let isAvailable (reachability:NetworkReachability) =
