@@ -58,11 +58,11 @@ type AppDelegate () =
                             Credits.transactionsAdd transaction
 
                     | SKPaymentTransactionState.Failed ->
-                        printfn "[StoreKit] Failed %s" transaction.Error.LocalizedDescription
+                        Logger.log(Exception (sprintf "[StoreKit] Transaction Failed for user %s" (match Api.userId with | null -> "-" | userId -> userId)))
                         SKPaymentQueue.DefaultQueue.FinishTransaction(transaction)
                     | SKPaymentTransactionState.Restored ->
                         //TODO: in theory this should never happen since we are only dealing with consumables
-                        printfn "[StoreKit] Restored"
+                        Logger.log(Exception (sprintf "[StoreKit] Transaction Restored for user %s" (match Api.userId with | null -> "-" | userId -> userId)))
                         SKPaymentQueue.DefaultQueue.FinishTransaction(transaction)
                     | state -> Logger.log(Exception (sprintf "[StoreKit] Uknown Transaction type: %A" state))
 
