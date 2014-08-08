@@ -37,17 +37,17 @@ type PrivateChatSessionViewController (user:Entity) as this =
     let sanitize payload = Regex.Replace(payload, "src=\"\/\/static.wireclub.com\/", "src=\"http://static.wireclub.com/")
 
     let nameplate slug image = 
-        let userUrl = sprintf "%s/users/%s" Api.baseUrl slug
-        sprintf
-            "<a class=icon href=%s><img src=%s width=%i height=%i /></a> <a class=name href=%s></a>"
-            userUrl
-            (App.imageUrl image nameplateImageSize)
-            nameplateImageSize
-            nameplateImageSize
-            userUrl
+        let userUrl = String.Format("{0}/users/{1}", Api.baseUrl, slug)
+        String.Format(
+            "<a class=icon href={0}><img src={1} width={2} height={3} /></a> <a class=name href={4}></a>",
+            userUrl,
+            (App.imageUrl image nameplateImageSize),
+            nameplateImageSize,
+            nameplateImageSize,
+            userUrl)
 
-    let message color font payload = sprintf "<span style='color: #%s; font-family: %s;'>%s</span>" color font payload
-    let line css nameplate message = sprintf "<div class='message %s'>%s <div class=body-wrap><div class=body>%s</div></div></div>" css nameplate message 
+    let message color font payload = String.Format("<span style='color: #{0}; font-family: {1};'>{2}</span>", color, font, payload)
+    let line css nameplate message = String.Format("<div class='message {0}'>{1} <div class=body-wrap><div class=body>{2}</div></div></div>", css, nameplate, message) 
     let partnerLine payload color font = line "partner" (nameplate user.Slug user.Image) (message color font (sanitize payload)) 
     let viewerLine payload color font = line "viewer" (nameplate identity.Slug identity.Avatar) (message color font (sanitize payload)) 
 

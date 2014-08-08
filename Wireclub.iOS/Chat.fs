@@ -69,8 +69,8 @@ type GameViewController (entity:Entity, name:string) =
             if events.Count > 0 then
                 let eventsBuilder = new System.Text.StringBuilder()
                 for (event, json) in events do
-                    let json = sprintf "[%i,%i,%i,%s,'%s']" event.Sequence event.EventType event.Stamp json event.User
-                    eventsBuilder.AppendLine (sprintf "wireclub.Channel.processChannelEvents('%s', %s);" entity.Id json) |> ignore
+                    let json = String.Format( "[{0},{1},{2},{3},'{4}']",event.Sequence, event.EventType, event.Stamp, json, event.User)
+                    eventsBuilder.AppendFormat ("wireclub.Channel.processChannelEvents('{0}', {1});", entity.Id, json) |> ignore
 
                 this.WebView.EvaluateJavascript (eventsBuilder.ToString()) |> ignore
                 events.Clear()
@@ -141,16 +141,16 @@ type ChatRoomViewController (room:Entity) as controller =
     let mutable lastEvent = DateTime.UtcNow
         
     let nameplate (user:UserProfile) =     
-        sprintf
-            "<a class=icon href=%s/users/%s><img src=%s width=%i height=%i /></a> <a class=name href=%s/users/%s>%s</a>"
-            Api.baseUrl
-            user.Slug
-            (App.imageUrl user.Avatar nameplateImageSize)
-            nameplateImageSize
-            nameplateImageSize
-            Api.baseUrl
-            user.Slug
-            user.Name
+        String.Format(
+            "<a class=icon href={0}/users/{1}><img src={2} width={3} height={4} /></a> <a class=name href={5}/users/{6}>{7}</a>",
+            Api.baseUrl,
+            user.Slug,
+            (App.imageUrl user.Avatar nameplateImageSize),
+            nameplateImageSize,
+            nameplateImageSize,
+            Api.baseUrl,
+            user.Slug,
+            user.Name)
 
     let sanitize payload = Regex.Replace(payload, "src=\"\/\/static.wireclub.com\/", "src=\"http://static.wireclub.com/")
 
