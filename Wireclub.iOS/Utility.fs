@@ -97,7 +97,7 @@ module Utility =
 
     let colorToCss (color:UIColor) = 
         match color.GetRGBA () with
-        | red, green, blue, _ -> sprintf "#%02x%02x%02x" (int (red * 255.0f)) (int (green * 255.0f)) (int (blue * 255.0f))
+        | red, green, blue, _ -> String.Format("#{0:x2}{1:x2}{2:x2}", (int (red * 255.0f)), (int (green * 255.0f)), (int (blue * 255.0f)))
 
     let colors =
         [
@@ -148,7 +148,7 @@ module Utility =
             match this.Object with
             | null -> ()
             | :? NSAppEventType as event -> handle event.Event
-            | event -> Logger.log(Exception(sprintf "Not a valid event type %s" (event.GetType().ToString())))
+            | event -> Logger.log(Exception(String.Format("Not a valid event type {0}", (event.GetType().ToString()))))
 
     type UIViewController with
         member this.HandleApiFailure<'A> (result:Api.ApiResult<'A>) =
@@ -158,7 +158,7 @@ module Utility =
             | Api.BadRequest ({Key=key; Value=value}::_) -> showSimpleAlert key value "Close"
             | Api.Unauthorized -> Navigation.navigate "/logout" None
             | Api.Timeout -> showSimpleAlert "Timeout" "Your request has timed out. Please try again in a few moments." "Close"
-            | Api.HttpError (code, desc) -> showSimpleAlert (sprintf "Http %i Error" code) desc "Close"
+            | Api.HttpError (code, desc) -> showSimpleAlert (String.Format("Http {0} Error", code)) desc "Close"
             | Api.Deserialization (ex, key) ->
                 Logger.log ex
                 showSimpleAlert "Error" "An error occured parsing your request" "Close"
@@ -190,11 +190,11 @@ module Utility =
     type UIWebView with
         member this.SetBodyBackgroundColor (color:string) =
             this.EvaluateJavascript 
-                (sprintf "document.body.style.backgroundColor = '%s';" color) |> ignore
+                (String.Format("document.body.style.backgroundColor = '{0}';", color)) |> ignore
 
-        member this.PreloadImages urls =
-            this.EvaluateJavascript 
-                (String.concat ";" [ yield "var preload = new Image()"; for url in urls do yield sprintf "preload.src = '%s'" url ]) |> ignore
+        member this.PreloadImages (urls:string list) =
+            let lines = [ yield "var preload = new Image()"; for url in urls do yield (String.Format("preload.src = '{0}'", url)) ]
+            this.EvaluateJavascript (String.concat ";" lines) |> ignore
 
 
 module Async =

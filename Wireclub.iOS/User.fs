@@ -176,7 +176,7 @@ type UserViewController (handle:nativeint) =
             setupButton
                 this.FriendButton
                 "Send"
-                (sprintf "Send %s a friend request?" user.Label)
+                (String.Format( "Send {0} a friend request?", user.Label))
                 (User.addFriend user.Slug)
                 (function 
                     | Api.ApiOk profile ->
@@ -188,7 +188,7 @@ type UserViewController (handle:nativeint) =
             setupButton
                 this.UnfriendButton
                 "Unfriend"
-                (sprintf "Remove %s as a friend?" user.Label)
+                (String.Format( "Remove {0} as a friend?", user.Label))
                 (User.removeFriend user.Slug)
                 (function 
                     | Api.ApiOk profile ->
@@ -200,7 +200,7 @@ type UserViewController (handle:nativeint) =
             setupButton
                 this.BlockButton
                 "Block"
-                (sprintf "Block %s?" user.Label)
+                (String.Format( "Block {0}?", user.Label))
                 (User.block user.Slug)
                 (function 
                     | Api.ApiOk profile ->
@@ -212,7 +212,7 @@ type UserViewController (handle:nativeint) =
             setupButton
                 this.UnblockButton
                 "Unblock"
-                (sprintf "Unblock %s?" user.Label)
+                (String.Format( "Unblock {0}?", user.Label))
                 (User.unblock user.Slug)
                 (function 
                     | Api.ApiOk profile ->
@@ -226,7 +226,7 @@ type UserViewController (handle:nativeint) =
                 (User.fetch user.Slug)
                 (function 
                     | Api.ApiOk profile ->
-                        this.ProfileLabel.Text <- sprintf "%s, %s" profile.Age profile.Gender
+                        this.ProfileLabel.Text <- (String.Format("{0}, {1}", profile.Age, profile.Gender))
                         this.LocationLabel.Text <- profile.Location
                         isSelf <- profile.Id = Api.userId
                         this.TableView.ReloadData()

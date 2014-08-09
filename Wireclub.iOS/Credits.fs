@@ -65,7 +65,7 @@ type CreditsViewController () as controller =
 
                 let size = (new NSString(price)).StringSize(font)
                 cell.AccessoryView <- new UILabel(new RectangleF(0.f, 0.f, size.Width, controller.Table.RowHeight), Text = price, Font = font)
-                cell.ImageView.Image <- UIImage.FromFile(sprintf "purchase-%i.png" (int bundle.Price))
+                cell.ImageView.Image <- UIImage.FromFile(String.Format( "purchase-{0}.png", (int bundle.Price)))
                 cell
 
             override this.RowsInSection(tableView, section) = products.Length
@@ -99,7 +99,7 @@ type CreditsViewController () as controller =
                     ] |> List.sortBy(fun (_, _, _, _, _, bundle) -> bundle.RegularCredits)
 
                 for product in response.InvalidProducts do
-                    Logger.log (Exception(sprintf "[StoreKit] InvalidProduct - %s" product))
+                    Logger.log (Exception(String.Format("[StoreKit] InvalidProduct - {0}", product)))
 
                 controller.Table.ReloadData()
 
@@ -117,7 +117,7 @@ type CreditsViewController () as controller =
 
     member this.SetBalance (balance:int) =
         this.NavigationItem.RightBarButtonItem <- 
-            new UIBarButtonItem(sprintf "Your Credits: %i" balance, UIBarButtonItemStyle.Bordered, new EventHandler(fun (s:obj) (e:EventArgs) -> ()))
+            new UIBarButtonItem(String.Format( "Your Credits: {0}", balance), UIBarButtonItemStyle.Bordered, new EventHandler(fun (s:obj) (e:EventArgs) -> ()))
 
     [<Outlet>]
     member val Table: UITableView = null with get, set
