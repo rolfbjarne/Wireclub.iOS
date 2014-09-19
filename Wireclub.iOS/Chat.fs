@@ -392,7 +392,7 @@ type ChatRoomViewController (room:Entity) as controller =
     }
 
     member this.UserButton:UIBarButtonItem =
-        new UIBarButtonItem(UIImage.FromFile "UIButtonBarProfile.png", UIBarButtonItemStyle.Bordered, new EventHandler(fun (s:obj) (e:EventArgs) -> 
+        new UIBarButtonItem(UIImage.FromFile "UIButtonBarProfile.png", UIBarButtonItemStyle.Plain, new EventHandler(fun (s:obj) (e:EventArgs) -> 
                 let users =
                     [|
                         for (user, historic) in users.Values do
@@ -404,10 +404,10 @@ type ChatRoomViewController (room:Entity) as controller =
             ))
 
     member this.MoreButton:UIBarButtonItem =
-        new UIBarButtonItem(UIImage.FromFile "UITabBarMoreTemplateSelected.png", UIBarButtonItemStyle.Bordered, new EventHandler(fun (s:obj) (e:EventArgs) -> showMore()))
+        new UIBarButtonItem(UIImage.FromFile "UITabBarMoreTemplateSelected.png", UIBarButtonItemStyle.Plain, new EventHandler(fun (s:obj) (e:EventArgs) -> showMore()))
 
     member this.GameButton:UIBarButtonItem =
-        new UIBarButtonItem(UIImage.FromFile "UIBarButtonGameItem.png", UIBarButtonItemStyle.Bordered, new EventHandler(fun (s:obj) (e:EventArgs) -> 
+        new UIBarButtonItem(UIImage.FromFile "UIBarButtonGameItem.png", UIBarButtonItemStyle.Plain, new EventHandler(fun (s:obj) (e:EventArgs) -> 
                 match gameController with
                 | Some controller -> this.NavigationController.PushViewController(controller, true)
                 | _ -> ()

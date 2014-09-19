@@ -120,7 +120,7 @@ type HomeViewController () as controller =
         | OnlineStateType.Invisible
         | OnlineStateType.Mobile
         | OnlineStateType.Offline ->
-            this.NavigationItem.RightBarButtonItem <- new UIBarButtonItem(statusDescription, UIBarButtonItemStyle.Bordered, new EventHandler(fun (s:obj) (e:EventArgs) -> showStatus()))
+            this.NavigationItem.RightBarButtonItem <- new UIBarButtonItem(statusDescription, UIBarButtonItemStyle.Plain, new EventHandler(fun (s:obj) (e:EventArgs) -> showStatus()))
         | _->
             this.NavigationItem.RightBarButtonItem <- null
 

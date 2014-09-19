@@ -30,7 +30,7 @@ type ForgotPasswordViewController (handle:nativeint) =
 
     override this.ViewDidLoad () =
         this.NavigationItem.Title <- "Forgot Password"
-        this.NavigationItem.LeftBarButtonItem <- new UIBarButtonItem("Cancel", UIBarButtonItemStyle.Bordered, new EventHandler(fun (s:obj) (e:EventArgs) -> 
+        this.NavigationItem.LeftBarButtonItem <- new UIBarButtonItem("Cancel", UIBarButtonItemStyle.Plain, new EventHandler(fun (s:obj) (e:EventArgs) -> 
             this.NavigationController.PopViewControllerAnimated (true) |> ignore
         ))
         this.SubmitButton.TouchUpInside.Add(fun _ ->
@@ -424,7 +424,7 @@ type SignupViewController (handle:nativeint) as controller =
 
     override this.ViewDidLoad () =
         this.NavigationItem.Title <- "Join"
-        this.NavigationItem.LeftBarButtonItem <- new UIBarButtonItem("Cancel", UIBarButtonItemStyle.Bordered, new EventHandler(fun (s:obj) (e:EventArgs) -> 
+        this.NavigationItem.LeftBarButtonItem <- new UIBarButtonItem("Cancel", UIBarButtonItemStyle.Plain, new EventHandler(fun (s:obj) (e:EventArgs) -> 
             this.NavigationController.PopViewControllerAnimated (true) |> ignore
         ))
 

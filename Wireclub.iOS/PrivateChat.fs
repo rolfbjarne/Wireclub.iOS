@@ -169,12 +169,12 @@ type PrivateChatSessionViewController (user:Entity) as this =
     member val Progress: UIActivityIndicatorView = null with get, set
 
     member this.UserButton:UIBarButtonItem =
-        new UIBarButtonItem(PrivateChatSessionViewController.buttonImage, UIBarButtonItemStyle.Bordered, new EventHandler(fun (s:obj) (e:EventArgs) -> 
+        new UIBarButtonItem(PrivateChatSessionViewController.buttonImage, UIBarButtonItemStyle.Plain, new EventHandler(fun (s:obj) (e:EventArgs) -> 
             Navigation.navigate (sprintf "/users/%s" user.Slug) (Some user)
         ))
 
     member this.MoreButton:UIBarButtonItem =
-        new UIBarButtonItem(UIImage.FromFile "UITabBarMoreTemplateSelected.png", UIBarButtonItemStyle.Bordered, new EventHandler(fun (s:obj) (e:EventArgs) -> showMore()))
+        new UIBarButtonItem(UIImage.FromFile "UITabBarMoreTemplateSelected.png", UIBarButtonItemStyle.Plain, new EventHandler(fun (s:obj) (e:EventArgs) -> showMore()))
 
 
     member this.ViewDidBecomeActive notification = 

@@ -117,7 +117,7 @@ type CreditsViewController () as controller =
 
     member this.SetBalance (balance:int) =
         this.NavigationItem.RightBarButtonItem <- 
-            new UIBarButtonItem(String.Format( "Your Credits: {0}", balance), UIBarButtonItemStyle.Bordered, new EventHandler(fun (s:obj) (e:EventArgs) -> ()))
+            new UIBarButtonItem(String.Format( "Your Credits: {0}", balance), UIBarButtonItemStyle.Plain, new EventHandler(fun (s:obj) (e:EventArgs) -> ()))
 
     [<Outlet>]
     member val Table: UITableView = null with get, set
