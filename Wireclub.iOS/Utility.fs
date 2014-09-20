@@ -81,6 +81,13 @@ module Utility =
         return result
     } 
 
+    let keyboardFrom (input:UIView) (accessory:UIView) = 
+        let keyboard = new UIView(new RectangleF(0.0f, 0.0f, max input.Frame.Width accessory.Frame.Width, input.Frame.Height + accessory.Frame.Height))
+        input.Frame <- new RectangleF(input.Frame.X, accessory.Frame.Height, input.Frame.Width, input.Frame.Height)
+        keyboard.AddSubview accessory
+        keyboard.AddSubview input
+        keyboard
+
     let cssToColor (color:string) =
         let color = 
             match color.ToCharArray() with 
