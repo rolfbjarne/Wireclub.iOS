@@ -64,7 +64,7 @@ type CreditsViewController () as controller =
                 cell.DetailTextLabel.Text <- desc
 
                 let size = (new NSString(price)).StringSize(font)
-                cell.AccessoryView <- new UILabel(new RectangleF(0.f, 0.f, size.Width, controller.Table.RowHeight), Text = price, Font = font)
+                cell.AccessoryView <- new UILabel(new RectangleF(0.f, 0.f, size.Width, size.Height), Text = price, Font = font)
                 cell.ImageView.Image <- UIImage.FromFile(String.Format( "purchase-{0}.png", (int bundle.Price)))
                 cell
 
