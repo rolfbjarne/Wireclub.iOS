@@ -172,9 +172,8 @@ type EditProfileViewController (handle:nativeint) as controller =
             let value = NSDate.op_Implicit pickerDate.Date
             this.Birthday.Text <- value.ToString("M/d/yyyy")
         )
-        this.Birthday.InputView <- pickerDate
+        this.Birthday.InputView <- keyboardFrom pickerDate accessoryBirthday.View 
         this.Birthday.TintColor <- UIColor.Clear
-        this.Birthday.InputAccessoryView <- accessoryBirthday.View
         this.Birthday.EditingDidBegin.Add(fun _ ->
             if String.IsNullOrEmpty(this.Birthday.Text.Trim()) = false then
                 pickerDate.Date <-
@@ -185,8 +184,7 @@ type EditProfileViewController (handle:nativeint) as controller =
         )
 
         // Country Picker
-        this.Country.InputView <- pickerCountry.View
-        this.Country.InputAccessoryView <- accessoryCountry.View
+        this.Country.InputView <- keyboardFrom pickerCountry.View accessoryCountry.View
         this.Country.TintColor <- UIColor.Clear
         pickerCountry.Picker.Source <- sourceCountry
         this.Country.EditingDidBegin.Add(fun _ ->
@@ -208,8 +206,7 @@ type EditProfileViewController (handle:nativeint) as controller =
         )
 
         // Region Picker
-        this.Region.InputView <- pickerRegion.View
-        this.Region.InputAccessoryView <- accessoryRegion.View
+        this.Region.InputView <- keyboardFrom pickerRegion.View accessoryRegion.View
         this.Region.TintColor <- UIColor.Clear
         pickerRegion.Picker.Source <- sourceRegion
         this.Region.EditingDidBegin.Add(fun _ ->

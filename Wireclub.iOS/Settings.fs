@@ -123,8 +123,7 @@ type ChatOptionsViewController(handle:nativeint) as controller =
                 | Api.ApiOk data -> 
                     this.Font.Text <- Utility.fontFamily data.Font
                     this.Font.TintColor <- UIColor.Clear
-                    this.Font.InputView <- pickerFont
-                    this.Font.InputAccessoryView <- accessoryFont.View
+                    this.Font.InputView <- keyboardFrom pickerFont accessoryFont.View
                     pickerFont.Source <- sourceFont
                     pickerFont.Select(Utility.fonts |> List.findIndex (fun (i, _) -> i = data.Font), 0, false)
                     this.Font.EditingDidBegin.Add(fun _ -> pickerFont.ReloadAllComponents())
@@ -133,16 +132,14 @@ type ChatOptionsViewController(handle:nativeint) as controller =
 
                     this.Color.Text <- (Utility.customColor data.ColorId).Name
                     this.Color.TintColor <- UIColor.Clear
-                    this.Color.InputView <- pickerColor
-                    this.Color.InputAccessoryView <- accessoryColor.View
+                    this.Color.InputView <- keyboardFrom pickerColor accessoryColor.View
                     pickerColor.Source <- sourceColor
                     pickerColor.Select(Utility.colors |> List.findIndex (fun c -> c.Id = data.ColorId), 0, false)
                     this.Color.EditingDidBegin.Add(fun _ -> pickerColor.ReloadAllComponents())
 
                     this.ShowJoinLeave.Text <- joinLeaveById data.JoinLeaveMessages
                     this.ShowJoinLeave.TintColor <- UIColor.Clear
-                    this.ShowJoinLeave.InputView <- pickerJoinLeave
-                    this.ShowJoinLeave.InputAccessoryView <- accessoryJoinLeave.View
+                    this.ShowJoinLeave.InputView <- keyboardFrom pickerJoinLeave accessoryJoinLeave.View
                     pickerJoinLeave.Source <- sourceJoinLeave
                     pickerJoinLeave.Select(joinLeave |> List.findIndex (fun (i, _) -> i = data.JoinLeaveMessages), 0, false)
                     this.ShowJoinLeave.EditingDidBegin.Add(fun _ -> pickerJoinLeave.ReloadAllComponents())
@@ -441,8 +438,7 @@ type PrivacyOptionsViewController(handle:nativeint) =
 
                             field.TintColor <- UIColor.Clear
                             field.Text <- value.ToString()
-                            field.InputView <- picker
-                            field.InputAccessoryView <- accessory.View
+                            field.InputView <- keyboardFrom picker accessory.View
                             picker.Source <- source
                             let row = 
                                 function
