@@ -56,6 +56,9 @@ type AppDelegate () =
         NSUserDefaults.StandardUserDefaults.RegisterDefaults(
             NSDictionary.FromObjectAndKey(NSObject.FromObject(Api.agent), NSObject.FromObject("UserAgent")))
 
+        Api.client.DefaultRequestHeaders.TryAddWithoutValidation("x-user-agent-name", UIDevice.CurrentDevice.SystemName) |> ignore
+        Api.client.DefaultRequestHeaders.TryAddWithoutValidation("x-user-agent-version", UIDevice.CurrentDevice.SystemVersion) |> ignore
+
         if options <> null then
             match options.TryGetValue(NSObject.FromObject UIApplication.LaunchOptionsRemoteNotificationKey) with
             | true, userInfo ->
