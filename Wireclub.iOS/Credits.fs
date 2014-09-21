@@ -34,6 +34,62 @@ module Credits =
     let transactionsClear () =
         lock transactions (fun _ -> transactions.Clear() )
 
+    let private tryRead read =
+       try
+           read ()
+       with
+       | ex -> ex.ToString()
+
+    let rec fetchTransactionData (transaction:SKPaymentTransaction) (original:SKPaymentTransaction) =
+        [
+            if transaction.TransactionDate <> null then
+                yield "transaction.TransactionDate", tryRead (fun _ -> (NSDate.op_Implicit transaction.TransactionDate).ToString())
+
+            yield "transaction.TransactionIdentifier", tryRead (fun _ ->  transaction.TransactionIdentifier)
+            yield "transaction.TransactionState", tryRead (fun _ ->  transaction.TransactionState.ToString())
+
+            if transaction.Error <> null then
+                yield "transaction.Error.Code", tryRead (fun _ ->  transaction.Error.Code.ToString())
+                yield "transaction.Error.LocalizedDescription", tryRead (fun _ ->  transaction.Error.LocalizedDescription)
+                yield "transaction.Error.LocalizedFailureReason", tryRead (fun _ ->  transaction.Error.LocalizedFailureReason)
+
+            if transaction.Error <> null then
+                yield "transaction.Payment.ApplicationUsername", tryRead (fun _ ->  transaction.Payment.ApplicationUsername)
+                yield "transaction.Payment.ProductIdentifier", tryRead (fun _ ->  transaction.Payment.ProductIdentifier)
+                yield "transaction.Payment.Quantity", tryRead (fun _ ->  transaction.Payment.Quantity.ToString())
+
+            if original <> null then
+                let data = fetchTransactionData original null
+                for key, value in data do
+                    yield key.Replace("transaction.", "transaction.original."), value
+        ]
+
+    let postTransaction (transaction:SKPaymentTransaction) = 
+        let data = fetchTransactionData transaction transaction.OriginalTransaction
+
+        let receipt =
+            match NSData.FromUrl(NSBundle.MainBundle.AppStoreReceiptUrl) with
+            | null -> String.Empty
+            | data -> data.GetBase64EncodedString NSDataBase64EncodingOptions.None
+
+        Async.startNetworkWithContinuation
+            (Credits.appStoreTransaction data receipt)
+            (function
+                | Api.ApiOk response ->
+                    if response.Complete then
+                        SKPaymentQueue.DefaultQueue.FinishTransaction(transaction)
+
+                    if response.Alert then
+                        let alert =
+                            new UIAlertView (
+                                Title = response.AlertTitle,
+                                Message = response.AlertMessage
+                            )
+                        alert.AddButton response.AlertButton |> ignore
+                        alert.Show ()
+                | error -> ()
+            )
+                
 [<Register ("CreditsViewController")>]
 type CreditsViewController () as controller =
     inherit UIViewController ("CreditsViewController", null)
