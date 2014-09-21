@@ -244,7 +244,6 @@ type EntryViewController () as controller =
 
             printfn "[Navigate] %s" (uri.ToString())
             match url, data with
-            | Routes.AddFriend id, data
             | Routes.User  id, data -> 
                 let pushUser user =
                     let userController = Resources.userStoryboard.Value.InstantiateInitialViewController () :?> UserViewController
