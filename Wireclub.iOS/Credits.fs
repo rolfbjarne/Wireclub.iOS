@@ -23,7 +23,7 @@ open ChannelEvent
 open Utility
 
 module Credits =
-    let transactions = new List<SKPaymentTransaction>()
+    let private transactions = new List<SKPaymentTransaction>()
 
     let transactionsFetch () =
         lock transactions (fun _ -> new List<SKPaymentTransaction>(transactions))
