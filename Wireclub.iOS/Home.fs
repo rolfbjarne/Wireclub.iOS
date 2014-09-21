@@ -346,14 +346,7 @@ type EntryViewController () as controller =
             UIApplication.SharedApplication.RegisterForRemoteNotificationTypes(UIRemoteNotificationType.Alert ||| UIRemoteNotificationType.Sound ||| UIRemoteNotificationType.Badge)
 
             for transaction in Credits.transactionsFetch () do
-                let data = NSData.FromUrl(NSBundle.MainBundle.AppStoreReceiptUrl)
-                if data <> null then
-                    Async.startNetworkWithContinuation
-                        (Credits.appStorePurchase (transaction.TransactionIdentifier) (data.GetBase64EncodedString NSDataBase64EncodingOptions.None))
-                        (function
-                            | Api.ApiOk _ -> SKPaymentQueue.DefaultQueue.FinishTransaction(transaction)
-                            | error -> ()
-                        )
+                Credits.postTransaction transaction
             
             Credits.transactionsClear()
 

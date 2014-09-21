@@ -31,42 +31,10 @@ type AppDelegate () =
             override this.UpdatedTransactions(queue, transactions) =
                 printfn "UpdatedTransactions"
                 for transaction in transactions do
-                    match transaction.TransactionState with
-                    | SKPaymentTransactionState.Purchasing -> printfn "[StoreKit] Purchasing"
-                    | SKPaymentTransactionState.Purchased ->
-                        printfn "[StoreKit] Purchased"
-
-                        if Api.userIdentity <> None then
-                            let data = NSData.FromUrl(NSBundle.MainBundle.AppStoreReceiptUrl)
-                            if data <> null then
-                                Async.startNetworkWithContinuation
-                                    (Credits.appStorePurchase (transaction.TransactionIdentifier) (data.GetBase64EncodedString NSDataBase64EncodingOptions.None))
-                                    (function
-                                        | Api.ApiOk bundle ->
-                                            SKPaymentQueue.DefaultQueue.FinishTransaction(transaction)
-
-                                            let alert =
-                                                new UIAlertView (
-                                                    Title = sprintf "Purchase Complete",
-                                                    Message = sprintf "%i credits have been added to your account." bundle.CurrentUserCredits
-                                                )
-                                            alert.AddButton "Awesome!" |> ignore
-                                            alert.Show ()
-                                        | error -> ()
-                                    )
-                        else
-                            Credits.transactionsAdd transaction
-
-                    | SKPaymentTransactionState.Failed ->
-                        Logger.log(Exception (sprintf "[StoreKit] Transaction Failed for user %s" (match Api.userId with | null -> "-" | userId -> userId)))
-                        SKPaymentQueue.DefaultQueue.FinishTransaction(transaction)
-                    | SKPaymentTransactionState.Restored ->
-                        //TODO: in theory this should never happen since we are only dealing with consumables
-                        Logger.log(Exception (sprintf "[StoreKit] Transaction Restored for user %s" (match Api.userId with | null -> "-" | userId -> userId)))
-                        SKPaymentQueue.DefaultQueue.FinishTransaction(transaction)
-                    | state -> Logger.log(Exception (sprintf "[StoreKit] Uknown Transaction type: %A" state))
-
-                ()
+                    if Api.userIdentity <> None then
+                        Credits.postTransaction transaction
+                    else
+                        Credits.transactionsAdd transaction
             }
 
     let parsePushNotification (info:NSDictionary) =
