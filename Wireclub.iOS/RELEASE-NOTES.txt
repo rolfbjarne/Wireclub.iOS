@@ -1,4 +1,2 @@
-In app Purchases
-Added Games Tab
-Many Bug Fixes
-Improved App Stability
+Fixed iOS 8 Compatability Issues
+Bug Fixes
