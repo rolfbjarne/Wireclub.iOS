@@ -484,7 +484,7 @@ type LoginViewController (handle:nativeint) as controller =
         this.LoginButton.TouchUpInside.Add(fun _ -> login ())
 
         this.ForgotPasswordButton.TouchUpInside.Add(fun _ ->
-            this.NavigationController.PushViewController (forgotPasswordStoryboard.InstantiateInitialViewController() :?> UIViewController, true)
+            UIApplication.SharedApplication.OpenUrl(NSUrl.FromString(Api.publicUrl + "/account/passwordResetRequest")) |> ignore
         )
 
         this.CreateAccountButton.TouchUpInside.Add(fun _ ->
