@@ -34,7 +34,7 @@ type ForgotPasswordViewController (handle:nativeint) =
             this.NavigationController.PopViewControllerAnimated (true) |> ignore
         ))
         this.SubmitButton.TouchUpInside.Add(fun _ ->
-            // ## Send / Toast ...
+            //TODO Make this work with recaptcha
             this.DismissViewController (true, null)
         )
             
@@ -197,7 +197,10 @@ type EditProfileViewController (handle:nativeint) as controller =
                         pickerCountry.Progress.StopAnimating()
                         pickerCountry.Picker.ReloadAllComponents()
                         match country with
-                        | Some country -> pickerCountry.Picker.Select(countries |> Array.findIndex (fun c -> c.Id = country.Id), 0, false)
+                        | Some country ->
+                            match countries |> Array.tryFindIndex (fun c -> c.Id = country.Id) with
+                            | Some index -> pickerCountry.Picker.Select(index, 0, false)
+                            | _ -> ()
                         | _ -> ()
                     | error ->
                         pickerCountry.Progress.StopAnimating()
@@ -222,7 +225,10 @@ type EditProfileViewController (handle:nativeint) as controller =
                             pickerRegion.Picker.ReloadAllComponents()
                             match region, regions with
                             | _, [||] -> ()
-                            | Some region, regions -> pickerCountry.Picker.Select(regions |> Array.findIndex (fun r -> r.Id = region.Id), 0, false)
+                            | Some region, regions ->
+                                match regions |> Array.tryFindIndex (fun r -> r.Id = region.Id) with
+                                | Some index -> pickerRegion.Picker.Select(index, 0, false)
+                                | _ -> ()
                             | _ -> ()
                         | error ->
                             pickerRegion.Progress.StopAnimating()
