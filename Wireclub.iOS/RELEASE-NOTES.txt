@@ -1,2 +1,2 @@
-Fixed iOS 8 Compatability Issues
+Resolved iOS 8 Compatability Issues
 Bug Fixes
