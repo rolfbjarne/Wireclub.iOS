@@ -359,7 +359,8 @@ type EntryViewController () as controller =
                     Navigation.navigate url entity
                 | _ ->
                     this.NavigationController.PushViewController(rootController, animated)
-                
+                this.NavigateOnLoad <- None
+
 
         match NSUserDefaults.StandardUserDefaults.StringForKey "auth-token", System.String.IsNullOrEmpty Api.userId with
         // User has not entered an account
