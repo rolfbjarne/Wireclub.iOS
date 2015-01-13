@@ -74,16 +74,11 @@ let fetchErrors () =
 let createError (error:Error) =
     dbLock (fun db ->
         db.Insert (error) |> ignore
-        #if DEBUG
-        let errors = db.Table<Error>().ToList()
-        printfn "Errors: %A" (errors.Select(fun (e:Error) -> e.Error).ToArray())
-        #endif
-    )
 
-let clearErrors () =
-    dbLock (fun db ->
-        let errors = db.Table<Error>().ToList()
-        for error in errors.Take(100) do db.Delete(error) |> ignore
+        let count = db.Table<Error>().Count()
+        if count > 250 then
+            let toClear = db.Table<Error>().OrderBy(fun s -> s.LastStamp).Take(50).ToList()
+            for event in toClear do db.Delete(event) |> ignore
     )
 
 let createChatHistoryEvent (entity:Entity) historyType eventJson =

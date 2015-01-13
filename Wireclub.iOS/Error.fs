@@ -24,7 +24,7 @@ module Error =
             if errors.Any() then
                 let! result = App.reportErrors [ for error in errors do yield error.Error ]
                 match result with
-                | Api.ApiOk _ -> DB.clearErrors()
+                | Api.ApiOk _ -> DB.deleteAll<DB.Error>()
                 | _ -> ()
         with
         | ex -> ()
