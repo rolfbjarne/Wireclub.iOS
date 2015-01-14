@@ -26,6 +26,8 @@ type GameViewController (entity:Entity, name:string) =
 
     let events = new List<ChannelEvent * string> ()
 
+    let cancelPoll = new Threading.CancellationTokenSource()
+
     [<Outlet>]
     member val WebView: UIWebView = null with get, set
 
@@ -65,16 +67,20 @@ type GameViewController (entity:Entity, name:string) =
         this.WebView.ScrollView.AddSubview refresh
         #endif
 
-        Async.Start(Utility.Timer.ticker (fun _ -> this.InvokeOnMainThread(fun _->  
+        Async.Start(Utility.Timer.ticker (fun _ -> 
             if events.Count > 0 then
                 let eventsBuilder = new System.Text.StringBuilder()
                 for (event, json) in events do
                     let json = String.Format( "[{0},{1},{2},{3},'{4}']",event.Sequence, event.EventType, event.Stamp, json, event.User)
                     eventsBuilder.AppendFormat ("wireclub.Channel.processChannelEvents('{0}', {1});", entity.Id, json) |> ignore
 
-                this.WebView.EvaluateJavascript (eventsBuilder.ToString()) |> ignore
+                this.InvokeOnMainThread(fun _-> this.WebView.EvaluateJavascript (eventsBuilder.ToString()) |> ignore)
                 events.Clear()
-        )) 500)
+
+        ) 500, cancelPoll.Token)
+
+    override this.Dispose (bool) =
+        cancelPoll.Cancel()
 
     member this.ProcessEvent(event:ChannelEvent) =
         match event.Event with
@@ -84,6 +90,8 @@ type GameViewController (entity:Entity, name:string) =
         | AppEvent (_, json)
         | CustomAppEvent json -> events.Add (event, json)
         | _ -> ()
+
+     
 
 [<Register ("ChatRoomUsersViewController")>]
 type ChatRoomUsersViewController (users:UserProfile[]) =
@@ -273,8 +281,6 @@ type ChatRoomViewController (room:Entity) as controller =
 
     let memberTypes = [  MembershipTypePublic.Member; MembershipTypePublic.Moderator; MembershipTypePublic.Admin ]
 
-    let cancelPoll = new Threading.CancellationTokenSource()
-   
     let barButtons () =
         [|
             yield controller.MoreButton
@@ -500,9 +506,6 @@ type ChatRoomViewController (room:Entity) as controller =
         match users.TryGetValue userId with
         | true, (user, historic) -> users.[userId] <- ({ user with Blocked = blocked }, historic)
         | _ -> ()
-
-    override this.Dispose (bool) =
-        cancelPoll.Cancel()
 
 module ChatRooms =
     let rooms = ConcurrentDictionary<string, Entity * ChatRoomViewController>()
