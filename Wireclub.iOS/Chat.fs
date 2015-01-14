@@ -274,16 +274,7 @@ type ChatRoomViewController (room:Entity) as controller =
     let memberTypes = [  MembershipTypePublic.Member; MembershipTypePublic.Moderator; MembershipTypePublic.Admin ]
 
     let cancelPoll = new Threading.CancellationTokenSource()
-
-    let keepAlive () =
-        controller.InvokeOnMainThread(fun _ -> 
-            if controller.NavigationController <> null && controller.NavigationController.VisibleViewController = upcast controller then
-                Async.startWithContinuation
-                    (Chat.keepAlive room.Slug)
-                    (fun _ -> ())
-                ()
-        )
-
+   
     let barButtons () =
         [|
             yield controller.MoreButton
