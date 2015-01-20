@@ -148,6 +148,11 @@ type ChatRoomViewController (room:Entity) as controller =
     let mutable starred = false
     let mutable lastEvent = DateTime.UtcNow
         
+    let mutable showObserver:NSObject = null
+    let mutable hideObserver:NSObject = null
+    let mutable activeObserver:NSObject = null
+    let mutable inactiveObserver:NSObject = null
+    let mutable appEventObserver:NSObject = null
     let nameplate (user:UserProfile) =     
         String.Format(
             "<a class=icon href={0}/users/{1}><img src={2} width={3} height={4} /></a> <a class=name href={5}/users/{6}>{7}</a>",
@@ -178,13 +183,6 @@ type ChatRoomViewController (room:Entity) as controller =
     let placeKeyboard (sender:obj) (args:UIKeyboardEventArgs) =
         controller.ResizeViewToKeyboard args
         controller.WebView.EvaluateJavascript "wireclub.Mobile.scrollToEnd(true);" |> ignore
-
-    let mutable showObserver:NSObject = null
-    let mutable hideObserver:NSObject = null
-    let mutable activeObserver:NSObject = null
-    let mutable inactiveObserver:NSObject = null
-    let mutable appEventObserver:NSObject = null
-
 
     let sendMessage (identity:Models.User) text =
         match text with
