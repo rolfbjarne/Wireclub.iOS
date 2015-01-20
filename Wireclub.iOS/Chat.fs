@@ -335,12 +335,10 @@ type ChatRoomViewController (room:Entity) as controller =
             | [|_; "api/"; "chat/"; "chatRoomTemplate" |] -> true
             | [|_; "users/"; slug |] ->
                 match users.Values |> Seq.tryFind (fun (user, _) -> user.Slug = slug) with
-                | Some (user, _) ->
-                    Navigation.navigate (sprintf "/users/%s" slug) (Some { Id = user.Id; Label = user.Name; Slug = user.Slug; Image = user.Avatar })
-                | _ ->
-                    Navigation.navigate (sprintf "/users/%s" slug) None
+                | Some (user, _) -> Navigation.navigate (sprintf "/users/%s" slug) (Some { Id = user.Id; Label = user.Name; Slug = user.Slug; Image = user.Avatar })
+                | _ -> Navigation.navigate (sprintf "/users/%s" slug) None
                 false
-            | segments -> 
+            | _ -> 
                 Navigation.navigate (uri.ToString()) None
                 false
 
