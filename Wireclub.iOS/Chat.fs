@@ -142,10 +142,10 @@ type ChatRoomViewController (room:Entity) as controller =
     let nameplateImageSize = 21
     let appsAllowed = [| "Slots"; "Bingo"; "Blackjack" |]
 
+    let mutable lastEvent = DateTime.UtcNow
 
     let mutable apps:string[] = [||]
     let mutable starred = false
-    let mutable lastEvent = DateTime.UtcNow
         
     let mutable showObserver:NSObject = null
     let mutable hideObserver:NSObject = null
