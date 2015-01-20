@@ -346,46 +346,7 @@ type ChatRoomViewController (room:Entity) as controller =
 
         override this.LoadFailed (view, error) = showSimpleAlert "Error" error.Description "Close"
 
-        override this.LoadingFinished (view) = 
-            Async.startNetworkWithContinuation
-                (Chat.join room.Slug)
-                (function
-                | Api.ApiOk (result, events) ->
-                    startSequence <- result.Sequence
-                    starred <- result.Channel.ViewerHasStarred
-                    apps <- result.Channel.Apps
-
-                    if apps.Any(fun e -> appsAllowed.Contains(e)) then
-                        gameController <- Some (new GameViewController(room, apps.First()))
-
-                    controller.NavigationItem.RightBarButtonItems <- barButtons()
-
-                    result.Members |> Array.filter (fun e -> memberTypes.Contains e.Membership) |> Array.iter (fun u -> addUser (u,false))
-                    result.HistoricMembers |> Array.filter (fun e -> memberTypes.Contains e.Membership) |> Array.iter (fun u -> addUser (u,true))
-                    controller.WebView.PreloadImages [ for user, _ in users.Values do yield App.imageUrl user.Avatar nameplateImageSize ]
-                    let lines = new List<string>()
-                    for event in events do processEvent event (fun l _ -> lines.Add l)
-                    addLines (lines.ToArray())
-                    controller.Progress.StopAnimating ()
-
-                    if loaded = false then
-                        loaded <- true
-                        processor.Start()
-
-                    lastEvent <- DateTime.UtcNow
-                | Api.HttpError (code, _) when code = 404 ->
-                    let alert = new UIAlertView (Title = "Room Deleted", Message = "This room no longer exists.")
-                    alert.AddButton "Leave" |> ignore
-                    alert.Show ()
-                    alert.Clicked.Add(fun _ -> 
-                        Async.startInBackgroundWithContinuation
-                            (fun _ -> DB.removeChatHistoryById room.Id)
-                            (fun _ ->
-                                controller.Leave room.Id
-                                Navigation.navigate "/home" None
-                            )
-                    )
-                | error -> controller.HandleApiFailure error)
+        override this.LoadingFinished (view) = ()
     }
 
     member this.UserButton:UIBarButtonItem =
@@ -427,7 +388,7 @@ type ChatRoomViewController (room:Entity) as controller =
     member this.ViewDidBecomeActive notification = 
         if shouldLoad () then
             active <- true
-            this.WebView.LoadRequest(new NSUrlRequest(new NSUrl(Api.webUrl + "/api/chat/chatRoomTemplate")))
+            //this.WebView.LoadRequest(new NSUrlRequest(new NSUrl(Api.webUrl + "/api/chat/chatRoomTemplate")))
         else
             inactiveBufferFlush ()
 
@@ -465,11 +426,50 @@ type ChatRoomViewController (room:Entity) as controller =
         appEventObserver <- NSNotificationCenter.DefaultCenter.AddObserver("Wireclub.AppEvent", this.OnAppEvent)
 
     override this.ViewDidAppear animated = 
-        // inital load
-        if shouldLoad () then
-            this.WebView.LoadRequest(new NSUrlRequest(new NSUrl(Api.webUrl + "/api/chat/chatRoomTemplate")))
-           
-        // mark things as read
+        Async.startNetworkWithContinuation
+            (Chat.join room.Slug "false")
+            (function
+            | Api.ApiOk (result, events) ->
+                startSequence <- result.Sequence
+                starred <- result.Channel.ViewerHasStarred
+                apps <- result.Channel.Apps
+
+                if apps.Any(fun e -> appsAllowed.Contains(e)) then
+                    gameController <- Some (new GameViewController(room, apps.First()))
+
+                controller.NavigationItem.RightBarButtonItems <- barButtons()
+
+                result.Members |> Array.filter (fun e -> memberTypes.Contains e.Membership) |> Array.iter (fun u -> addUser (u,false))
+                result.HistoricMembers |> Array.filter (fun e -> memberTypes.Contains e.Membership) |> Array.iter (fun u -> addUser (u,true))
+
+                controller.WebView.LoadHtmlString(result.Html, new NSUrl(Api.webUrl + "/api/chat/chatRoomTemplate"))
+                controller.WebView.PreloadImages [ for user, _ in users.Values do yield App.imageUrl user.Avatar nameplateImageSize ]
+
+                let lines = new List<string>()
+                for event in events do processEvent event (fun l _ -> lines.Add l)
+                addLines (lines.ToArray())
+                controller.Progress.StopAnimating ()
+
+                if loaded = false then
+                    loaded <- true
+                    processor.Start()
+
+                lastEvent <- DateTime.UtcNow
+            | Api.HttpError (code, _) when code = 404 ->
+                let alert = new UIAlertView (Title = "Room Deleted", Message = "This room no longer exists.")
+                alert.AddButton "Leave" |> ignore
+                alert.Show ()
+                alert.Clicked.Add(fun _ -> 
+                    Async.startInBackgroundWithContinuation
+                        (fun _ -> DB.removeChatHistoryById room.Id)
+                        (fun _ ->
+                            controller.Leave room.Id
+                            Navigation.navigate "/home" None
+                        )
+                )
+            | error -> controller.HandleApiFailure error)
+
+
         Async.startInBackgroundWithContinuation 
             (fun _ ->
                 DB.updateChatHistoryReadById room.Id
