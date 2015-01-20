@@ -137,11 +137,16 @@ type ChatRoomViewController (room:Entity) as controller =
 
     static let nameplateImageSize = 21
     static let appsAllowed = [| "Slots"; "Bingo"; "Blackjack"; "WireSlots" |]
+
     let identity = match Api.userIdentity with | Some id -> id | None -> failwith "User must be logged in"
+
     let events = System.Collections.Generic.HashSet<int64>()
     let users = ConcurrentDictionary<string, UserProfile * bool>()
-    let mutable startSequence = 0L
+    let eventBuffer = new List<ChannelEvent>()
 
+    let mutable startSequence = 0L
+    let mutable loaded = false
+    let mutable active = true
     let mutable lastEvent = DateTime.UtcNow
 
     let mutable apps:string[] = [||]
@@ -209,65 +214,53 @@ type ChatRoomViewController (room:Entity) as controller =
         let user, historic = userProfile
         users.AddOrUpdate (user.Id, userProfile, System.Func<string,UserProfile * bool, UserProfile *bool>(fun _ _ -> userProfile)) |> ignore
 
-    let inactiveBuffer = new List<ChannelEvent>()
-    let mutable active = true
-
     let processEvent event addLine =
-        if active = false then inactiveBuffer.Add(event) else
-        let historic = event.Sequence < startSequence
-        if events.Add event.Sequence then
-            lastEvent <- DateTime.UtcNow
+        if loaded && active then
+            let historic = event.Sequence < startSequence
+            if events.Add event.Sequence then
+                lastEvent <- DateTime.UtcNow
 
-            match gameController with
-            | Some gameController -> gameController.ProcessEvent(event);
-            | _ -> ()
-
-            match event with
-            | { Event = Notification message } -> 
-                addLine (notificationLine message) false
-
-            | { Event = Message (color, font, message); User = user } when (user <> identity.Id || historic) -> 
-                match users.TryGetValue event.User with
-                | true, (user, _) when user.Blocked = false ->
-                    addLine (userMessageLine message user color (fontFamily font)) false
+                match gameController with
+                | Some gameController -> gameController.ProcessEvent(event);
                 | _ -> ()
 
-            | { Event = Join user } -> 
-                if historic = false then
-                    addUser(user, false)
-                if users.Count < 25 then
-                    addLine (userMessageLine "joined the room" user "#000" (fontFamily 0)) false
+                match event with
+                | { Event = Notification message } -> 
+                    addLine (notificationLine message) false
 
-            | { Event = Leave user } -> 
-                match users.TryGetValue event.User with
-                | true, (user, _) -> 
-                    if users.Count < 25 then
-                        addLine (userMessageLine "left the room" user "#000" (fontFamily 0)) false
+                | { Event = Message (color, font, message); User = user } when (user <> identity.Id || historic) -> 
+                    match users.TryGetValue event.User with
+                    | true, (user, _) when user.Blocked = false ->
+                        addLine (userMessageLine message user color (fontFamily font)) false
+                    | _ -> ()
+
+                | { Event = Join user } -> 
                     if historic = false then
-                        users.TryRemove user.Id |> ignore
+                        addUser(user, false)
+                    if users.Count < 25 then
+                        addLine (userMessageLine "joined the room" user "#000" (fontFamily 0)) false
+
+                | { Event = Leave user } -> 
+                    match users.TryGetValue event.User with
+                    | true, (user, _) -> 
+                        if users.Count < 25 then
+                            addLine (userMessageLine "left the room" user "#000" (fontFamily 0)) false
+                        if historic = false then
+                            users.TryRemove user.Id |> ignore
+                    | _ -> ()
+                
+                | { Event = DisposableMessage } -> () //messages from anon chat rooms
+                | { Event = AddedModerator; User = user } when historic = false -> ()
+                | { Event = RemovedModerator; User = user } when historic = false -> ()
+                | { Event = Drink } -> ()
+                | { Event = AcceptDrink } -> ()
+                | { Event = Modifier } -> ()
                 | _ -> ()
-            
-            | { Event = DisposableMessage } -> () //messages from anon chat rooms
-            | { Event = AddedModerator; User = user } when historic = false -> ()
-            | { Event = RemovedModerator; User = user } when historic = false -> ()
-            | { Event = Drink } -> ()
-            | { Event = AcceptDrink } -> ()
-            | { Event = Modifier } -> ()
-            | _ -> ()
 
-            if events.Count > 50 then
-                events.Clear()
-
-    let inactiveBufferFlush () =
-        Async.startWithContinuation
-            (Async.Sleep(1000))
-            (fun _ ->
-                active <- true
-                let lines = new List<string>()
-                for event in inactiveBuffer do processEvent event (fun l _ -> lines.Add l)
-                inactiveBuffer.Clear()
-                addLines (lines.ToArray())
-            )
+                if events.Count > 50 then
+                    events.Clear()
+        else
+            eventBuffer.Add(event)
 
     let processor = new MailboxProcessor<ChannelEvent>(fun inbox ->
         let rec loop () = async {
@@ -291,17 +284,83 @@ type ChatRoomViewController (room:Entity) as controller =
                 yield controller.GameButton
         |]
 
+    let markRead () =
+        Async.startInBackgroundWithContinuation 
+            (fun _ ->
+                DB.updateChatHistoryReadById room.Id
+                DB.fetchChatHistoryUnreadCount ()
+            )
+            (function
+                | 0 -> controller.NavigationItem.LeftBarButtonItem <- null
+                | unread ->
+                    controller.NavigationItem.LeftBarButtonItem <- new UIBarButtonItem((sprintf "(%i)" unread), UIBarButtonItemStyle.Plain, new EventHandler(fun _ _ -> 
+                        controller.NavigationController.PopViewControllerAnimated true |> ignore
+                    ))
+            )
 
-    let mutable loaded = false
-    let shouldLoad () =
-        loaded = false || (DateTime.UtcNow - lastEvent).TotalMilliseconds > (1000. * 60. * 20.) 
+    let activate () =
+        active <- true
+        let lines = new List<string>()
+        for event in eventBuffer do processEvent event (fun l _ -> lines.Add l)
+        eventBuffer.Clear()
+        addLines (lines.ToArray())
+
+    let load () =
+        loaded <- true
+        controller.WebView.PreloadImages [ for user, _ in users.Values do yield App.imageUrl user.Avatar nameplateImageSize ]
+        controller.Progress.StopAnimating ()
+        controller.NavigationItem.RightBarButtonItems <- barButtons()
+
+        if apps.Any(fun e -> appsAllowed.Contains(e)) then
+            gameController <- Some (new GameViewController(room, apps.First()))
+
+        activate ()
+
+        processor.Start()
+
+    let join () =
+        Async.startNetworkWithContinuation
+            (Chat.join room.Slug loaded)
+            (function
+            | Api.ApiOk (result, events) ->
+                startSequence <- result.Sequence
+                starred <- result.Channel.ViewerHasStarred
+                apps <- result.Channel.Apps
+
+                result.Members |> Array.filter (fun e -> memberTypes.Contains e.Membership) |> Array.iter (fun u -> addUser (u,false))
+                result.HistoricMembers |> Array.filter (fun e -> memberTypes.Contains e.Membership) |> Array.iter (fun u -> addUser (u,true))
+
+                let lines = new List<string>()
+                for event in events do processEvent event (fun l _ -> lines.Add l)
+                addLines (lines.ToArray())
+
+                if loaded = false then
+                    controller.WebView.LoadHtmlString(result.Html, new NSUrl(Api.webUrl + "/template"))
+                
+                if active = false then
+                    activate ()
+
+            | Api.HttpError (code, _) when code = 404 ->
+                let alert = new UIAlertView (Title = "Room Deleted", Message = "This room no longer exists.")
+                alert.AddButton "Leave" |> ignore
+                alert.Show ()
+                alert.Clicked.Add(fun _ -> 
+                    Async.startInBackgroundWithContinuation
+                        (fun _ -> DB.removeChatHistoryById room.Id)
+                        (fun _ ->
+                            controller.Leave room.Id
+                            Navigation.navigate "/home" None
+                        )
+                )
+            | error -> controller.HandleApiFailure error)
+
 
     member val WebViewDelegate = {
         new UIWebViewDelegate() with
         override this.ShouldStartLoad (view, request, navigationType) =
             let uri = new Uri(request.Url.AbsoluteString)
             match uri.Segments with
-            | [|_; "api/"; "chat/"; "chatRoomTemplate" |] -> true
+            | [|_; "template" |] -> true
             | [|_; "users/"; slug |] ->
                 match users.Values |> Seq.tryFind (fun (user, _) -> user.Slug = slug) with
                 | Some (user, _) -> Navigation.navigate (sprintf "/users/%s" slug) (Some { Id = user.Id; Label = user.Name; Slug = user.Slug; Image = user.Avatar })
@@ -311,9 +370,11 @@ type ChatRoomViewController (room:Entity) as controller =
                 Navigation.navigate (uri.ToString()) None
                 false
 
-        override this.LoadFailed (view, error) = showSimpleAlert "Error" error.Description "Close"
+        override this.LoadFailed (view, error) =
+            showSimpleAlert "Error" error.Description "Close"
 
-        override this.LoadingFinished (view) = ()
+        override this.LoadingFinished (view) =
+            load ()
     }
 
     member this.UserButton:UIBarButtonItem =
@@ -382,23 +443,6 @@ type ChatRoomViewController (room:Entity) as controller =
     [<Outlet>]
     member val Progress: UIActivityIndicatorView = null with get, set
 
-    member this.ViewDidBecomeActive notification = 
-        if shouldLoad () then
-            active <- true
-            //this.WebView.LoadRequest(new NSUrlRequest(new NSUrl(Api.webUrl + "/api/chat/chatRoomTemplate")))
-        else
-            inactiveBufferFlush ()
-
-    member this.ViewWillResignActive notification =
-        active <- false
-
-    member this.OnAppEvent (notification:NSNotification) =
-        notification.HandleAppEvent
-            (function
-                | UserRelationshipChanged (id, blocked)-> controller.SetBlocked (id, blocked)
-                | _ -> ()
-            )
-
     override this.ViewDidLoad () =
         this.WebView.BackgroundColor <- UIColor.White
         this.WebView.Delegate <- this.WebViewDelegate
@@ -408,7 +452,6 @@ type ChatRoomViewController (room:Entity) as controller =
 
         // Prevents a 64px offset on a webviews scrollview
         this.AutomaticallyAdjustsScrollViewInsets <- false
-
         this.NavigationItem.RightBarButtonItems <- barButtons()
 
         // Send message
@@ -422,64 +465,26 @@ type ChatRoomViewController (room:Entity) as controller =
 
         appEventObserver <- NSNotificationCenter.DefaultCenter.AddObserver("Wireclub.AppEvent", this.OnAppEvent)
 
+    member this.OnAppEvent (notification:NSNotification) =
+        notification.HandleAppEvent
+            (function
+                | UserRelationshipChanged (id, blocked)-> 
+                    match users.TryGetValue id with
+                    | true, (user, historic) -> users.[id] <- ({ user with Blocked = blocked }, historic)
+                    | _ -> ()
+                | _ -> ()
+            )
+
+    member this.ViewDidBecomeActive notification =
+        join ()
+
+    member this.ViewWillResignActive notification =
+        active <- false
+
     override this.ViewDidAppear animated = 
-        Async.startNetworkWithContinuation
-            (Chat.join room.Slug "false")
-            (function
-            | Api.ApiOk (result, events) ->
-                startSequence <- result.Sequence
-                starred <- result.Channel.ViewerHasStarred
-                apps <- result.Channel.Apps
+        join ()
+        markRead ()
 
-                if apps.Any(fun e -> appsAllowed.Contains(e)) then
-                    gameController <- Some (new GameViewController(room, apps.First()))
-
-                controller.NavigationItem.RightBarButtonItems <- barButtons()
-
-                result.Members |> Array.filter (fun e -> memberTypes.Contains e.Membership) |> Array.iter (fun u -> addUser (u,false))
-                result.HistoricMembers |> Array.filter (fun e -> memberTypes.Contains e.Membership) |> Array.iter (fun u -> addUser (u,true))
-
-                controller.WebView.LoadHtmlString(result.Html, new NSUrl(Api.webUrl + "/api/chat/chatRoomTemplate"))
-                controller.WebView.PreloadImages [ for user, _ in users.Values do yield App.imageUrl user.Avatar nameplateImageSize ]
-
-                let lines = new List<string>()
-                for event in events do processEvent event (fun l _ -> lines.Add l)
-                addLines (lines.ToArray())
-                controller.Progress.StopAnimating ()
-
-                if loaded = false then
-                    loaded <- true
-                    processor.Start()
-
-                lastEvent <- DateTime.UtcNow
-            | Api.HttpError (code, _) when code = 404 ->
-                let alert = new UIAlertView (Title = "Room Deleted", Message = "This room no longer exists.")
-                alert.AddButton "Leave" |> ignore
-                alert.Show ()
-                alert.Clicked.Add(fun _ -> 
-                    Async.startInBackgroundWithContinuation
-                        (fun _ -> DB.removeChatHistoryById room.Id)
-                        (fun _ ->
-                            controller.Leave room.Id
-                            Navigation.navigate "/home" None
-                        )
-                )
-            | error -> controller.HandleApiFailure error)
-
-
-        Async.startInBackgroundWithContinuation 
-            (fun _ ->
-                DB.updateChatHistoryReadById room.Id
-                DB.fetchChatHistoryUnreadCount ()
-            )
-            (function
-                | 0 -> this.NavigationItem.LeftBarButtonItem <- null
-                | unread ->
-                    this.NavigationItem.LeftBarButtonItem <- new UIBarButtonItem((sprintf "(%i)" unread), UIBarButtonItemStyle.Plain, new EventHandler(fun _ _ -> 
-                        this.NavigationController.PopViewControllerAnimated true |> ignore
-                    ))
-            )
-    
         // keyboard
         showObserver <- UIKeyboard.Notifications.ObserveWillShow(System.EventHandler<UIKeyboardEventArgs>(placeKeyboard))
         hideObserver <- UIKeyboard.Notifications.ObserveWillHide(System.EventHandler<UIKeyboardEventArgs>(placeKeyboard))
@@ -495,11 +500,6 @@ type ChatRoomViewController (room:Entity) as controller =
     member this.HandleChannelEvent = processor.Post
 
     member this.Room:Entity = room
-
-    member this.SetBlocked (userId, blocked) =
-        match users.TryGetValue userId with
-        | true, (user, historic) -> users.[userId] <- ({ user with Blocked = blocked }, historic)
-        | _ -> ()
 
 module ChatRooms =
     let rooms = ConcurrentDictionary<string, Entity * ChatRoomViewController>()
