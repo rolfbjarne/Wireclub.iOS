@@ -291,37 +291,6 @@ type ChatRoomViewController (room:Entity) as controller =
                 yield controller.GameButton
         |]
 
-    let showMore () =
-        let sheet = new UIActionSheet (Title = "Chat Room Options")
-        sheet.AddButton (if starred then "Unfavorite Room" else "Favorite Room") |> ignore
-        sheet.AddButton "Leave Room" |> ignore
-        sheet.AddButton "Cancel" |> ignore
-        sheet.DestructiveButtonIndex <- 1
-        sheet.CancelButtonIndex <- 2
-
-        sheet.ShowInView (controller.View)
-        sheet.Dismissed.Add(fun args ->
-            match args.ButtonIndex with
-            | 0 -> 
-                Async.startWithContinuation
-                    ((if starred then Chat.unstar else Chat.star) controller.Room.Slug)
-                    (function 
-                        | Api.ApiOk _ -> starred <- not starred
-                        | error -> controller.HandleApiFailure error 
-                    )
-            | 1 ->
-                Async.startNetworkWithContinuation
-                    (Chat.leave controller.Room.Slug)
-                    (fun _ -> 
-                        Async.startInBackgroundWithContinuation
-                            (fun _ -> DB.removeChatHistoryById room.Id)
-                            (fun _ ->
-                                controller.Leave room.Id
-                                Navigation.navigate "/home" None
-                            )
-                    )
-            | _ -> ()
-        )
 
     let mutable loaded = false
     let shouldLoad () =
@@ -360,7 +329,37 @@ type ChatRoomViewController (room:Entity) as controller =
             ))
 
     member this.MoreButton:UIBarButtonItem =
-        new UIBarButtonItem(UIImage.FromFile "UITabBarMoreTemplateSelected.png", UIBarButtonItemStyle.Plain, new EventHandler(fun (s:obj) (e:EventArgs) -> showMore()))
+        new UIBarButtonItem(UIImage.FromFile "UITabBarMoreTemplateSelected.png", UIBarButtonItemStyle.Plain, new EventHandler(fun (s:obj) (e:EventArgs) ->
+            let sheet = new UIActionSheet (Title = "Chat Room Options")
+            sheet.AddButton (if starred then "Unfavorite Room" else "Favorite Room") |> ignore
+            sheet.AddButton "Leave Room" |> ignore
+            sheet.AddButton "Cancel" |> ignore
+            sheet.DestructiveButtonIndex <- 1
+            sheet.CancelButtonIndex <- 2
+
+            sheet.ShowInView (controller.View)
+            sheet.Dismissed.Add(fun args ->
+                match args.ButtonIndex with
+                | 0 -> 
+                    Async.startWithContinuation
+                        ((if starred then Chat.unstar else Chat.star) controller.Room.Slug)
+                        (function 
+                            | Api.ApiOk _ -> starred <- not starred
+                            | error -> controller.HandleApiFailure error 
+                        )
+                | 1 ->
+                    Async.startNetworkWithContinuation
+                        (Chat.leave controller.Room.Slug)
+                        (fun _ -> 
+                            Async.startInBackgroundWithContinuation
+                                (fun _ -> DB.removeChatHistoryById room.Id)
+                                (fun _ ->
+                                    controller.Leave room.Id
+                                    Navigation.navigate "/home" None
+                                )
+                        )
+                | _ -> ()
+            )))
 
     member this.GameButton:UIBarButtonItem =
         new UIBarButtonItem(UIImage.FromFile "UIBarButtonGameItem.png", UIBarButtonItemStyle.Plain, new EventHandler(fun (s:obj) (e:EventArgs) -> 
