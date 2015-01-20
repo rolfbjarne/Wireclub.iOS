@@ -142,7 +142,6 @@ type ChatRoomViewController (room:Entity) as controller =
     let nameplateImageSize = 21
     let appsAllowed = [| "Slots"; "Bingo"; "Blackjack" |]
 
-    let mutable gameController:GameViewController option = None
 
     let mutable apps:string[] = [||]
     let mutable starred = false
@@ -153,6 +152,9 @@ type ChatRoomViewController (room:Entity) as controller =
     let mutable activeObserver:NSObject = null
     let mutable inactiveObserver:NSObject = null
     let mutable appEventObserver:NSObject = null
+
+    let mutable gameController:GameViewController option = None
+
     let nameplate (user:UserProfile) =     
         String.Format(
             "<a class=icon href={0}/users/{1}><img src={2} width={3} height={4} /></a> <a class=name href={5}/users/{6}>{7}</a>",
