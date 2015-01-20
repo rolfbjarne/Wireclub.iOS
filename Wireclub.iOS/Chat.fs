@@ -489,9 +489,6 @@ type ChatRoomViewController (room:Entity) as controller =
         activeObserver <- NSNotificationCenter.DefaultCenter.AddObserver(UIApplication.DidBecomeActiveNotification, this.ViewDidBecomeActive)
         inactiveObserver <- NSNotificationCenter.DefaultCenter.AddObserver(UIApplication.WillResignActiveNotification, this.ViewWillResignActive)
 
-
-        this.Text.BecomeFirstResponder () |> ignore
-    
     override this.ViewDidDisappear animated =
         showObserver.Dispose ()
         hideObserver.Dispose ()
