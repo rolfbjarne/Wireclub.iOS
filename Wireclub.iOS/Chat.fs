@@ -135,12 +135,12 @@ type ChatRoomUsersViewController (users:UserProfile[]) =
 type ChatRoomViewController (room:Entity) as controller =
     inherit UIViewController ("PrivateChatSessionViewController", null)
 
+    static let nameplateImageSize = 21
+    static let appsAllowed = [| "Slots"; "Bingo"; "Blackjack"; "WireSlots" |]
     let identity = match Api.userIdentity with | Some id -> id | None -> failwith "User must be logged in"
     let events = System.Collections.Generic.HashSet<int64>()
     let users = ConcurrentDictionary<string, UserProfile * bool>()
     let mutable startSequence = 0L
-    let nameplateImageSize = 21
-    let appsAllowed = [| "Slots"; "Bingo"; "Blackjack" |]
 
     let mutable lastEvent = DateTime.UtcNow
 
