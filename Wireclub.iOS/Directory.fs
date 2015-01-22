@@ -51,17 +51,16 @@ type ChatsViewController (rootController:RootViewContoller) as controller =
         override this.GetCell(tableView, indexPath) =
             match chats with
             | [||] when loaded -> 
-                let cell = 
-                    match tableView.DequeueReusableCell "no-chat-cell" with
-                    | null -> new UITableViewCell (UITableViewCellStyle.Subtitle, "no-chat-cell")
-                    | c -> c
-
-                let label = new UILabel(tableView.Frame)
-                label.TextAlignment <- UITextAlignment.Center
-                label.Text <- "No chats yet."
-                cell.ContentView.AddSubview(label)
-                cell.SelectionStyle <- UITableViewCellSelectionStyle.None
-                cell
+                match tableView.DequeueReusableCell "no-chat-cell" with
+                | null -> 
+                    let cell = new UITableViewCell (UITableViewCellStyle.Subtitle, "no-chat-cell")
+                    let label = new UILabel(tableView.Frame)
+                    label.TextAlignment <- UITextAlignment.Center
+                    label.Text <- "No chats yet."
+                    cell.ContentView.AddSubview(label)
+                    cell.SelectionStyle <- UITableViewCellSelectionStyle.None
+                    cell
+                | c -> c
             | _ -> 
                 let chat = chats.[indexPath.Row]
                 let cell = 
