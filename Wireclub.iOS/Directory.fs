@@ -276,17 +276,16 @@ type FriendsViewController (rootController:RootViewContoller) as controller =
         override this.GetCell(tableView, indexPath) =
             match friends with
             | [||] when loaded -> 
-                let cell = 
                     match tableView.DequeueReusableCell "no-friend-cell" with
-                    | null -> new UITableViewCell (UITableViewCellStyle.Subtitle, "no-friends-cell")
+                    | null ->
+                        let cell = new UITableViewCell (UITableViewCellStyle.Subtitle, "no-friends-cell")
+                        let label = new UILabel(tableView.Frame)
+                        label.TextAlignment <- UITextAlignment.Center
+                        label.Text <- "No friends yet."
+                        cell.ContentView.AddSubview(label)
+                        cell.SelectionStyle <- UITableViewCellSelectionStyle.None
+                        cell
                     | c -> c
-
-                let label = new UILabel(tableView.Frame)
-                label.TextAlignment <- UITextAlignment.Center
-                label.Text <- "No friends yet."
-                cell.ContentView.AddSubview(label)
-                cell.SelectionStyle <- UITableViewCellSelectionStyle.None
-                cell
             | _ -> 
                 let friend = friends.[indexPath.Row]
                 let cell = 
