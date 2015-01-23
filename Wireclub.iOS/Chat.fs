@@ -244,6 +244,22 @@ type ChatRoomViewController (room:Entity) as controller =
                             addLine (userMessageLine "left the room" user "#000" (fontFamily 0)) false
                         if historic = false then
                             users.TryRemove user.Id |> ignore
+
+                            if user.Id = identity.Id then
+                                match controller.NavigationController with
+                                | null -> ()
+                                | navController when navController.VisibleViewController = (controller :> UIViewController) ->
+                                    let alert = new UIAlertView (Title = "Room Left", Message = "You have left the room.")
+                                    alert.AddButton "Leave" |> ignore
+                                    alert.AddButton "Rejoin" |> ignore
+                                    alert.Show ()
+                                    alert.Clicked.Add(fun e -> 
+                                        match e.ButtonIndex with
+                                        | 0 -> controller.Leave()
+                                        | 1 -> controller.Join()
+                                        | _ -> ()
+                                    )
+                                | _ -> ()
                     | _ -> ()
                 
                 | { Event = DisposableMessage } -> () //messages from anon chat rooms
@@ -315,6 +331,18 @@ type ChatRoomViewController (room:Entity) as controller =
 
         processor.Start()
 
+    let leave () =
+        Async.startNetworkWithContinuation
+            (Chat.leave controller.Room.Slug)
+            (fun _ -> 
+                Async.startInBackgroundWithContinuation
+                    (fun _ -> DB.removeChatHistoryById room.Id)
+                    (fun _ ->
+                        controller.OnLeave room.Id
+                        Navigation.navigate "/home" None
+                    )
+            )
+
     let join () =
         Async.startNetworkWithContinuation
             (Chat.join room.Slug loaded)
@@ -341,14 +369,7 @@ type ChatRoomViewController (room:Entity) as controller =
                 let alert = new UIAlertView (Title = "Room Deleted", Message = "This room no longer exists.")
                 alert.AddButton "Leave" |> ignore
                 alert.Show ()
-                alert.Clicked.Add(fun _ -> 
-                    Async.startInBackgroundWithContinuation
-                        (fun _ -> DB.removeChatHistoryById room.Id)
-                        (fun _ ->
-                            controller.Leave room.Id
-                            Navigation.navigate "/home" None
-                        )
-                )
+                alert.Clicked.Add(fun _ -> leave())
             | error -> controller.HandleApiFailure error)
 
 
@@ -405,17 +426,7 @@ type ChatRoomViewController (room:Entity) as controller =
                             | Api.ApiOk _ -> starred <- not starred
                             | error -> controller.HandleApiFailure error 
                         )
-                | 1 ->
-                    Async.startNetworkWithContinuation
-                        (Chat.leave controller.Room.Slug)
-                        (fun _ -> 
-                            Async.startInBackgroundWithContinuation
-                                (fun _ -> DB.removeChatHistoryById room.Id)
-                                (fun _ ->
-                                    controller.Leave room.Id
-                                    Navigation.navigate "/home" None
-                                )
-                        )
+                | 1 -> leave ()
                 | _ -> ()
             )))
 
@@ -426,7 +437,7 @@ type ChatRoomViewController (room:Entity) as controller =
                 | _ -> ()
             ))
 
-    member val Leave:(string -> unit) = (fun (slug:string) -> ()) with get, set
+    member val OnLeave:(string -> unit) = (fun (slug:string) -> ()) with get, set
 
     [<Outlet>]
     member val WebView: UIWebView = null with get, set
@@ -496,6 +507,8 @@ type ChatRoomViewController (room:Entity) as controller =
 
     member this.HandleChannelEvent = processor.Post
 
+    member this.Join () = join ()
+    member this.Leave () = leave()
     member this.Room:Entity = room
 
 module ChatRooms =
@@ -509,7 +522,7 @@ module ChatRooms =
     let join (room:Entity) =
         let _, controller =
             let controllerAdd = new ChatRoomViewController (room)
-            controllerAdd.Leave <- leave
+            controllerAdd.OnLeave <- leave
             rooms.AddOrUpdate (
                     room.Id,
                     (fun _ -> room, controllerAdd),
