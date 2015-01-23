@@ -147,7 +147,6 @@ type ChatRoomViewController (room:Entity) as controller =
     let mutable startSequence = 0L
     let mutable loaded = false
     let mutable active = true
-    let mutable lastEvent = DateTime.UtcNow
 
     let mutable apps:string[] = [||]
     let mutable starred = false
@@ -218,8 +217,6 @@ type ChatRoomViewController (room:Entity) as controller =
         if loaded && active then
             let historic = event.Sequence < startSequence
             if events.Add event.Sequence then
-                lastEvent <- DateTime.UtcNow
-
                 match gameController with
                 | Some gameController -> gameController.ProcessEvent(event);
                 | _ -> ()
