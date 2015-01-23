@@ -463,13 +463,8 @@ type ChatRoomViewController (room:Entity) as controller =
         this.NavigationItem.RightBarButtonItems <- barButtons()
 
         // Send message
-        this.Text.ShouldReturn <- (fun _ ->
-            sendMessage identity this.Text.Text
-            false
-        )
-        this.SendButton.TouchUpInside.Add(fun args ->
-            sendMessage identity this.Text.Text
-        )
+        this.Text.ShouldReturn <- (fun _ -> sendMessage identity this.Text.Text; false)
+        this.SendButton.TouchUpInside.Add(fun args -> sendMessage identity this.Text.Text)
 
         appEventObserver <- NSNotificationCenter.DefaultCenter.AddObserver("Wireclub.AppEvent", this.OnAppEvent)
 
