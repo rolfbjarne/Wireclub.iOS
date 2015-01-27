@@ -332,6 +332,7 @@ type ChatRoomViewController (room:Entity) as controller =
         processor.Start()
 
     let leave () =
+        active <- false
         Async.startNetworkWithContinuation
             (Chat.leave controller.Room.Slug)
             (fun _ -> 
