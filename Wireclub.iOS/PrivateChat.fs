@@ -34,6 +34,9 @@ type PrivateChatSessionViewController (user:Entity) as this =
     let mutable loaded = false
     let nameplateImageSize = 50
 
+    let eventBuffer = new List<ChannelEvent>()
+    let mutable active = true
+
     let sanitize payload = Regex.Replace(payload, "src=\"\/\/static.wireclub.com\/", "src=\"http://static.wireclub.com/")
 
     let nameplate slug image = 
@@ -84,32 +87,20 @@ type PrivateChatSessionViewController (user:Entity) as this =
                             addLine (viewerLine response.Feedback response.Color (fontFamily response.Font)) true
                     | error -> this.HandleApiFailure error)
 
-    let inactiveBuffer = new List<ChannelEvent>()
-    let mutable active = true
 
     let processEvent event addLine = 
-        if active = false then inactiveBuffer.Add(event) else
-        if events.Add event.Sequence then
-            match event with
-            | { Event = PrivateMessage (color, font, message) } -> 
-                addLine (partnerLine message color (fontFamily font)) false
-            | { Event = PrivateMessageSent (color, font, message) } -> 
-                addLine (viewerLine message color (fontFamily font)) true
-            | _ -> ()
+        if loaded && active then
+            if events.Add event.Sequence then
+                match event with
+                | { Event = PrivateMessage (color, font, message) } -> addLine (partnerLine message color (fontFamily font)) false
+                | { Event = PrivateMessageSent (color, font, message) } -> addLine (viewerLine message color (fontFamily font)) true
+                | _ -> ()
 
-            if events.Count > 50 then
-                events.Clear()
+                if events.Count > 50 then
+                    events.Clear()
+        else
+            eventBuffer.Add(event)
 
-    let inactiveBufferFlush () =
-        Async.startWithContinuation
-            (Async.Sleep(1000))
-            (fun _ ->
-                active <- true
-                let lines = new List<string>()
-                for event in inactiveBuffer do processEvent event (fun l _ -> lines.Add l)
-                inactiveBuffer.Clear()
-                addLines (lines.ToArray())
-            )
 
     let processor = new MailboxProcessor<ChannelEvent>(fun inbox ->
         let rec loop () = async {
@@ -121,40 +112,89 @@ type PrivateChatSessionViewController (user:Entity) as this =
         loop ()
     )
 
-    let webViewDelegate = {
-        new UIWebViewDelegate() with
-        override this.ShouldStartLoad (view, request, navigationType) =
-            let uri = new Uri(request.Url.AbsoluteString)
-            match uri.Segments with
-            | [| _; "users/"; slug |] when slug = user.Slug -> Navigation.navigate (sprintf "/users/%s" slug) (Some user)
-            | [| _; "users/"; slug |] when slug = identity.Slug -> Navigation.navigate (sprintf "/users/%s" slug) (Some { Id = identity.Id; Label = identity.Name; Slug = identity.Slug; Image = identity.Avatar })
-            | segments -> Navigation.navigate (uri.ToString()) None
+    let markRead () = 
+        Async.startInBackgroundWithContinuation 
+            (fun _ ->
+                DB.updateChatHistoryReadById user.Id
+                DB.fetchChatHistoryUnreadCount ()
+            )
+            (function
+                | 0 -> this.NavigationItem.LeftBarButtonItem <- null
+                | unread ->
+                    this.NavigationItem.LeftBarButtonItem <- new UIBarButtonItem((sprintf "(%i)" unread), UIBarButtonItemStyle.Plain, new EventHandler(fun _ _ -> 
+                        this.NavigationController.PopViewControllerAnimated true |> ignore
+                    ))
+            )
+
+    let navigate url =
+        let uri = new Uri(url)
+        match uri.Segments with
+        | [| _; "template" |] -> true
+        | [| _; "users/"; slug |] when slug = user.Slug ->
+            Navigation.navigate (sprintf "/users/%s" slug) (Some user)
             false
-    }
+        | [| _; "users/"; slug |] when slug = identity.Slug ->
+            Navigation.navigate (sprintf "/users/%s" slug) (Some { Id = identity.Id; Label = identity.Name; Slug = identity.Slug; Image = identity.Avatar })
+            false
+        | _ ->
+            Navigation.navigate (uri.ToString()) None
+            false
 
-    let showMore () =
-        let sheet = new UIActionSheet (Title = "Private Message Options")
-        sheet.AddButton "Close Chat" |> ignore
-        sheet.AddButton "Cancel" |> ignore
-        sheet.DestructiveButtonIndex <- 0
-        sheet.CancelButtonIndex <- 1
+    let activate () =
+        active <- true
+        let lines = new List<string>()
+        for event in eventBuffer do processEvent event (fun l _ -> lines.Add l)
+        eventBuffer.Clear()
+        addLines (lines.ToArray())
 
-        sheet.ShowInView (this.View)
-        sheet.Dismissed.Add(fun args ->
-            match args.ButtonIndex with
-            | 0 -> 
-                Async.startInBackgroundWithContinuation
-                    (fun _ -> DB.removeChatHistoryById user.Id)
-                    (fun _ ->
-                        this.Leave user.Id
-                        Navigation.navigate "/home" None
-                    )
-            | _ -> ()
-        )
+    let load () =
+        loaded <- true
+        this.WebView.SetBodyBackgroundColor (colorToCss Utility.grayLightAccent)
+        this.Progress.StopAnimating ()
+
+        activate ()
+        processor.Start()
+
+    let joinSession () =
+        Async.startNetworkWithContinuation
+            (async {
+                let! session = PrivateChat.session user.Id true loaded
+                let history = DB.fetchChatEventHistoryByEntity user.Id
+                return session, history
+            })
+            (function
+                | Api.ApiOk (newSession, historyRemote), historyLocal ->
+                    session <- Some newSession
+                    let events =
+                        [
+                            for event in historyRemote do yield Some event
+                            for event in historyLocal do
+                                if String.IsNullOrEmpty event.EventJson = false then
+                                    yield
+                                        try
+                                            Some (JsonConvert.DeserializeObject<ChannelEvent>(event.EventJson))
+                                        with ex ->
+                                            printfn "%A %s" event ex.Message
+                                            None
+
+                        ] |> List.choose id
+
+                    let lines = new List<string>()
+                    for event in events.OrderBy(fun e -> e.Sequence) do processEvent event (fun l _ -> lines.Add l)
+                    addLines (lines.ToArray())
+
+                    if loaded = false then
+                        this.WebView.LoadHtmlString(newSession.Html, new NSUrl(Api.webUrl + "/template"))
+                    
+                    if active = false then
+                        activate ()
+
+                | error, _ -> this.HandleApiFailure error
+            )
 
     static member val buttonImage = UIImage.FromFile "UIButtonBarProfile.png" with get
 
-    member val Leave:(string -> unit) = (fun (slug:string) -> ()) with get, set
+    member val OnLeave:(string -> unit) = (fun (slug:string) -> ()) with get, set
 
     [<Outlet>]
     member val WebView: UIWebView = null with get, set
@@ -174,97 +214,59 @@ type PrivateChatSessionViewController (user:Entity) as this =
         ))
 
     member this.MoreButton:UIBarButtonItem =
-        new UIBarButtonItem(UIImage.FromFile "UITabBarMoreTemplateSelected.png", UIBarButtonItemStyle.Plain, new EventHandler(fun (s:obj) (e:EventArgs) -> showMore()))
+        new UIBarButtonItem(UIImage.FromFile "UITabBarMoreTemplateSelected.png", UIBarButtonItemStyle.Plain, new EventHandler(fun (s:obj) (e:EventArgs) -> 
+            let sheet = new UIActionSheet (Title = "Private Message Options")
+            sheet.AddButton "Close Chat" |> ignore
+            sheet.AddButton "Cancel" |> ignore
+            sheet.DestructiveButtonIndex <- 0
+            sheet.CancelButtonIndex <- 1
 
-
-    member this.ViewDidBecomeActive notification = 
-        inactiveBufferFlush ()
-
-    member this.ViewWillResignActive notification =
-        active <- false
+            sheet.ShowInView (this.View)
+            sheet.Dismissed.Add(fun args ->
+                match args.ButtonIndex with
+                | 0 -> 
+                    Async.startInBackgroundWithContinuation
+                        (fun _ -> DB.removeChatHistoryById user.Id)
+                        (fun _ ->
+                            this.OnLeave user.Id
+                            Navigation.navigate "/home" None
+                        )
+                | _ -> ()
+            )
+        ))
 
     override this.ViewDidLoad () =
         this.NavigationItem.LeftItemsSupplementBackButton <- true
-        this.NavigationItem.RightBarButtonItems <-
-            [|
-                this.MoreButton
-                this.UserButton
-            |]
+        this.NavigationItem.RightBarButtonItems <- [| this.MoreButton; this.UserButton |]
+
+        this.WebView.ShouldStartLoad <- UIWebLoaderControl(fun view request navigationType -> navigate request.Url.AbsoluteString)
+        this.WebView.LoadError.Add(fun error -> showSimpleAlert "Error" error.Error.Description "Close")
+        this.WebView.LoadFinished.Add(fun _ -> load() )
+
         // Prevents a 64px offset on a webviews scrollview
         this.AutomaticallyAdjustsScrollViewInsets <- false
         this.WebView.BackgroundColor <- Utility.grayLightAccent
 
         this.NavigationItem.Title <- user.Label
 
+        // Send message
+        this.Text.ShouldReturn <- (fun _ -> sendMessage this.Text.Text; false)
+        this.SendButton.TouchUpInside.Add(fun args -> sendMessage this.Text.Text)
+
+    member this.ViewDidBecomeActive notification = 
+        joinSession ()
+
+    member this.ViewWillResignActive notification =
+        active <- false
+
     override this.ViewDidAppear animated = 
-        if loaded = false then
-            this.WebView.LoadRequest(new NSUrlRequest(new NSUrl(Api.webUrl + "/api/chat/privateChatTemplate")))
-            this.WebView.LoadError.Add(fun error -> showSimpleAlert "Error" error.Error.Description "Close")
-            this.WebView.LoadFinished.Add(fun _ ->
-                this.WebView.Delegate <- webViewDelegate
-                this.WebView.SetBodyBackgroundColor (colorToCss Utility.grayLightAccent)
-
-                Async.startNetworkWithContinuation
-                    (async {
-                        let! session = PrivateChat.session user.Id
-                        let history = DB.fetchChatEventHistoryByEntity user.Id
-                        return session, history
-                    })
-                    (function
-                        | Api.ApiOk (newSession, historyRemote), historyLocal ->
-                            session <- Some newSession
-
-                            let history =
-                                [
-                                    for event in historyRemote do yield Some event
-                                    for event in historyLocal do
-                                        if String.IsNullOrEmpty event.EventJson = false then
-                                            yield
-                                                try
-                                                    Some (JsonConvert.DeserializeObject<ChannelEvent>(event.EventJson))
-                                                with
-                                                | ex ->
-                                                    printfn "%A %s" event ex.Message
-                                                    None
-
-                                ] |> List.choose id
-
-                            let lines = new List<string>()
-                            for event in history.OrderBy(fun e -> e.Sequence) do processEvent event (fun l _ -> lines.Add l)
-                            addLines (lines.ToArray())
-
-                            // Send message
-                            this.Text.ShouldReturn <- (fun _ -> sendMessage this.Text.Text; false)
-                            this.SendButton.TouchUpInside.Add(fun args -> sendMessage this.Text.Text )
-                            this.Progress.StopAnimating ()
-
-                            if loaded = false then
-                                loaded <- true
-                                processor.Start()
-
-                        | error, _ -> this.HandleApiFailure error
-                    )
-            )
-
-        Async.startInBackgroundWithContinuation 
-            (fun _ ->
-                DB.updateChatHistoryReadById user.Id
-                DB.fetchChatHistoryUnreadCount ()
-            )
-            (function
-                | 0 -> this.NavigationItem.LeftBarButtonItem <- null
-                | unread ->
-                    this.NavigationItem.LeftBarButtonItem <- new UIBarButtonItem((sprintf "(%i)" unread), UIBarButtonItemStyle.Plain, new EventHandler(fun _ _ -> 
-                        this.NavigationController.PopViewControllerAnimated true |> ignore
-                    ))
-            )
+        joinSession ()
+        markRead ()
 
         showObserver <- UIKeyboard.Notifications.ObserveWillShow(System.EventHandler<UIKeyboardEventArgs>(placeKeyboard))
         hideObserver <- UIKeyboard.Notifications.ObserveWillHide(System.EventHandler<UIKeyboardEventArgs>(placeKeyboard))
         activeObserver <- NSNotificationCenter.DefaultCenter.AddObserver(UIApplication.DidBecomeActiveNotification, this.ViewDidBecomeActive)
         inactiveObserver <- NSNotificationCenter.DefaultCenter.AddObserver(UIApplication.WillResignActiveNotification, this.ViewWillResignActive)
-
-        this.Text.BecomeFirstResponder () |> ignore
     
     override this.ViewDidDisappear animated =
         showObserver.Dispose ()
@@ -289,7 +291,7 @@ module ChatSessions =
     let start (user:Entity) =
         let _, controller =
             let controllerAdd = new PrivateChatSessionViewController (user) 
-            controllerAdd.Leave <- leave
+            controllerAdd.OnLeave <- leave
 
             sessions.AddOrUpdate (
                 user.Id,
@@ -306,7 +308,7 @@ module ChatSessions =
         if id = Api.userId then failwith "Can't chat with yourself"
 
         Async.startNetworkWithContinuation
-            (PrivateChat.session id)
+            (PrivateChat.session id false false)
             (function
                 | Api.ApiOk (newSession, _) ->
                     let user =
