@@ -215,7 +215,7 @@ type ChatRoomViewController (room:Entity) as controller =
 
     let processEvent event addLine =
         if loaded && active then
-            let historic = event.Sequence < startSequence
+            let historic = event.Sequence <= startSequence
             if events.Add event.Sequence then
                 match gameController with
                 | Some gameController -> gameController.ProcessEvent(event);
