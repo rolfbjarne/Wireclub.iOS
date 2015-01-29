@@ -1,2 +1,2 @@
-Resolved iOS 8 Compatability Issues
-Bug Fixes
+Improved chat connectivity
+Bug fixes
