@@ -14,7 +14,6 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|iPhoneSimulator' ">
     <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
     <OutputPath>bin\iPhoneSimulator\Debug</OutputPath>
     <DefineConstants>DEBUG;__MOBILE__;__IOS__</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
@@ -27,6 +26,7 @@
     <MtouchI18n>
     </MtouchI18n>
     <MtouchArch>ARMv7</MtouchArch>
+    <Optimize>true</Optimize>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|iPhoneSimulator' ">
     <DebugSymbols>true</DebugSymbols>
@@ -47,7 +47,6 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|iPhone' ">
     <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
     <OutputPath>bin\iPhone\Debug</OutputPath>
     <DefineConstants>DEBUG;__MOBILE__;__IOS__;__IOS_DEVICE__</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
@@ -64,6 +63,8 @@
     <MtouchArch>ARMv7</MtouchArch>
     <MtouchLink>None</MtouchLink>
     <MtouchExtraArgs>--registrar:oldstatic</MtouchExtraArgs>
+    <MtouchSdkVersion>8.4</MtouchSdkVersion>
+    <Optimize>true</Optimize>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|iPhone' ">
     <DebugSymbols>true</DebugSymbols>

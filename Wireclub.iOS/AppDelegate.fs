@@ -18,13 +18,27 @@ type PushNotification =
 | Unknown
 | PrivateChat of string
 
+type WireclubNavigationController =
+    inherit UINavigationController
+
+    new (controller:UIViewController) = {
+        inherit UINavigationController(controller)
+    }
+
+    override this.ShouldAutorotate () = true
+
+    override this.GetSupportedInterfaceOrientations () =
+        match this.VisibleViewController with
+        | :? GameViewController -> UIInterfaceOrientationMask.All
+        | _ -> UIInterfaceOrientationMask.Portrait
+
 [<Register ("AppDelegate")>]
 type AppDelegate () =
     inherit UIApplicationDelegate ()
 
     let window = new UIWindow (UIScreen.MainScreen.Bounds)
     let entryController = new EntryViewController()
-    let navigationController = new UINavigationController(entryController)
+    let navigationController = new WireclubNavigationController(entryController)
 
     let transactionObserver = {
         new SKPaymentTransactionObserver() with
