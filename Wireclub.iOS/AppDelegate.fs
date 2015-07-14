@@ -32,6 +32,13 @@ type WireclubNavigationController =
         | :? GameViewController -> UIInterfaceOrientationMask.All
         | _ -> UIInterfaceOrientationMask.Portrait
 
+    override this.PopViewControllerAnimated (animated:bool) =
+        match this.VisibleViewController with
+        | :? GameViewController as controller -> UIDevice.CurrentDevice.SetValueForKey(NSObject.FromObject(UIInterfaceOrientation.Portrait), new NSString("orientation"))
+        | _ -> ()
+
+        base.PopViewControllerAnimated(animated)
+
 [<Register ("AppDelegate")>]
 type AppDelegate () =
     inherit UIApplicationDelegate ()
