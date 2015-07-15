@@ -186,7 +186,7 @@ type EditProfileViewController (handle:nativeint) as controller =
         // Country Picker
         this.Country.InputView <- keyboardFrom pickerCountry.View accessoryCountry.View
         this.Country.TintColor <- UIColor.Clear
-        pickerCountry.Picker.Source <- sourceCountry
+        pickerCountry.Picker.Model <- sourceCountry
         this.Country.EditingDidBegin.Add(fun _ ->
             Async.startNetworkWithContinuation
                 (Settings.countries ())
@@ -211,7 +211,7 @@ type EditProfileViewController (handle:nativeint) as controller =
         // Region Picker
         this.Region.InputView <- keyboardFrom pickerRegion.View accessoryRegion.View
         this.Region.TintColor <- UIColor.Clear
-        pickerRegion.Picker.Source <- sourceRegion
+        pickerRegion.Picker.Model <- sourceRegion
         this.Region.EditingDidBegin.Add(fun _ ->
             match country with
             | Some country ->
