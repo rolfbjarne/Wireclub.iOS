@@ -343,7 +343,13 @@ type EntryViewController () as controller =
         let proceed animated =
             ChannelClient.init handleEvent
 
-            UIApplication.SharedApplication.RegisterForRemoteNotificationTypes(UIRemoteNotificationType.Alert ||| UIRemoteNotificationType.Sound ||| UIRemoteNotificationType.Badge)
+            if new Version(UIDevice.CurrentDevice.SystemVersion) < new Version(8, 0) then
+                UIApplication.SharedApplication.RegisterForRemoteNotificationTypes(UIRemoteNotificationType.Alert ||| UIRemoteNotificationType.Sound ||| UIRemoteNotificationType.Badge)
+            else 
+                let settings = UIUserNotificationSettings.GetSettingsForTypes (UIUserNotificationType.Sound ||| UIUserNotificationType.Alert ||| UIUserNotificationType.Badge, null)
+                UIApplication.SharedApplication.RegisterUserNotificationSettings (settings)
+                UIApplication.SharedApplication.RegisterForRemoteNotifications ()
+
 
             for transaction in Credits.transactionsFetch () do
                 Credits.postTransaction transaction
