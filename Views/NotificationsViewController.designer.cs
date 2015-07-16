@@ -5,8 +5,8 @@
 // Manual changes to this file will not be maintained.
 //
 using System;
-using MonoTouch.Foundation;
-using MonoTouch.UIKit;
+using Foundation;
+using UIKit;
 using System.CodeDom.Compiler;
 
 namespace Views
@@ -15,16 +15,16 @@ namespace Views
 	partial class NotificationsViewController
 	{
 		[Outlet]
-		MonoTouch.UIKit.UISwitch ClubActivity { get; set; }
+		UIKit.UISwitch ClubActivity { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UISwitch Invitations { get; set; }
+		UIKit.UISwitch Invitations { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UISwitch NewMessages { get; set; }
+		UIKit.UISwitch NewMessages { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UIButton Save { get; set; }
+		UIKit.UIButton Save { get; set; }
 
 		void ReleaseDesignerOutlets ()
 		{

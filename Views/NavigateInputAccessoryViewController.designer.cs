@@ -4,7 +4,7 @@
 // actions made in the UI designer. If it is removed, they will be lost.
 // Manual changes to this file may not be handled correctly.
 //
-using MonoTouch.Foundation;
+using Foundation;
 using System.CodeDom.Compiler;
 
 namespace Views
@@ -13,13 +13,13 @@ namespace Views
 	partial class NavigateInputAccessoryViewController
 	{
 		[Outlet]
-		MonoTouch.UIKit.UIButton DoneButton { get; set; }
+		UIKit.UIButton DoneButton { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UIButton NextButton { get; set; }
+		UIKit.UIButton NextButton { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UIButton PrevButton { get; set; }
+		UIKit.UIButton PrevButton { get; set; }
 		
 		void ReleaseDesignerOutlets ()
 		{

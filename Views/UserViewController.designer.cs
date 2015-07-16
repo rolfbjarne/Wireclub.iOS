@@ -5,8 +5,8 @@
 // Manual changes to this file will not be maintained.
 //
 using System;
-using MonoTouch.Foundation;
-using MonoTouch.UIKit;
+using Foundation;
+using UIKit;
 using System.CodeDom.Compiler;
 
 namespace Views
@@ -15,28 +15,28 @@ namespace Views
 	partial class UserViewController
 	{
 		[Outlet]
-		MonoTouch.UIKit.UIButton BlockButton { get; set; }
+		UIKit.UIButton BlockButton { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UIButton ChatButton { get; set; }
+		UIKit.UIButton ChatButton { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UIButton FriendButton { get; set; }
+		UIKit.UIButton FriendButton { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UIView ImageView { get; set; }
+		UIKit.UIView ImageView { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UILabel LocationLabel { get; set; }
+		UIKit.UILabel LocationLabel { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UILabel ProfileLabel { get; set; }
+		UIKit.UILabel ProfileLabel { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UIButton UnblockButton { get; set; }
+		UIKit.UIButton UnblockButton { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UIButton UnfriendButton { get; set; }
+		UIKit.UIButton UnfriendButton { get; set; }
 
 		void ReleaseDesignerOutlets ()
 		{

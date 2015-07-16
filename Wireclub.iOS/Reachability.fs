@@ -4,10 +4,11 @@ module Wireclub.iOS.Reachability
 
 open System
 open System.Net
-open MonoTouch.Foundation
-open MonoTouch.UIKit
-open MonoTouch.SystemConfiguration
-open MonoTouch.CoreFoundation
+
+open Foundation
+open UIKit
+open SystemConfiguration
+open CoreFoundation
 
 type NetworkStatus =
 | NotReachable = 0
@@ -46,7 +47,7 @@ let isHostReachable host =
 let onReachabilityChanged = new Event<NetworkReachabilityFlags> ()
 
 let checkReachability (reachability: NetworkReachability) =
-    reachability.SetCallback (fun flags -> onReachabilityChanged.Trigger flags) |> ignore
+    reachability.SetNotification (fun flags -> onReachabilityChanged.Trigger flags) |> ignore
     reachability.Schedule (CFRunLoop.Current, CFRunLoop.ModeDefault.ToString()) |> ignore
     reachability
 

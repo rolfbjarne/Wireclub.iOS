@@ -29,30 +29,30 @@ module Toast
 open System
 open System.Collections.Generic
 open System.Linq
-open MonoTouch.Foundation
-open MonoTouch.UIKit
-open MonoTouch.CoreGraphics
+open Foundation
+open UIKit
+open CoreGraphics
 open System.Drawing
 
 //CONFIGURE THESE VALUES TO ADJUST LOOK & FEEL,
 //DISPLAY DURATION, ETC.
 
 // general appearance
-let toastMaxWidth = 0.8f // 80% of parent view width
-let toastMaxHeight = 0.8f // 80% of parent view height
-let toastHorizontalPadding = 10.0f
-let toastVerticalPadding = 10.0f
-let toastCornerRadius = 10.0f
-let toastOpacity = 0.8f
-let toastFontSize = 16.0f
-let toastMaxTitleLines  = 0
-let toastMaxMessageLines = 0
+let toastMaxWidth = nfloat 0.8f // 80% of parent view width
+let toastMaxHeight = nfloat 0.8f // 80% of parent view height
+let toastHorizontalPadding = nfloat 10.0f
+let toastVerticalPadding = nfloat 10.0f
+let toastCornerRadius = nfloat 10.0f
+let toastOpacity = nfloat 0.8f
+let toastFontSize = nfloat 16.0f
+let toastMaxTitleLines  = nint 0
+let toastMaxMessageLines = nint 0
 let toastFadeDuration = 0.2
 
 // shadow appearance
 let toastShadowOpacity = 0.8f
-let toastShadowRadius = 6.0f
-let toastShadowOffset = new SizeF(4.0f, 4.0f)
+let toastShadowRadius = nfloat 6.0f
+let toastShadowOffset = new CGSize(nfloat 4.0f, nfloat 4.0f)
 let toastDisplayShadow = true
 
 // display duration and position
@@ -60,8 +60,8 @@ let toastDefaultPosition = "bottom"
 let toastDefaultDuration  = 3.0
 
 // image view size
-let toastImageViewWidth = 80.0f
-let toastImageViewHeight = 80.0f
+let toastImageViewWidth = nfloat 80.0f
+let toastImageViewHeight = nfloat 80.0f
 
 // activity
 let toastActivityWidth = 100.0f
@@ -75,7 +75,7 @@ let toastHidesOnTap = true // excludes activity views
 let toastTimerKey = "toastTimerKey"
 let toastActivityViewKey = "toastActivityViewKey"
 
-let sizeForString (str:string) (font:UIFont) (constrainedSize:SizeF) (lineBreakMode:UILineBreakMode) =
+let sizeForString (str:string) (font:UIFont) (constrainedSize:CGSize) (lineBreakMode:UILineBreakMode) =
     let str = NSString.op_Explicit str 
     str.StringSize(font, constrainedSize, lineBreakMode)
 //    if ([str respondsToSelector:@selector(boundingRectWithSize:options:attributes:context:)]) {
@@ -106,9 +106,9 @@ type UIView with
 
     member this.CenterPointForPosition (point:string) (toast:UIView) =
         match point with
-        | "top" -> new PointF(this.Bounds.Size.Width/2.0f, (toast.Frame.Size.Height / 2.0f) + toastVerticalPadding)
-        | "bottom" -> new PointF(this.Bounds.Size.Width/2.0f, (this.Bounds.Size.Height - (toast.Frame.Size.Height / 2.0f)) - toastVerticalPadding)
-        | "center" -> new PointF(this.Bounds.Size.Width / 2.0f, this.Bounds.Size.Height / 2.0f)
+        | "top" -> new CGPoint(this.Bounds.Size.Width / nfloat 2.0f, (toast.Frame.Size.Height / nfloat 2.0f) + toastVerticalPadding)
+        | "bottom" -> new CGPoint(this.Bounds.Size.Width / nfloat 2.0f, (this.Bounds.Size.Height - (toast.Frame.Size.Height / nfloat 2.0f)) - toastVerticalPadding)
+        | "center" -> new CGPoint(this.Bounds.Size.Width / nfloat 2.0f, this.Bounds.Size.Height / nfloat 2.0f)
         | _-> this.CenterPointForPosition toastDefaultPosition toast
 
 //    if([point isKindOfClass:[NSString class]]) {
@@ -125,7 +125,7 @@ type UIView with
 
     member this.ShowToast(toast:UIView, duration:float, position:string) =
         toast.Center <- this.CenterPointForPosition position toast
-        toast.Alpha <- 0.0f
+        toast.Alpha <- nfloat 0.0f
 
         let timer:NSTimer ref = ref null
         if toastHidesOnTap then
@@ -140,7 +140,7 @@ type UIView with
             toastFadeDuration,
             0.0,
             UIViewAnimationOptions.CurveEaseOut ||| UIViewAnimationOptions.AllowUserInteraction,
-            (fun _ -> toast.Alpha <- 1.0f),
+            (fun _ -> toast.Alpha <- nfloat 1.0f),
             (fun _ -> timer := NSTimer.CreateScheduledTimer(duration, (fun _ ->  this.HideToast toast ))))
 
     member this.HideToast (toast:UIView) =
@@ -148,7 +148,7 @@ type UIView with
             toastFadeDuration,
             0.0,
             UIViewAnimationOptions.CurveEaseIn ||| UIViewAnimationOptions.BeginFromCurrentState,
-            (fun _ -> toast.Alpha <- 0.0f),
+            (fun _ -> toast.Alpha <- nfloat 0.0f),
             (fun _ -> toast.RemoveFromSuperview()))
 
 
@@ -232,12 +232,12 @@ type UIView with
         if image <> null then
             imageView <- new UIImageView()
             imageView.ContentMode <- UIViewContentMode.ScaleAspectFit
-            imageView.Frame <- new RectangleF(toastHorizontalPadding, toastVerticalPadding, toastImageViewWidth, toastImageViewHeight)
+            imageView.Frame <- new CGRect(toastHorizontalPadding, toastVerticalPadding, toastImageViewWidth, toastImageViewHeight)
         
         
         let imageWidth, imageHeight, imageLeft =
             match imageView with 
-            | null -> 0.0f,0.0f,0.0f
+            | null -> nfloat 0.0f, nfloat 0.0f, nfloat 0.0f
             | imageView -> imageView.Bounds.Size.Width,imageView.Bounds.Size.Height,toastHorizontalPadding
         
         if title <> null then
@@ -248,13 +248,13 @@ type UIView with
             titleLabel.LineBreakMode <- UILineBreakMode.WordWrap
             titleLabel.TextColor <- UIColor.White
             titleLabel.BackgroundColor <- UIColor.Clear
-            titleLabel.Alpha <- 1.0f
+            titleLabel.Alpha <- nfloat 1.0f
             titleLabel.Text <- title
             
             // size the title label according to the length of the text
-            let maxSizeTitle = new SizeF((this.Bounds.Size.Width * toastMaxWidth) - imageWidth, this.Bounds.Size.Height * toastMaxHeight)
+            let maxSizeTitle = new CGSize((this.Bounds.Size.Width * toastMaxWidth) - imageWidth, this.Bounds.Size.Height * toastMaxHeight)
             let expectedSizeTitle = sizeForString title titleLabel.Font maxSizeTitle titleLabel.LineBreakMode
-            titleLabel.Frame <- new RectangleF(0.0f, 0.0f, expectedSizeTitle.Width, expectedSizeTitle.Height)
+            titleLabel.Frame <- new CGRect(nfloat 0.0f, nfloat 0.0f, expectedSizeTitle.Width, expectedSizeTitle.Height)
 
         if message <> null then
             messageLabel <- new UILabel()
@@ -263,43 +263,43 @@ type UIView with
             messageLabel.LineBreakMode <- UILineBreakMode.WordWrap
             messageLabel.TextColor <- UIColor.White
             messageLabel.BackgroundColor <- UIColor.Clear
-            messageLabel.Alpha <- 1.0f
+            messageLabel.Alpha <- nfloat 1.0f
             messageLabel.Text <- message
             
             // size the message label according to the length of the text
-            let maxSizeMessage = new SizeF((this.Bounds.Size.Width * toastMaxWidth) - imageWidth, this.Bounds.Size.Height * toastMaxHeight)
+            let maxSizeMessage = new CGSize((this.Bounds.Size.Width * toastMaxWidth) - imageWidth, this.Bounds.Size.Height * toastMaxHeight)
             let expectedSizeMessage = sizeForString message messageLabel.Font maxSizeMessage messageLabel.LineBreakMode
-            messageLabel.Frame <- new RectangleF(0.0f, 0.0f, expectedSizeMessage.Width, expectedSizeMessage.Height)
+            messageLabel.Frame <- new CGRect(nfloat 0.0f, nfloat 0.0f, expectedSizeMessage.Width, expectedSizeMessage.Height)
         
         
         // titleLabel frame values
         let titleWidth, titleHeight, titleTop, titleLeft =
             match titleLabel with 
-            | null -> 0.0f, 0.0f, 0.0f, 0.0f
+            | null -> nfloat 0.0f, nfloat 0.0f, nfloat 0.0f, nfloat 0.0f
             | titleLabel -> titleLabel.Bounds.Size.Width, titleLabel.Bounds.Size.Height, toastVerticalPadding, imageLeft + imageWidth + toastHorizontalPadding
         
         
         // messageLabel frame values
         let messageWidth, messageHeight, messageLeft, messageTop =
             match messageLabel with
-            | null -> 0.0f,0.0f,0.0f,0.0f
+            | null -> nfloat 0.0f, nfloat 0.0f, nfloat 0.0f, nfloat 0.0f
             | messageLabel -> messageLabel.Bounds.Size.Width,messageLabel.Bounds.Size.Height,imageLeft + imageWidth + toastHorizontalPadding,titleTop + titleHeight + toastVerticalPadding
 
-        let longerWidth = Math.Max(titleWidth, messageWidth)
-        let longerLeft = Math.Max(titleLeft, messageLeft)
+        let longerWidth = max titleWidth messageWidth
+        let longerLeft = max titleLeft messageLeft
         
         // wrapper width uses the longerWidth or the image width, whatever is larger. same logic applies to the wrapper height
-        let wrapperWidth = Math.Max((imageWidth + (toastHorizontalPadding * 2.0f)), (longerLeft + longerWidth + toastHorizontalPadding))
-        let wrapperHeight = Math.Max((messageTop + messageHeight + toastVerticalPadding), (imageHeight + (toastVerticalPadding * 2.0f)))
+        let wrapperWidth = max (imageWidth + (toastHorizontalPadding * nfloat 2.0f)) (longerLeft + longerWidth + toastHorizontalPadding)
+        let wrapperHeight = max (messageTop + messageHeight + toastVerticalPadding) (imageHeight + (toastVerticalPadding * nfloat 2.0f))
                              
-        wrapperView.Frame <- new RectangleF(0.0f, 0.0f, wrapperWidth, wrapperHeight)
+        wrapperView.Frame <- new CGRect(nfloat 0.0f, nfloat 0.0f, wrapperWidth, wrapperHeight)
         
         if titleLabel <> null then
-            titleLabel.Frame <- new RectangleF(titleLeft, titleTop, titleWidth, titleHeight)
+            titleLabel.Frame <- new CGRect(titleLeft, titleTop, titleWidth, titleHeight)
             wrapperView.AddSubview titleLabel
         
         if messageLabel <> null then
-            messageLabel.Frame <- new RectangleF(messageLeft, messageTop, messageWidth, messageHeight)
+            messageLabel.Frame <- new CGRect(messageLeft, messageTop, messageWidth, messageHeight)
             wrapperView.AddSubview messageLabel
         
         if imageView <> null then

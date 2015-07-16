@@ -1,150 +1,91 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">iPhoneSimulator</Platform>
+    <ProjectTypeGuids>{FEACFBD2-3405-455C-9665-78FE426C6842};{F2A71F9B-5D33-465A-A702-920D77279786}</ProjectTypeGuids>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{86B121C0-1F33-4E4A-B684-04EFD9E7CE78}</ProjectGuid>
-    <ProjectTypeGuids>{6BC8ED88-2882-458C-8E55-DFD12B67127B};{F2A71F9B-5D33-465A-A702-920D77279786}</ProjectTypeGuids>
     <OutputType>Exe</OutputType>
     <RootNamespace>Wireclub.iOS</RootNamespace>
     <IPhoneResourcePrefix>Resources</IPhoneResourcePrefix>
-    <AssemblyName>WireclubiOS</AssemblyName>
+    <AssemblyName>Wireclub.iOS</AssemblyName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|iPhoneSimulator' ">
     <DebugSymbols>true</DebugSymbols>
+    <Optimize>false</Optimize>
     <OutputPath>bin\iPhoneSimulator\Debug</OutputPath>
-    <DefineConstants>DEBUG;__MOBILE__;__IOS__</DefineConstants>
+    <DefineConstants>DEBUG</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
-    <MtouchDebug>true</MtouchDebug>
+    <MtouchArch>i386</MtouchArch>
     <MtouchLink>None</MtouchLink>
+    <MtouchDebug>true</MtouchDebug>
+    <ConsolePause>false</ConsolePause>
     <PlatformTarget>
     </PlatformTarget>
-    <ConsolePause>false</ConsolePause>
-    <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
-    <MtouchI18n>
-    </MtouchI18n>
-    <MtouchArch>ARMv7</MtouchArch>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|iPhone' ">
+    <DebugSymbols>false</DebugSymbols>
     <Optimize>true</Optimize>
+    <OutputPath>bin\iPhone\Release</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <GenerateTailCalls>true</GenerateTailCalls>
+    <MtouchArch>ARMv7, ARM64</MtouchArch>
+    <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
+    <CodesignKey>iPhone Developer</CodesignKey>
+    <ConsolePause>false</ConsolePause>
+    <PlatformTarget>
+    </PlatformTarget>
+    <DefineConstants>
+    </DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|iPhoneSimulator' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>pdbonly</DebugType>
+    <DebugSymbols>false</DebugSymbols>
     <Optimize>true</Optimize>
     <OutputPath>bin\iPhoneSimulator\Release</OutputPath>
-    <DefineConstants>__MOBILE__;__IOS__</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
+    <GenerateTailCalls>true</GenerateTailCalls>
+    <MtouchArch>i386</MtouchArch>
+    <MtouchLink>None</MtouchLink>
+    <ConsolePause>false</ConsolePause>
     <PlatformTarget>
     </PlatformTarget>
-    <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
-    <ConsolePause>false</ConsolePause>
-    <Tailcalls>true</Tailcalls>
-    <MtouchLink>None</MtouchLink>
-    <MtouchI18n>
-    </MtouchI18n>
-    <MtouchArch>ARMv7</MtouchArch>
+    <DefineConstants>
+    </DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|iPhone' ">
     <DebugSymbols>true</DebugSymbols>
+    <Optimize>false</Optimize>
     <OutputPath>bin\iPhone\Debug</OutputPath>
-    <DefineConstants>DEBUG;__MOBILE__;__IOS__;__IOS_DEVICE__</DefineConstants>
+    <DefineConstants>DEBUG</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
-    <CodesignKey>iPhone Developer</CodesignKey>
+    <MtouchArch>ARMv7, ARM64</MtouchArch>
     <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
-    <PlatformTarget>
-    </PlatformTarget>
-    <ConsolePause>false</ConsolePause>
     <MtouchDebug>true</MtouchDebug>
-    <IpaPackageName>
-    </IpaPackageName>
-    <MtouchI18n>
-    </MtouchI18n>
-    <MtouchArch>ARMv7</MtouchArch>
-    <MtouchLink>None</MtouchLink>
-    <MtouchExtraArgs>--registrar:oldstatic</MtouchExtraArgs>
-    <MtouchSdkVersion>8.4</MtouchSdkVersion>
-    <Optimize>true</Optimize>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|iPhone' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\iPhone\Release</OutputPath>
-    <DefineConstants>__MOBILE__;__IOS__</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <PlatformTarget>
-    </PlatformTarget>
     <CodesignKey>iPhone Developer</CodesignKey>
     <ConsolePause>false</ConsolePause>
-    <Tailcalls>true</Tailcalls>
-    <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
-    <IpaPackageName>
-    </IpaPackageName>
-    <MtouchI18n>
-    </MtouchI18n>
-    <MtouchArch>ARMv7</MtouchArch>
-    <MtouchExtraArgs>--registrar:oldstatic</MtouchExtraArgs>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Ad-Hoc|iPhone' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\iPhone\Ad-Hoc</OutputPath>
-    <DefineConstants>__MOBILE__;__IOS__</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <Tailcalls>true</Tailcalls>
-    <ConsolePause>false</ConsolePause>
-    <CodesignKey>iPhone Distribution</CodesignKey>
     <PlatformTarget>
     </PlatformTarget>
-    <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
-    <CodesignProvision>Automatic:AdHoc</CodesignProvision>
-    <BuildIpa>true</BuildIpa>
-    <IpaPackageName>
-    </IpaPackageName>
-    <MtouchI18n>
-    </MtouchI18n>
-    <MtouchArch>ARMv7</MtouchArch>
-    <MtouchExtraArgs>--registrar:oldstatic</MtouchExtraArgs>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'AppStore|iPhone' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\iPhone\AppStore</OutputPath>
-    <DefineConstants>__MOBILE__;__IOS__</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <Tailcalls>true</Tailcalls>
-    <ConsolePause>false</ConsolePause>
-    <CodesignKey>iPhone Distribution</CodesignKey>
-    <PlatformTarget>
-    </PlatformTarget>
-    <CodesignProvision>Automatic:AppStore</CodesignProvision>
-    <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
-    <MtouchExtraArgs>--registrar:oldstatic</MtouchExtraArgs>
-    <MtouchI18n>
-    </MtouchI18n>
-    <MtouchArch>ARMv7</MtouchArch>
-    <IpaPackageName>
-    </IpaPackageName>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Core" />
-    <Reference Include="monotouch" />
+    <Reference Include="mscorlib" />
+    <Reference Include="FSharp.Core" />
+    <Reference Include="Xamarin.iOS" />
+    <Reference Include="SQLite">
+      <HintPath>..\Components\sqlite-net-1.0.8.3\lib\ios-unified\SQLite.dll</HintPath>
+    </Reference>
     <Reference Include="Newtonsoft.Json">
-      <HintPath>..\lib\Newtonsoft.Json.dll</HintPath>
+      <HintPath>..\packages\Newtonsoft.Json.6.0.8\lib\portable-net40+sl5+wp80+win8+wpa81\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="Xamarin.Mobile">
+      <HintPath>..\Components\xamarin.mobile-0.7.6\lib\ios-unified\Xamarin.Mobile.dll</HintPath>
     </Reference>
     <Reference Include="System.Web.Services" />
-    <Reference Include="Xamarin.Mobile">
-      <HintPath>..\Components\xamarin.mobile-0.7.1\lib\ios\Xamarin.Mobile.dll</HintPath>
-    </Reference>
     <Reference Include="System.Net.Http" />
-    <Reference Include="SQLite">
-      <HintPath>..\Components\sqlite-net-1.0.8.3\lib\ios\SQLite.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Resources\" />
@@ -154,6 +95,7 @@
     <None Include="Info.plist" />
     <None Include="Entitlements.plist" />
     <None Include="RELEASE-NOTES.txt" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Reachability.fs" />
@@ -173,8 +115,6 @@
     <Compile Include="Home.fs" />
     <Compile Include="AppDelegate.fs" />
   </ItemGroup>
-  <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" />
-  <Import Project="$(MSBuildExtensionsPath)\Xamarin\iOS\Xamarin.MonoTouch.CSharp.targets" />
   <ItemGroup>
     <InterfaceDefinition Include="..\Views\FriendsViewController.xib">
       <Link>Resources\FriendsViewController.xib</Link>
@@ -332,28 +272,33 @@
     <ImageAsset Include="Resources\Images.xcassets\AppIcons.appiconset\Icon-Small-50%402x.png" />
     <ImageAsset Include="Resources\Images.xcassets\AppIcons.appiconset\Icon-Small-50.png" />
   </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath)\Xamarin\iOS\Xamarin.iOS.FSharp.targets" />
   <ItemGroup>
-    <XamarinComponentReference Include="xamarin.mobile">
-      <Version>0.7.1</Version>
-      <Visible>False</Visible>
-    </XamarinComponentReference>
+    <ProjectReference Include="..\..\wireclub.boundary\Wireclub.Boundary\Wireclub.Boundary.iOS.fsproj">
+      <Project>{EBCF5823-4CD0-42FE-A98E-017CD761B7B7}</Project>
+      <Name>Wireclub.Boundary.iOS</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\wireclub.appclient\Wireclub.AppClient\Wireclub.AppClient.iOS.fsproj">
+      <Project>{A2B22EA9-E692-44AA-A8F5-3007431ED07B}</Project>
+      <Name>Wireclub.AppClient.iOS</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\websocket-sharp\websocket-sharp\websocket-sharp-ios.csproj">
+      <Project>{D476C912-8459-4A6B-AA01-CE3EFDD89CFF}</Project>
+      <Name>websocket-sharp-ios</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
     <XamarinComponentReference Include="sqlite-net">
       <Version>1.0.8.3</Version>
       <Visible>False</Visible>
     </XamarinComponentReference>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\wireclub.appclient\Wireclub.AppClient\Wireclub.AppClient.iOS.fsproj">
-      <Project>{0AA0452B-6D60-4FA3-A54C-0BAF2A672111}</Project>
-      <Name>Wireclub.AppClient.iOS</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\wireclub.boundary\Wireclub.Boundary\Wireclub.Boundary.iOS.fsproj">
-      <Project>{F83837F7-71B9-4EEB-85B8-276B8767DA2B}</Project>
-      <Name>Wireclub.Boundary.iOS</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <ITunesArtwork Include="iTunesArtwork" />
-    <ITunesArtwork Include="iTunesArtwork%402x" />
+    <XamarinComponentReference Include="json.net">
+      <Version>6.0.8.1</Version>
+      <Visible>False</Visible>
+    </XamarinComponentReference>
+    <XamarinComponentReference Include="xamarin.mobile">
+      <Version>0.7.6</Version>
+      <Visible>False</Visible>
+    </XamarinComponentReference>
   </ItemGroup>
 </Project>

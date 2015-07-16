@@ -5,8 +5,8 @@
 // Manual changes to this file will not be maintained.
 //
 using System;
-using MonoTouch.Foundation;
-using MonoTouch.UIKit;
+using Foundation;
+using UIKit;
 using System.CodeDom.Compiler;
 
 namespace Views
@@ -15,34 +15,34 @@ namespace Views
 	partial class EditProfileViewController
 	{
 		[Outlet]
-		MonoTouch.UIKit.UITextView About { get; set; }
+		UIKit.UITextView About { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField Birthday { get; set; }
+		UIKit.UITextField Birthday { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField City { get; set; }
+		UIKit.UITextField City { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField Country { get; set; }
+		UIKit.UITextField Country { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UISegmentedControl GenderSelect { get; set; }
+		UIKit.UISegmentedControl GenderSelect { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UIImageView ProfileImage { get; set; }
+		UIKit.UIImageView ProfileImage { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UIActivityIndicatorView ProfileImageProgress { get; set; }
+		UIKit.UIActivityIndicatorView ProfileImageProgress { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField Region { get; set; }
+		UIKit.UITextField Region { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UIButton SaveButton { get; set; }
+		UIKit.UIButton SaveButton { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField Username { get; set; }
+		UIKit.UITextField Username { get; set; }
 
 		void ReleaseDesignerOutlets ()
 		{

@@ -5,8 +5,8 @@
 // Manual changes to this file will not be maintained.
 //
 using System;
-using MonoTouch.Foundation;
-using MonoTouch.UIKit;
+using Foundation;
+using UIKit;
 using System.CodeDom.Compiler;
 
 namespace Views
@@ -15,31 +15,31 @@ namespace Views
 	partial class PrivacyOptionsViewController
 	{
 		[Outlet]
-		MonoTouch.UIKit.UITextField Contact { get; set; }
+		UIKit.UITextField Contact { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField InviteGames { get; set; }
+		UIKit.UITextField InviteGames { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UISwitch OptOut { get; set; }
+		UIKit.UISwitch OptOut { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UISwitch PictureRankings { get; set; }
+		UIKit.UISwitch PictureRankings { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField PrivateChat { get; set; }
+		UIKit.UITextField PrivateChat { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UIButton Save { get; set; }
+		UIKit.UIButton Save { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField ViewBlog { get; set; }
+		UIKit.UITextField ViewBlog { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField ViewPictures { get; set; }
+		UIKit.UITextField ViewPictures { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField ViewProfile { get; set; }
+		UIKit.UITextField ViewProfile { get; set; }
 
 		void ReleaseDesignerOutlets ()
 		{

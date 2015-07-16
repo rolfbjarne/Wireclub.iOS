@@ -5,8 +5,8 @@
 // Manual changes to this file will not be maintained.
 //
 using System;
-using MonoTouch.Foundation;
-using MonoTouch.UIKit;
+using Foundation;
+using UIKit;
 using System.CodeDom.Compiler;
 
 namespace Views
@@ -15,7 +15,7 @@ namespace Views
 	partial class UserBlogViewController
 	{
 		[Outlet]
-		MonoTouch.UIKit.UIWebView WebView { get; set; }
+		UIKit.UIWebView WebView { get; set; }
 
 		void ReleaseDesignerOutlets ()
 		{

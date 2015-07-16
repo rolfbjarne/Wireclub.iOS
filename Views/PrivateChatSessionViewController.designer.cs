@@ -4,7 +4,7 @@
 // actions made in the UI designer. If it is removed, they will be lost.
 // Manual changes to this file may not be handled correctly.
 //
-using MonoTouch.Foundation;
+using Foundation;
 using System.CodeDom.Compiler;
 
 namespace Views
@@ -13,16 +13,16 @@ namespace Views
 	partial class PrivateChatSessionViewController
 	{
 		[Outlet]
-		MonoTouch.UIKit.UIActivityIndicatorView Progress { get; set; }
+		UIKit.UIActivityIndicatorView Progress { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UIButton SendButton { get; set; }
+		UIKit.UIButton SendButton { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField Text { get; set; }
+		UIKit.UITextField Text { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UIWebView WebView { get; set; }
+		UIKit.UIWebView WebView { get; set; }
 		
 		void ReleaseDesignerOutlets ()
 		{

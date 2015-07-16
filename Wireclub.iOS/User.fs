@@ -3,12 +3,14 @@
 namespace Wireclub.iOS
 
 open System
-open System.Drawing
 open System.Threading
 open System.Collections.Generic
 open System.Collections.Concurrent
-open MonoTouch.Foundation
-open MonoTouch.UIKit
+
+open CoreGraphics
+open Foundation
+open UIKit
+
 open Wireclub.Boundary
 open Wireclub.Boundary.Chat
 open Wireclub.Boundary.Models
@@ -133,7 +135,7 @@ type UserViewController (handle:nativeint) =
     [<Outlet>]
     member val LocationLabel: UILabel = null with get, set
 
-    static member val Placeholder = lazy Image.resize (new SizeF (320.0f, 320.0f)) Image.placeholder
+    static member val Placeholder = lazy Image.resize (new CGSize (nfloat 320.0f, nfloat 320.0f)) Image.placeholder
 
     override this.ViewDidLoad () =
         base.ViewDidLoad ()
@@ -148,7 +150,7 @@ type UserViewController (handle:nativeint) =
                 let imageView = new UIImageView(image)
                 for view in this.ImageView.Subviews do view.RemoveFromSuperview ()
                 this.ImageView.Add imageView
-                this.TableView.ReloadRows([| NSIndexPath.FromRowSection(0, 0) |], UITableViewRowAnimation.None)
+                this.TableView.ReloadRows([| NSIndexPath.FromRowSection(nint 0, nint 0) |], UITableViewRowAnimation.None)
             )
 
             this.TableView.ReloadData()
@@ -164,7 +166,7 @@ type UserViewController (handle:nativeint) =
                     alert.AddButton verb |> ignore
                     alert.Show ()
                     alert.Dismissed.Add(fun args ->
-                        match args.ButtonIndex with
+                        match int args.ButtonIndex with
                         | 1 -> 
                             Async.startNetworkWithContinuation
                                 computation
@@ -248,12 +250,12 @@ type UserViewController (handle:nativeint) =
         | _ -> failwith "No user"
 
     override this.GetHeightForHeader (tableView, index) =
-        match index with
-        | 0 -> 64.0f
+        match int index with
+        | 0 -> nfloat 64.0f
         | _-> tableView.SectionHeaderHeight
 
     override this.GetHeightForRow(tableView, indexPath) =
         match indexPath.Section, indexPath.Row with
-        | 0, 0 -> match image with | null -> 320.f | image -> image.Size.Height
-        | 1, _ when isSelf -> 0.0f //HACK does not look good with the single bar but simpler than any other solution I found to hiding these rows
+        | 0, 0 -> match image with | null -> nfloat 320.f | image -> image.Size.Height
+        | 1, _ when isSelf -> nfloat 0.0f //HACK does not look good with the single bar but simpler than any other solution I found to hiding these rows
         | _ -> tableView.RowHeight

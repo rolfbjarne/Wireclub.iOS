@@ -5,12 +5,11 @@ namespace Wireclub.iOS
 open System
 open System.Text.RegularExpressions
 open System.Linq
-open System.Drawing
 open System.Globalization
-open System.Web
 
-open MonoTouch.Foundation
-open MonoTouch.UIKit
+open Foundation
+open UIKit
+open CoreGraphics
 
 open Wireclub.Models
 open Wireclub.Boundary
@@ -42,8 +41,8 @@ type ChatsViewController (rootController:RootViewContoller) as controller =
          
     let mutable (chats:DB.ChatHistory[]) = [| |]
 
-    let readColor = new UIColor(0.3f, 0.3f, 0.3f, 1.0f)
-    let unreadColor = new UIColor(0.0f, 0.0f, 0.0f, 1.0f)
+    let readColor = new UIColor(nfloat 0.3f, nfloat 0.3f, nfloat 0.3f, nfloat 1.0f)
+    let unreadColor = new UIColor(nfloat 0.0f, nfloat 0.0f, nfloat 0.0f, nfloat 1.0f)
     let mutable loaded = false
 
     let tableSource = { 
@@ -68,7 +67,7 @@ type ChatsViewController (rootController:RootViewContoller) as controller =
                     | null -> new UITableViewCell (UITableViewCellStyle.Subtitle, "chat-cell")
                     | c -> c
                 
-                cell.Tag <- indexPath.Row
+                cell.Tag <- nint indexPath.Row
                 match chat.Type with
                 | DB.ChatHistoryType.PrivateChat
                 | DB.ChatHistoryType.ChatRoom
@@ -84,8 +83,8 @@ type ChatsViewController (rootController:RootViewContoller) as controller =
 
         override this.RowsInSection(tableView, section) =
             match chats with
-            | [||] when loaded -> 1
-            | _ -> chats.Length
+            | [||] when loaded -> nint 1
+            | _ -> nint chats.Length
 
         override this.GetHeightForRow(tableView, index) =
             match chats with
@@ -196,7 +195,7 @@ type ChatDirectoryViewController(rootController:RootViewContoller) as controller
     let mutable directory:ChatDirectoryViewModel option = None
     let rooms () = 
         let rooms =
-            match directory, controller.RoomFilter.SelectedSegment with
+            match directory, int controller.RoomFilter.SelectedSegment with
             | Some directory, 0 -> directory.Official 
             | Some directory, 1 -> directory.Member
             | Some directory, 2 -> directory.Games
@@ -216,7 +215,7 @@ type ChatDirectoryViewController(rootController:RootViewContoller) as controller
                 | null -> new UITableViewCell (UITableViewCellStyle.Subtitle, "room-cell")
                 | c -> c
 
-            cell.Tag <- indexPath.Row
+            cell.Tag <- nint indexPath.Row
             cell.TextLabel.Text <- room.Name
             cell.DetailTextLabel.Text <- room.Description
             cell.DetailTextLabel.TextColor <- UIColor.Gray
@@ -224,7 +223,7 @@ type ChatDirectoryViewController(rootController:RootViewContoller) as controller
             cell
 
         override this.RowsInSection(tableView, section) =
-            rooms().Length
+            nint (rooms().Length)
 
         override this.RowSelected(tableView, indexPath) =
             tableView.DeselectRow (indexPath, false)
@@ -258,7 +257,7 @@ type ChatDirectoryViewController(rootController:RootViewContoller) as controller
         this.ContentView.AddSubview tableController.View
         this.RoomFilter.ValueChanged.Add(fun args -> tableController.TableView.ReloadData () )
 
-        tableController.View.Frame <- new RectangleF(0.f, 0.f, this.ContentView.Frame.Width, this.ContentView.Frame.Height)
+        tableController.View.Frame <- new CGRect(nfloat 0.f, nfloat 0.f, this.ContentView.Frame.Width, this.ContentView.Frame.Height)
         tableController.TableView.Source <- tableSource
         tableController.RefreshControl <- new UIRefreshControl()
         tableController.RefreshControl.ValueChanged.Add(fun _ -> refresh tableController)
@@ -293,7 +292,7 @@ type FriendsViewController (rootController:RootViewContoller) as controller =
                     | null -> new UITableViewCell (UITableViewCellStyle.Subtitle, "friend-cell")
                     | c -> c
                 
-                cell.Tag <- indexPath.Row
+                cell.Tag <- nint indexPath.Row
                 cell.TextLabel.Text <- friend.Name
                 match friend.State with
                 | OnlineStateType.Idle -> 
@@ -315,8 +314,8 @@ type FriendsViewController (rootController:RootViewContoller) as controller =
 
         override this.RowsInSection(tableView, section) =
             match friends with
-            | [||] when loaded -> 1
-            | _ -> friends.Length
+            | [||] when loaded -> nint 1
+            | _ -> nint friends.Length
 
         override this.GetHeightForRow(tableView, index) =
             match friends with
@@ -370,7 +369,7 @@ type FriendsViewController (rootController:RootViewContoller) as controller =
         this.AddChildViewController tableController
         this.ContentView.AddSubview tableController.View
 
-        tableController.View.Frame <- new RectangleF(0.f, 0.f, this.ContentView.Frame.Width, this.ContentView.Frame.Height)
+        tableController.View.Frame <- new CGRect(nfloat 0.f, nfloat 0.f, this.ContentView.Frame.Width, this.ContentView.Frame.Height)
         tableController.TableView.Source <- tableSource
         tableController.RefreshControl <- new UIRefreshControl()
         tableController.RefreshControl.ValueChanged.Add(fun _ -> refresh tableController)

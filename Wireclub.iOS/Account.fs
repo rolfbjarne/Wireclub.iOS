@@ -4,11 +4,11 @@ namespace Wireclub.iOS
 
 open System
 open System.Linq
-open System.Drawing
 open System.Globalization
 
-open MonoTouch.Foundation
-open MonoTouch.UIKit
+open Foundation
+open UIKit
+open CoreGraphics
 
 open Wireclub.Models
 open Wireclub.Boundary
@@ -31,7 +31,7 @@ type ForgotPasswordViewController (handle:nativeint) =
     override this.ViewDidLoad () =
         this.NavigationItem.Title <- "Forgot Password"
         this.NavigationItem.LeftBarButtonItem <- new UIBarButtonItem("Cancel", UIBarButtonItemStyle.Plain, new EventHandler(fun (s:obj) (e:EventArgs) -> 
-            this.NavigationController.PopViewControllerAnimated (true) |> ignore
+            this.NavigationController.PopViewController (true) |> ignore
         ))
         this.SubmitButton.TouchUpInside.Add(fun _ ->
             //TODO Make this work with recaptcha
@@ -75,7 +75,7 @@ type EditProfileViewController (handle:nativeint) as controller =
     let identity = match Api.userIdentity with | Some id -> id | None -> failwith "User must be logged in"
 
     let pickerMedia = new MediaPicker()
-    let pickerDate = new UIDatePicker(new RectangleF(0.0f,0.0f,320.0f,216.0f))
+    let pickerDate = new UIDatePicker(new CGRect(nfloat 0.0f, nfloat 0.0f, nfloat 320.0f, nfloat 216.0f))
     let accessoryBirthday =
         new NavigateInputAccessoryViewController(
             (fun _ -> controller.Country.BecomeFirstResponder() |> ignore),
@@ -95,11 +95,11 @@ type EditProfileViewController (handle:nativeint) as controller =
     let sourceCountry =
         { 
             new UIPickerViewModel() with
-            override this.GetRowsInComponent(pickerView, comp) = countries.Length
-            override this.GetComponentCount(pickerView) = 1
-            override this.GetTitle(pickerView, row, comp) = countries.[row].Name
+            override this.GetRowsInComponent(pickerView, comp) = nint countries.Length
+            override this.GetComponentCount(pickerView) = nint 1
+            override this.GetTitle(pickerView, row, comp) = countries.[int row].Name
             override this.Selected(pickerView, row, comp) =
-                country <- Some countries.[row]
+                country <- Some countries.[int row]
                 controller.Country.Text <- country.Value.Name
         }
 
@@ -116,11 +116,11 @@ type EditProfileViewController (handle:nativeint) as controller =
     let sourceRegion =
         { 
             new UIPickerViewModel() with
-            override this.GetRowsInComponent(pickerView, comp) = regions.Length
-            override this.GetComponentCount(pickerView) = 1
-            override this.GetTitle(pickerView, row, comp) = regions.[row].Name
+            override this.GetRowsInComponent(pickerView, comp) = nint regions.Length
+            override this.GetComponentCount(pickerView) = nint 1
+            override this.GetTitle(pickerView, row, comp) = regions.[int row].Name
             override this.Selected(pickerView, row, comp) =
-                region <- Some regions.[row]
+                region <- Some regions.[int row]
                 controller.Region.Text <- region.Value.Name
         }
 
@@ -164,12 +164,12 @@ type EditProfileViewController (handle:nativeint) as controller =
         this.NavigationItem.HidesBackButton <- identity.Membership = MembershipTypePublic.Pending
 
         // Birthday picker
-        pickerDate.MinimumDate <-  NSDate.op_Implicit (DateTime.UtcNow.AddYears(-120))
-        pickerDate.MaximumDate <- NSDate.op_Implicit (DateTime.UtcNow.AddYears(-13))
-        pickerDate.Date <- NSDate.op_Implicit (DateTime.UtcNow.AddYears(-100))
+        pickerDate.MinimumDate <-  NSDate.op_Explicit (DateTime.UtcNow.AddYears(-120))
+        pickerDate.MaximumDate <- NSDate.op_Explicit (DateTime.UtcNow.AddYears(-13))
+        pickerDate.Date <- NSDate.op_Explicit (DateTime.UtcNow.AddYears(-100))
         pickerDate.Mode <- UIDatePickerMode.Date
         pickerDate.ValueChanged.Add(fun _ ->
-            let value = NSDate.op_Implicit pickerDate.Date
+            let value = NSDate.op_Explicit pickerDate.Date
             this.Birthday.Text <- value.ToString("M/d/yyyy")
         )
         this.Birthday.InputView <- keyboardFrom pickerDate accessoryBirthday.View 
@@ -177,7 +177,7 @@ type EditProfileViewController (handle:nativeint) as controller =
         this.Birthday.EditingDidBegin.Add(fun _ ->
             if String.IsNullOrEmpty(this.Birthday.Text.Trim()) = false then
                 pickerDate.Date <-
-                    NSDate.op_Implicit (
+                    NSDate.op_Explicit (
                         match DateTime.TryParse(this.Birthday.Text) with
                         | true, date -> date
                         | _ -> defaultDate)
@@ -199,7 +199,7 @@ type EditProfileViewController (handle:nativeint) as controller =
                         match country with
                         | Some country ->
                             match countries |> Array.tryFindIndex (fun c -> c.Id = country.Id) with
-                            | Some index -> pickerCountry.Picker.Select(index, 0, false)
+                            | Some index -> pickerCountry.Picker.Select(nint index, nint 0, false)
                             | _ -> ()
                         | _ -> ()
                     | error ->
@@ -227,7 +227,7 @@ type EditProfileViewController (handle:nativeint) as controller =
                             | _, [||] -> ()
                             | Some region, regions ->
                                 match regions |> Array.tryFindIndex (fun r -> r.Id = region.Id) with
-                                | Some index -> pickerRegion.Picker.Select(index, 0, false)
+                                | Some index -> pickerRegion.Picker.Select(nint index, nint 0, false)
                                 | _ -> ()
                             | _ -> ()
                         | error ->
@@ -255,7 +255,7 @@ type EditProfileViewController (handle:nativeint) as controller =
             Async.startNetworkWithContinuation
                 (Settings.updateProfile
                     (this.Username.Text.Trim())
-                    (match this.GenderSelect.SelectedSegment with | 0 -> GenderType.Male | 1 -> GenderType.Female | _ -> GenderType.Undefined)
+                    (match int this.GenderSelect.SelectedSegment with | 0 -> GenderType.Male | 1 -> GenderType.Female | _ -> GenderType.Undefined)
                     (match DateTime.TryParse(this.Birthday.Text) with | true, date -> date | _ -> defaultDate)
                     (match country with | Some country -> country.Id | None _ -> String.Empty)
                     (match region with | Some region -> region.Name | None _ -> String.Empty)
@@ -303,8 +303,8 @@ type EditProfileViewController (handle:nativeint) as controller =
 
                     this.GenderSelect.SelectedSegment <-
                         match profile.Gender with
-                        | GenderType.Female -> 1
-                        | _ -> 0
+                        | GenderType.Female -> nint 1
+                        | _ -> nint 0
 
                     this.Birthday.Text <- profile.Birthday.ToString("M/d/yyyy")
 
@@ -329,9 +329,9 @@ type EditProfileViewController (handle:nativeint) as controller =
 
     override this.GetHeightForRow (tableView, indexPath) =
         match indexPath.Section, indexPath.Row with
-        | 0, 0 -> 74.0f
-        | 1, 0 -> if identity.Membership = MembershipTypePublic.Pending then tableView.RowHeight else 0.0f
-        | 3, 0 -> 74.0f
+        | 0, 0 -> nfloat 74.0f
+        | 1, 0 -> if identity.Membership = MembershipTypePublic.Pending then tableView.RowHeight else nfloat 0.0f
+        | 3, 0 -> nfloat 74.0f
         | _ -> tableView.RowHeight
 
 
@@ -390,7 +390,7 @@ type EditProfileViewController (handle:nativeint) as controller =
                         (fun exCancel -> controller.DismissViewController (true, fun _ -> ()))
                     )
 
-                match args.ButtonIndex with
+                match int args.ButtonIndex with
                 | 0 -> pickerMedia.GetPickPhotoUI() |> updateAvatar
                 | 1 -> pickerMedia.GetTakePhotoUI (new StoreCameraMediaOptions(Name = sprintf "%s.jpg" (System.IO.Path.GetTempFileName()), Directory = "Wireclub")) |> updateAvatar
                 | _ -> ()
@@ -414,7 +414,7 @@ type SignupViewController (handle:nativeint) as controller =
                 | Api.ApiOk result ->
                     NSUserDefaults.StandardUserDefaults.SetString (result.Token, "auth-token")
                     NSUserDefaults.StandardUserDefaults.Synchronize () |> ignore
-                    controller.NavigationController.PushViewController (editProfileStoryboard.InstantiateInitialViewController() :?> UIViewController, true)
+                    controller.NavigationController.PushViewController (editProfileStoryboard.InstantiateInitialViewController(), true)
                 | error -> controller.HandleApiFailure error
             )
 
@@ -428,7 +428,7 @@ type SignupViewController (handle:nativeint) as controller =
     override this.ViewDidLoad () =
         this.NavigationItem.Title <- "Join"
         this.NavigationItem.LeftBarButtonItem <- new UIBarButtonItem("Cancel", UIBarButtonItemStyle.Plain, new EventHandler(fun (s:obj) (e:EventArgs) -> 
-            this.NavigationController.PopViewControllerAnimated (true) |> ignore
+            this.NavigationController.PopViewController(true) |> ignore
         ))
 
         this.Email.EditingDidEndOnExit.Add(fun _-> this.Password.BecomeFirstResponder() |> ignore )
@@ -458,7 +458,7 @@ type LoginViewController (handle:nativeint) as controller =
                     controller.Password.Text <- String.Empty
                     NSUserDefaults.StandardUserDefaults.SetString (result.Token, "auth-token")
                     NSUserDefaults.StandardUserDefaults.Synchronize () |> ignore
-                    controller.NavigationController.PopViewControllerAnimated true |> ignore
+                    controller.NavigationController.PopViewController true |> ignore
                 | error -> controller.HandleApiFailure error
             )
 

@@ -5,8 +5,8 @@
 // Manual changes to this file will not be maintained.
 //
 using System;
-using MonoTouch.Foundation;
-using MonoTouch.UIKit;
+using Foundation;
+using UIKit;
 using System.CodeDom.Compiler;
 
 namespace Views
@@ -15,22 +15,22 @@ namespace Views
 	partial class ChatOptionsViewController
 	{
 		[Outlet]
-		MonoTouch.UIKit.UITextField Color { get; set; }
+		UIKit.UITextField Color { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField Font { get; set; }
+		UIKit.UITextField Font { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UISwitch PlaySounds { get; set; }
+		UIKit.UISwitch PlaySounds { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UIButton Save { get; set; }
+		UIKit.UIButton Save { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UISwitch ShowAdultContent { get; set; }
+		UIKit.UISwitch ShowAdultContent { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField ShowJoinLeave { get; set; }
+		UIKit.UITextField ShowJoinLeave { get; set; }
 
 		void ReleaseDesignerOutlets ()
 		{

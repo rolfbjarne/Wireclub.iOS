@@ -5,8 +5,8 @@
 // Manual changes to this file will not be maintained.
 //
 using System;
-using MonoTouch.Foundation;
-using MonoTouch.UIKit;
+using Foundation;
+using UIKit;
 using System.CodeDom.Compiler;
 
 namespace Views
@@ -15,19 +15,19 @@ namespace Views
 	partial class LoginViewController
 	{
 		[Outlet]
-		MonoTouch.UIKit.UIButton CreateAccountButton { get; set; }
+		UIKit.UIButton CreateAccountButton { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField Email { get; set; }
+		UIKit.UITextField Email { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UIButton ForgotPasswordButton { get; set; }
+		UIKit.UIButton ForgotPasswordButton { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UIButton LoginButton { get; set; }
+		UIKit.UIButton LoginButton { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField Password { get; set; }
+		UIKit.UITextField Password { get; set; }
 
 		void ReleaseDesignerOutlets ()
 		{

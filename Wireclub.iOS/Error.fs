@@ -7,10 +7,9 @@ open System.Text.RegularExpressions
 open System.Linq
 open System.Drawing
 open System.Globalization
-open System.Web
 
-open MonoTouch.Foundation
-open MonoTouch.UIKit
+open Foundation
+open UIKit
 
 open Wireclub.Models
 open Wireclub.Boundary

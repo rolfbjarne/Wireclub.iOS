@@ -3,8 +3,8 @@
 namespace Wireclub.iOS
 
 open System
-open MonoTouch.Foundation
-open MonoTouch.UIKit
+open Foundation
+open UIKit
 
 [<Register ("DialogViewController")>]
 type DialogViewController (url:string) =

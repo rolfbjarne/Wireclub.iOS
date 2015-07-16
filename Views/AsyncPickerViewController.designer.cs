@@ -4,7 +4,7 @@
 // actions made in the UI designer. If it is removed, they will be lost.
 // Manual changes to this file may not be handled correctly.
 //
-using MonoTouch.Foundation;
+using Foundation;
 using System.CodeDom.Compiler;
 
 namespace Views
@@ -13,10 +13,10 @@ namespace Views
 	partial class AsyncPickerViewController
 	{
 		[Outlet]
-		MonoTouch.UIKit.UIPickerView Picker { get; set; }
+		UIKit.UIPickerView Picker { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UIActivityIndicatorView Progress { get; set; }
+		UIKit.UIActivityIndicatorView Progress { get; set; }
 		
 		void ReleaseDesignerOutlets ()
 		{

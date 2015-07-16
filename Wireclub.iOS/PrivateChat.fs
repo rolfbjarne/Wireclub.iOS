@@ -9,8 +9,8 @@ open System.Collections.Concurrent
 open System.Collections.Generic
 open System.Text.RegularExpressions
 
-open MonoTouch.Foundation
-open MonoTouch.UIKit
+open Foundation
+open UIKit
 
 open Wireclub.Models
 open Wireclub.Boundary 
@@ -55,11 +55,11 @@ type PrivateChatSessionViewController (user:Entity) as this =
     let viewerLine payload color font = line "viewer" (nameplate identity.Slug identity.Avatar) (message color font (sanitize payload)) 
 
     let addLine line forceScroll =
-        this.WebView.EvaluateJavascript(sprintf "wireclub.Mobile.addLine(%s)" (Newtonsoft.Json.JsonConvert.SerializeObject { Line = line })) |> ignore
+        this.WebView.EvaluateJavascript(sprintf "wireclub.Mobile.addLine(%s)" (JsonConvert.SerializeObject { Line = line })) |> ignore
         this.WebView.EvaluateJavascript (sprintf "wireclub.Mobile.scrollToEnd(%b);" forceScroll) |> ignore
 
     let addLines lines =
-        this.WebView.EvaluateJavascript(sprintf "wireclub.Mobile.addLines(%s)" (Newtonsoft.Json.JsonConvert.SerializeObject (lines |> Array.map (fun e -> { Line = e })))) |> ignore
+        this.WebView.EvaluateJavascript(sprintf "wireclub.Mobile.addLines(%s)" (JsonConvert.SerializeObject (lines |> Array.map (fun e -> { Line = e })))) |> ignore
         this.WebView.EvaluateJavascript "wireclub.Mobile.scrollToEnd(true);" |> ignore
 
     let placeKeyboard (sender:obj) (args:UIKeyboardEventArgs) =
@@ -122,7 +122,7 @@ type PrivateChatSessionViewController (user:Entity) as this =
                 | 0 -> this.NavigationItem.LeftBarButtonItem <- null
                 | unread ->
                     this.NavigationItem.LeftBarButtonItem <- new UIBarButtonItem((sprintf "(%i)" unread), UIBarButtonItemStyle.Plain, new EventHandler(fun _ _ -> 
-                        this.NavigationController.PopViewControllerAnimated true |> ignore
+                        this.NavigationController.PopViewController true |> ignore
                     ))
             )
 
@@ -218,12 +218,12 @@ type PrivateChatSessionViewController (user:Entity) as this =
             let sheet = new UIActionSheet (Title = "Private Message Options")
             sheet.AddButton "Close Chat" |> ignore
             sheet.AddButton "Cancel" |> ignore
-            sheet.DestructiveButtonIndex <- 0
-            sheet.CancelButtonIndex <- 1
+            sheet.DestructiveButtonIndex <- nint 0
+            sheet.CancelButtonIndex <- nint 1
 
             sheet.ShowInView (this.View)
             sheet.Dismissed.Add(fun args ->
-                match args.ButtonIndex with
+                match int args.ButtonIndex with
                 | 0 -> 
                     Async.startInBackgroundWithContinuation
                         (fun _ -> DB.removeChatHistoryById user.Id)
@@ -265,8 +265,8 @@ type PrivateChatSessionViewController (user:Entity) as this =
 
         showObserver <- UIKeyboard.Notifications.ObserveWillShow(System.EventHandler<UIKeyboardEventArgs>(placeKeyboard))
         hideObserver <- UIKeyboard.Notifications.ObserveWillHide(System.EventHandler<UIKeyboardEventArgs>(placeKeyboard))
-        activeObserver <- NSNotificationCenter.DefaultCenter.AddObserver(UIApplication.DidBecomeActiveNotification, this.ViewDidBecomeActive)
-        inactiveObserver <- NSNotificationCenter.DefaultCenter.AddObserver(UIApplication.WillResignActiveNotification, this.ViewWillResignActive)
+        activeObserver <- NSNotificationCenter.DefaultCenter.AddObserver(UIApplication.DidBecomeActiveNotification, (fun n -> this.ViewDidBecomeActive n))
+        inactiveObserver <- NSNotificationCenter.DefaultCenter.AddObserver(UIApplication.WillResignActiveNotification, (fun n -> this.ViewWillResignActive n))
     
     override this.ViewDidDisappear animated =
         showObserver.Dispose ()

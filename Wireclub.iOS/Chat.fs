@@ -3,14 +3,15 @@
 namespace Wireclub.iOS
 
 open System
-open System.Drawing
 open System.Linq
 open System.Collections.Concurrent
 open System.Collections.Generic
 open System.Text.RegularExpressions
 
-open MonoTouch.Foundation
-open MonoTouch.UIKit
+open Foundation
+open UIKit
+open CoreGraphics
+
 open Wireclub.Models
 open Wireclub.Boundary
 open Wireclub.Boundary.Chat
@@ -108,13 +109,13 @@ type ChatRoomUsersViewController (users:UserProfile[]) =
                     | null -> new UITableViewCell (UITableViewCellStyle.Subtitle, "room-user-cell")
                     | c -> c
                 
-                cell.Tag <- indexPath.Row
+                cell.Tag <- nint indexPath.Row
                 cell.TextLabel.Text <- user.Name
                 Image.loadImageForCell (App.imageUrl user.Avatar 100) Image.placeholder cell tableView
                 cell
 
             override this.RowsInSection(tableView, section) =
-                users.Length
+                nint users.Length
 
             override this.RowSelected(tableView, indexPath) =
                 tableView.DeselectRow (indexPath, false)
@@ -254,7 +255,7 @@ type ChatRoomViewController (room:Entity) as controller =
                                     alert.AddButton "Rejoin" |> ignore
                                     alert.Show ()
                                     alert.Clicked.Add(fun e -> 
-                                        match e.ButtonIndex with
+                                        match int e.ButtonIndex with
                                         | 0 -> controller.Leave()
                                         | 1 -> controller.Join()
                                         | _ -> ()
@@ -307,7 +308,7 @@ type ChatRoomViewController (room:Entity) as controller =
                 | 0 -> controller.NavigationItem.LeftBarButtonItem <- null
                 | unread ->
                     controller.NavigationItem.LeftBarButtonItem <- new UIBarButtonItem((sprintf "(%i)" unread), UIBarButtonItemStyle.Plain, new EventHandler(fun _ _ -> 
-                        controller.NavigationController.PopViewControllerAnimated true |> ignore
+                        controller.NavigationController.PopViewController true |> ignore
                     ))
             )
 
@@ -414,12 +415,12 @@ type ChatRoomViewController (room:Entity) as controller =
             sheet.AddButton (if starred then "Unfavorite Room" else "Favorite Room") |> ignore
             sheet.AddButton "Leave Room" |> ignore
             sheet.AddButton "Cancel" |> ignore
-            sheet.DestructiveButtonIndex <- 1
-            sheet.CancelButtonIndex <- 2
+            sheet.DestructiveButtonIndex <- nint 1
+            sheet.CancelButtonIndex <- nint 2
 
             sheet.ShowInView (controller.View)
             sheet.Dismissed.Add(fun args ->
-                match args.ButtonIndex with
+                match int args.ButtonIndex with
                 | 0 -> 
                     Async.startWithContinuation
                         ((if starred then Chat.unstar else Chat.star) controller.Room.Slug)
@@ -467,7 +468,7 @@ type ChatRoomViewController (room:Entity) as controller =
         this.Text.ShouldReturn <- (fun _ -> sendMessage identity this.Text.Text; false)
         this.SendButton.TouchUpInside.Add(fun args -> sendMessage identity this.Text.Text)
 
-        appEventObserver <- NSNotificationCenter.DefaultCenter.AddObserver("Wireclub.AppEvent", this.OnAppEvent)
+        appEventObserver <- NSNotificationCenter.DefaultCenter.AddObserver(NSString.op_Explicit "Wireclub.AppEvent", (fun n -> this.OnAppEvent n))
 
     member this.OnAppEvent (notification:NSNotification) =
         notification.HandleAppEvent
@@ -492,8 +493,8 @@ type ChatRoomViewController (room:Entity) as controller =
         // keyboard
         showObserver <- UIKeyboard.Notifications.ObserveWillShow(System.EventHandler<UIKeyboardEventArgs>(placeKeyboard))
         hideObserver <- UIKeyboard.Notifications.ObserveWillHide(System.EventHandler<UIKeyboardEventArgs>(placeKeyboard))
-        activeObserver <- NSNotificationCenter.DefaultCenter.AddObserver(UIApplication.DidBecomeActiveNotification, this.ViewDidBecomeActive)
-        inactiveObserver <- NSNotificationCenter.DefaultCenter.AddObserver(UIApplication.WillResignActiveNotification, this.ViewWillResignActive)
+        activeObserver <- NSNotificationCenter.DefaultCenter.AddObserver(UIApplication.DidBecomeActiveNotification, (fun n -> this.ViewDidBecomeActive n))
+        inactiveObserver <- NSNotificationCenter.DefaultCenter.AddObserver(UIApplication.WillResignActiveNotification, (fun n -> this.ViewWillResignActive n))
 
     override this.ViewDidDisappear animated =
         showObserver.Dispose ()

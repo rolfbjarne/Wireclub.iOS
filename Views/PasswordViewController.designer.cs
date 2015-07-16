@@ -5,8 +5,8 @@
 // Manual changes to this file will not be maintained.
 //
 using System;
-using MonoTouch.Foundation;
-using MonoTouch.UIKit;
+using Foundation;
+using UIKit;
 using System.CodeDom.Compiler;
 
 namespace Views
@@ -15,19 +15,19 @@ namespace Views
 	partial class PasswordViewController
 	{
 		[Outlet]
-		MonoTouch.UIKit.UITextField Confirm { get; set; }
+		UIKit.UITextField Confirm { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UIButton Forgot { get; set; }
+		UIKit.UIButton Forgot { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField New { get; set; }
+		UIKit.UITextField New { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UITextField Old { get; set; }
+		UIKit.UITextField Old { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UIButton Save { get; set; }
+		UIKit.UIButton Save { get; set; }
 
 		void ReleaseDesignerOutlets ()
 		{

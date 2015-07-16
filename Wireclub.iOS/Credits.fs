@@ -3,15 +3,15 @@
 namespace Wireclub.iOS
 
 open System
-open System.Drawing
 open System.Linq
 open System.Collections.Concurrent
 open System.Collections.Generic
 open System.Text.RegularExpressions
 
-open MonoTouch.Foundation
-open MonoTouch.UIKit
-open MonoTouch.StoreKit
+open Foundation
+open UIKit
+open StoreKit
+open CoreGraphics
 
 open Wireclub.Models
 open Wireclub.Boundary
@@ -43,7 +43,7 @@ module Credits =
     let rec fetchTransactionData (transaction:SKPaymentTransaction) (original:SKPaymentTransaction) =
         [
             if transaction.TransactionDate <> null then
-                yield "transaction.TransactionDate", tryRead (fun _ -> (NSDate.op_Implicit transaction.TransactionDate).ToString())
+                yield "transaction.TransactionDate", tryRead (fun _ -> transaction.TransactionDate.ToString())
 
             yield "transaction.TransactionIdentifier", tryRead (fun _ ->  transaction.TransactionIdentifier)
             yield "transaction.TransactionState", tryRead (fun _ ->  transaction.TransactionState.ToString())
@@ -115,23 +115,23 @@ type CreditsViewController () as controller =
                     | null -> new UITableViewCell (UITableViewCellStyle.Subtitle, "credits-product-cell")
                     | c -> c
                 
-                cell.Tag <- indexPath.Row
+                cell.Tag <- nint indexPath.Row
                 cell.TextLabel.Text <- name
                 cell.DetailTextLabel.Text <- desc
 
                 let size = (new NSString(price)).StringSize(font)
-                cell.AccessoryView <- new UILabel(new RectangleF(0.f, 0.f, size.Width, size.Height), Text = price, Font = font)
+                cell.AccessoryView <- new UILabel(new CGRect(nfloat 0.f, nfloat 0.f, size.Width, size.Height), Text = price, Font = font)
                 cell.ImageView.Image <- UIImage.FromFile(String.Format( "purchase-{0}.png", (int bundle.Price)))
                 cell
 
-            override this.RowsInSection(tableView, section) = products.Length
+            override this.RowsInSection(tableView, section) = nint products.Length
 
             override this.RowSelected(tableView, indexPath) =
                 tableView.DeselectRow (indexPath, false)
                 let (id, name, desc, price, product, bundle) = products.[indexPath.Row]
 
                 let payment = SKMutablePayment.PaymentWithProduct product
-                payment.Quantity <- 1
+                payment.Quantity <- nint 1
                 SKPaymentQueue.DefaultQueue.AddPayment(payment)
     }
 
@@ -180,7 +180,7 @@ type CreditsViewController () as controller =
 
     override this.ViewDidLoad () =
         this.Table.Source <- source
-        appEventObserver <- NSNotificationCenter.DefaultCenter.AddObserver("Wireclub.AppEvent", this.OnAppEvent)
+        appEventObserver <- NSNotificationCenter.DefaultCenter.AddObserver(NSString.op_Explicit "Wireclub.AppEvent", (fun n -> this.OnAppEvent n))
 
         Async.startNetworkWithContinuation
             (Credits.bundles())

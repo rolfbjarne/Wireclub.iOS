@@ -5,8 +5,8 @@
 // Manual changes to this file will not be maintained.
 //
 using System;
-using MonoTouch.Foundation;
-using MonoTouch.UIKit;
+using Foundation;
+using UIKit;
 using System.CodeDom.Compiler;
 
 namespace Views
@@ -15,13 +15,13 @@ namespace Views
 	partial class MessagingOptionsViewController
 	{
 		[Outlet]
-		MonoTouch.UIKit.UISwitch Picture { get; set; }
+		UIKit.UISwitch Picture { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UIButton Save { get; set; }
+		UIKit.UIButton Save { get; set; }
 
 		[Outlet]
-		MonoTouch.UIKit.UISwitch Verified { get; set; }
+		UIKit.UISwitch Verified { get; set; }
 
 		void ReleaseDesignerOutlets ()
 		{

@@ -5,12 +5,11 @@ namespace Wireclub.iOS
 open System
 open System.Text.RegularExpressions
 open System.Linq
-open System.Drawing
 open System.Globalization
-open System.Web
 
-open MonoTouch.Foundation
-open MonoTouch.UIKit
+open Foundation
+open UIKit
+open CoreGraphics
 
 open Wireclub.Models
 open Wireclub.Boundary
@@ -49,11 +48,11 @@ type ChatOptionsViewController(handle:nativeint) as controller =
     let sourceFont =
         { 
             new UIPickerViewModel() with
-            override this.GetRowsInComponent(pickerView, comp) = Utility.fonts.Length
-            override this.GetComponentCount(pickerView) = 1
-            override this.GetTitle(pickerView, row, comp) = snd Utility.fonts.[row]
+            override this.GetRowsInComponent(pickerView, comp) = nint Utility.fonts.Length
+            override this.GetComponentCount(pickerView) = nint 1
+            override this.GetTitle(pickerView, row, comp) = snd Utility.fonts.[int row]
             override this.Selected(pickerView, row, comp) =
-                controller.Font.Text <- snd Utility.fonts.[row]
+                controller.Font.Text <- snd Utility.fonts.[int row]
         }
                 
     let pickerColor = new UIPickerView() 
@@ -67,16 +66,16 @@ type ChatOptionsViewController(handle:nativeint) as controller =
     let sourceColor =
         { 
             new UIPickerViewModel() with
-            override this.GetRowsInComponent(pickerView, comp) = Utility.colors.Length
-            override this.GetComponentCount(pickerView) = 1
+            override this.GetRowsInComponent(pickerView, comp) = nint Utility.colors.Length
+            override this.GetComponentCount(pickerView) = nint 1
             override this.GetView(pickerView, row, comp, view) =
-                let colors = Utility.colors.[row]
+                let colors = Utility.colors.[int row]
                 let label = new UILabel()
                 label.TextColor <- colors.Color
                 label.Text <- colors.Name
                 label.TextAlignment <- UITextAlignment.Center
                 upcast label
-            override this.Selected(pickerView, row, comp) = controller.Color.Text <- Utility.colors.[row].Name
+            override this.Selected(pickerView, row, comp) = controller.Color.Text <- Utility.colors.[int row].Name
         }
 
     let pickerJoinLeave = new UIPickerView() 
@@ -90,10 +89,10 @@ type ChatOptionsViewController(handle:nativeint) as controller =
     let sourceJoinLeave =
         { 
             new UIPickerViewModel() with
-            override this.GetRowsInComponent(pickerView, comp) = joinLeave.Length
-            override this.GetComponentCount(pickerView) = 1
-            override this.GetTitle(pickerView, row, comp) = snd joinLeave.[row]
-            override this.Selected(pickerView, row, comp) = controller.ShowJoinLeave.Text <- snd joinLeave.[row]
+            override this.GetRowsInComponent(pickerView, comp) = nint joinLeave.Length
+            override this.GetComponentCount(pickerView) = nint 1
+            override this.GetTitle(pickerView, row, comp) = snd joinLeave.[int row]
+            override this.Selected(pickerView, row, comp) = controller.ShowJoinLeave.Text <- snd joinLeave.[int row]
         }
 
     [<Outlet>]
@@ -125,7 +124,7 @@ type ChatOptionsViewController(handle:nativeint) as controller =
                     this.Font.TintColor <- UIColor.Clear
                     this.Font.InputView <- keyboardFrom pickerFont accessoryFont.View
                     pickerFont.Model <- sourceFont
-                    pickerFont.Select(Utility.fonts |> List.findIndex (fun (i, _) -> i = data.Font), 0, false)
+                    pickerFont.Select(nint (Utility.fonts |> List.findIndex (fun (i, _) -> int i = data.Font)), nint 0, false)
                     this.Font.EditingDidBegin.Add(fun _ -> pickerFont.ReloadAllComponents())
 
                     pickerColor.BackgroundColor <- UIColor.White
@@ -134,14 +133,14 @@ type ChatOptionsViewController(handle:nativeint) as controller =
                     this.Color.TintColor <- UIColor.Clear
                     this.Color.InputView <- keyboardFrom pickerColor accessoryColor.View
                     pickerColor.Model <- sourceColor
-                    pickerColor.Select(Utility.colors |> List.findIndex (fun c -> c.Id = data.ColorId), 0, false)
+                    pickerColor.Select(nint (Utility.colors |> List.findIndex (fun c -> c.Id = data.ColorId)), nint 0, false)
                     this.Color.EditingDidBegin.Add(fun _ -> pickerColor.ReloadAllComponents())
 
                     this.ShowJoinLeave.Text <- joinLeaveById data.JoinLeaveMessages
                     this.ShowJoinLeave.TintColor <- UIColor.Clear
                     this.ShowJoinLeave.InputView <- keyboardFrom pickerJoinLeave accessoryJoinLeave.View
                     pickerJoinLeave.Model <- sourceJoinLeave
-                    pickerJoinLeave.Select(joinLeave |> List.findIndex (fun (i, _) -> i = data.JoinLeaveMessages), 0, false)
+                    pickerJoinLeave.Select(nint (joinLeave |> List.findIndex (fun (i, _) -> i = data.JoinLeaveMessages)), nint 0, false)
                     this.ShowJoinLeave.EditingDidBegin.Add(fun _ -> pickerJoinLeave.ReloadAllComponents())
 
                     this.PlaySounds.On <- data.PlaySounds
@@ -349,7 +348,7 @@ type PasswordViewController(handle:nativeint) =
         )
 
         this.Forgot.TouchUpInside.Add(fun _ ->
-            this.NavigationController.PushViewController (forgotPasswordStoryboard.InstantiateInitialViewController() :?> UIViewController, true)
+            this.NavigationController.PushViewController (forgotPasswordStoryboard.InstantiateInitialViewController(), true)
         )
 
 
@@ -363,11 +362,11 @@ type PasswordViewController(handle:nativeint) =
     ]
 
 
-    override this.GetRowsInComponent(pickerView, comp) = options.Length
-    override this.GetComponentCount(pickerView) = 1
-    override this.GetTitle(pickerView, row, comp) = options.[row].ToString()
+    override this.GetRowsInComponent(pickerView, comp) = nint options.Length
+    override this.GetComponentCount(pickerView) = nint 1
+    override this.GetTitle(pickerView, row, comp) = options.[int row].ToString()
     override this.Selected(pickerView, row, comp) =
-        field.Text <- options.[row].ToString()
+        field.Text <- options.[int row].ToString()
 
 
 
@@ -442,11 +441,11 @@ type PrivacyOptionsViewController(handle:nativeint) =
                             picker.Model <- source
                             let row = 
                                 function
-                                | RelationshipRequiredType.NoOne -> 2
-                                | RelationshipRequiredType.Friends -> 1
-                                | _ -> 0
+                                | RelationshipRequiredType.NoOne -> nint 2
+                                | RelationshipRequiredType.Friends -> nint 1
+                                | _ -> nint 0
 
-                            picker.Select(row value, 0, false)
+                            picker.Select(row value, nint 0, false)
                             field.EditingDidBegin.Add(fun _ -> picker.ReloadAllComponents())
                             picker, accessory, source
                         )
@@ -506,12 +505,12 @@ type BlockedUsersViewController (handle:nativeint) as controller =
                     | c -> c
 
                 cell.SelectionStyle <- UITableViewCellSelectionStyle.None
-                cell.Tag <- indexPath.Row
+                cell.Tag <- nint indexPath.Row
                 cell.TextLabel.Text <- user.Label
                 Image.loadImageForCell (App.imageUrl user.Image 44) Image.placeholder cell tableView
                 cell
 
-            override this.RowsInSection(tableView, section) = users.Length
+            override this.RowsInSection(tableView, section) = nint users.Length
             override this.RowSelected(tableView, indexPath) = ()
             override this.CanEditRow(tableView, indexPath) = true
             override this.EditingStyleForRow(tableView, indexPath) = UITableViewCellEditingStyle.Delete
@@ -548,7 +547,7 @@ type BlockedUsersViewController (handle:nativeint) as controller =
 type SettingsMenuViewController (handle:nativeint) =
     inherit UITableViewController (handle)
 
-    let editProfileController = lazy (Resources.editProfileStoryboard.Value.InstantiateInitialViewController() :?> UIViewController)
+    let editProfileController = lazy (Resources.editProfileStoryboard.Value.InstantiateInitialViewController())
 
     override this.ViewDidLoad () =
         base.ViewDidLoad ()

@@ -2,8 +2,8 @@
 
 module Resources
 
-open MonoTouch.Foundation
-open MonoTouch.UIKit
+open Foundation
+open UIKit
 
 // Storyboards
 let menuStoryboard = lazy (UIStoryboard.FromName ("MegaMenu", null))

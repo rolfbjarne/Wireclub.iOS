@@ -4,11 +4,11 @@ namespace Wireclub.iOS
 
 open System
 open System.Text.RegularExpressions
-open System.Drawing
 open System.Globalization
 
-open MonoTouch.Foundation
-open MonoTouch.UIKit
+open Foundation
+open UIKit
+open CoreGraphics
 
 open Utility
 
@@ -20,7 +20,7 @@ type NSAppEventType (event:AppEventType) =
     inherit NSObject ()
     member val Event = event with get, set
 
-type AlertDelegate (action: int -> unit) =
+type AlertDelegate (action: nint -> unit) =
     inherit UIAlertViewDelegate ()
     override this.Dismissed (view, index) = 
         action index
@@ -82,8 +82,8 @@ module Utility =
     } 
 
     let keyboardFrom (input:UIView) (accessory:UIView) = 
-        let keyboard = new UIView(new RectangleF(0.0f, 0.0f, max input.Frame.Width accessory.Frame.Width, input.Frame.Height + accessory.Frame.Height))
-        input.Frame <- new RectangleF(input.Frame.X, accessory.Frame.Height, input.Frame.Width, input.Frame.Height)
+        let keyboard = new UIView(new CGRect(nfloat 0.0f, nfloat 0.0f, max input.Frame.Width accessory.Frame.Width, input.Frame.Height + accessory.Frame.Height))
+        input.Frame <- new CGRect(input.Frame.X, accessory.Frame.Height, input.Frame.Width, input.Frame.Height)
         keyboard.AddSubview accessory
         keyboard.AddSubview input
         keyboard
@@ -104,7 +104,7 @@ module Utility =
 
     let colorToCss (color:UIColor) = 
         match color.GetRGBA () with
-        | red, green, blue, _ -> String.Format("#{0:x2}{1:x2}{2:x2}", (int (red * 255.0f)), (int (green * 255.0f)), (int (blue * 255.0f)))
+        | red, green, blue, _ -> String.Format("#{0:x2}{1:x2}{2:x2}", (int (Convert.ToSingle red * 255.0f)), (int (Convert.ToSingle green * 255.0f)), (int (Convert.ToSingle blue * 255.0f)))
 
     let colors =
         [
@@ -246,7 +246,7 @@ module Image =
 
     let resize size (image:UIImage) =
         UIGraphics.BeginImageContext(size)
-        image.Draw(new RectangleF(0.0f, 0.0f, size.Width, size.Height))
+        image.Draw(new CGRect(nfloat 0.0f, nfloat 0.0f, size.Width, size.Height))
         let image = UIGraphics.GetImageFromCurrentImageContext()
         UIGraphics.EndImageContext()
         image

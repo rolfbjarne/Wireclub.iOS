@@ -5,13 +5,12 @@ namespace Wireclub.iOS
 open System
 open System.Text.RegularExpressions
 open System.Linq
-open System.Drawing
 open System.Globalization
-open System.Web
 
-open MonoTouch.Foundation
-open MonoTouch.UIKit
-open MonoTouch.StoreKit
+open Foundation
+open UIKit
+open StoreKit
+open CoreGraphics
 
 open Wireclub.Models
 open Wireclub.Boundary
@@ -32,7 +31,7 @@ type HomeViewController () as controller =
                 new ChatsViewController (controller) :> UIViewController
                 new FriendsViewController (controller) :> UIViewController
                 new ChatDirectoryViewController (controller) :> UIViewController
-                Resources.menuStoryboard.Value.InstantiateInitialViewController() :?> UIViewController
+                Resources.menuStoryboard.Value.InstantiateInitialViewController()
             |])
 
     let changeTab index =
@@ -49,7 +48,7 @@ type HomeViewController () as controller =
     let tabBarDelegate =
         { 
             new UITabBarDelegate() with
-            override this.ItemSelected (bar, item) = changeTab (item.Tag)
+            override this.ItemSelected (bar, item) = changeTab (int item.Tag)
         }
 
     [<Outlet>]
@@ -68,7 +67,7 @@ type HomeViewController () as controller =
         this.AutomaticallyAdjustsScrollViewInsets <- false
 
         // Set up the child controllers
-        let frame = System.Drawing.RectangleF(0.0f, 0.0f, this.ContentView.Bounds.Width, this.ContentView.Bounds.Height)       
+        let frame = CGRect(nfloat 0.0f, nfloat 0.0f, this.ContentView.Bounds.Width, this.ContentView.Bounds.Height)       
         for controller in controllers.Value do
             controller.View.Frame <- frame
             this.AddChildViewController controller
@@ -96,7 +95,7 @@ type HomeViewController () as controller =
             alert.Show ()
             alert.Dismissed.Add(fun args ->
                 let status =
-                    match args.ButtonIndex with
+                    match int args.ButtonIndex with
                         | 0 -> Some OnlineStateType.Visible
                         | 1 -> Some OnlineStateType.Idle
                         | 2 -> Some OnlineStateType.Invisible
@@ -131,8 +130,8 @@ type EntryViewController () as controller =
     inherit UIViewController ()
 
     let mutable rootController = new HomeViewController()
-    let loginController = lazy (Resources.loginStoryboard.Value.InstantiateInitialViewController() :?> UIViewController)
-    let editProfileController = lazy (Resources.editProfileStoryboard.Value.InstantiateInitialViewController() :?> UIViewController)
+    let loginController = lazy (Resources.loginStoryboard.Value.InstantiateInitialViewController())
+    let editProfileController = lazy (Resources.editProfileStoryboard.Value.InstantiateInitialViewController())
 
     let reloadNavigationItem (controller:UIViewController) =
         Async.startInBackgroundWithContinuation 
@@ -145,7 +144,7 @@ type EntryViewController () as controller =
                     rootController.TabBar.Items.[0].BadgeValue <- string unread
                     controller.NavigationItem.LeftBarButtonItem <-
                         new UIBarButtonItem((sprintf "(%i)" unread), UIBarButtonItemStyle.Plain, new EventHandler(fun _ _ -> 
-                            controller.NavigationController.PopViewControllerAnimated true |> ignore
+                            controller.NavigationController.PopViewController true |> ignore
                         ))
             )
 
@@ -177,7 +176,7 @@ type EntryViewController () as controller =
 
     let handleEvent channel (event:ChannelEvent.ChannelEvent) =
         controller.InvokeOnMainThread (fun _ ->             
-            let stripHtml html = html |> String.stripHtml |> HttpUtility.HtmlDecode
+            let stripHtml html = html |> String.stripHtml |> System.Web.HttpUtility.HtmlDecode
     
             match event |> handleAppEvent with
             //Private chat event

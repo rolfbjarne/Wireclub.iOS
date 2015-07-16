@@ -4,9 +4,10 @@ namespace Wireclub.iOS
 
 open System
 open System.Collections.Generic
-open MonoTouch.UIKit
-open MonoTouch.StoreKit
-open MonoTouch.Foundation
+
+open UIKit
+open StoreKit
+open Foundation
 
 open Newtonsoft.Json
 
@@ -32,12 +33,12 @@ type WireclubNavigationController =
         | :? GameViewController -> UIInterfaceOrientationMask.All
         | _ -> UIInterfaceOrientationMask.Portrait
 
-    override this.PopViewControllerAnimated (animated:bool) =
+    override this.PopViewController (animated:bool) =
         match this.VisibleViewController with
         | :? GameViewController as controller -> UIDevice.CurrentDevice.SetValueForKey(NSObject.FromObject(UIInterfaceOrientation.Portrait), new NSString("orientation"))
         | _ -> ()
 
-        base.PopViewControllerAnimated(animated)
+        base.PopViewController(animated)
 
 [<Register ("AppDelegate")>]
 type AppDelegate () =
