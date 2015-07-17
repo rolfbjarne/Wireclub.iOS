@@ -82,6 +82,7 @@
     <GenerateTailCalls>true</GenerateTailCalls>
     <MtouchSdkVersion>8.4</MtouchSdkVersion>
     <MtouchLink>None</MtouchLink>
+    <MtouchExtraArgs>-v -v -v</MtouchExtraArgs>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
