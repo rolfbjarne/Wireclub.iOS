@@ -24,6 +24,9 @@
     <ConsolePause>false</ConsolePause>
     <PlatformTarget>
     </PlatformTarget>
+    <MtouchUseRefCounting>true</MtouchUseRefCounting>
+    <MtouchI18n>
+    </MtouchI18n>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|iPhone' ">
     <DebugSymbols>false</DebugSymbols>
@@ -39,6 +42,10 @@
     </PlatformTarget>
     <DefineConstants>
     </DefineConstants>
+    <MtouchSdkVersion>8.4</MtouchSdkVersion>
+    <MtouchUseRefCounting>true</MtouchUseRefCounting>
+    <MtouchI18n>
+    </MtouchI18n>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|iPhoneSimulator' ">
     <DebugSymbols>false</DebugSymbols>
@@ -73,6 +80,8 @@
     <MtouchI18n>
     </MtouchI18n>
     <GenerateTailCalls>true</GenerateTailCalls>
+    <MtouchSdkVersion>8.4</MtouchSdkVersion>
+    <MtouchLink>None</MtouchLink>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
