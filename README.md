@@ -7,7 +7,7 @@ It depends on a couple libraries:
 
 https://github.com/wireclub/wireclub.boundary (exposed models from the API)
 https://github.com/wireclub/wireclub.appclient (base api for different mobile clients)
-https://github.com/sta/websocket-sharp (realtime events for chat)
+https://github.com/wireclub/websocket-sharp (realtime events for chat)
 
 Wireclub iOS App:
 
