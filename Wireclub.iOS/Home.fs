@@ -45,11 +45,11 @@ type HomeViewController () as controller =
             | item -> controller.TabBar.Items.[index].Title 
 
 
-    let tabBarDelegate =
-        { 
-            new UITabBarDelegate() with
-            override this.ItemSelected (bar, item) = changeTab (int item.Tag)
-        }
+//    let tabBarDelegate =
+//        { 
+//            new UITabBarDelegate() with
+//            override this.ItemSelected (bar, item) = changeTab (int item.Tag)
+//        }
 
     [<Outlet>]
     member val TabBar: UITabBar = null with get, set
@@ -73,7 +73,7 @@ type HomeViewController () as controller =
             this.AddChildViewController controller
             this.ContentView.AddSubview controller.View
 
-        this.TabBar.Delegate <- tabBarDelegate
+//        this.TabBar.Delegate <- tabBarDelegate
         this.TabBar.SelectedItem <- this.TabBar.Items.First()
         changeTab 0
 

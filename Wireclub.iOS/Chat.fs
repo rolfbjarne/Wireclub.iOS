@@ -100,35 +100,35 @@ type ChatRoomUsersViewController (users:UserProfile[]) =
 
     let users = users.OrderBy(fun e -> e.Name).ToArray()
 
-    let source = {
-        new UITableViewSource() with
-            override this.GetCell(tableView, indexPath) =
-                let user = users.[indexPath.Row]
-                let cell = 
-                    match tableView.DequeueReusableCell "room-user-cell" with
-                    | null -> new UITableViewCell (UITableViewCellStyle.Subtitle, "room-user-cell")
-                    | c -> c
-                
-                cell.Tag <- nint indexPath.Row
-                cell.TextLabel.Text <- user.Name
-                Image.loadImageForCell (App.imageUrl user.Avatar 100) Image.placeholder cell tableView
-                cell
-
-            override this.RowsInSection(tableView, section) =
-                nint users.Length
-
-            override this.RowSelected(tableView, indexPath) =
-                tableView.DeselectRow (indexPath, false)
-                let user = users.[indexPath.Row]
-                Navigation.navigate ("/users/" + user.Slug) (Some { Id = user.Id; Label = user.Name; Slug = user.Slug; Image = user.Avatar })
-                ()
-        }
-
+//    let source = {
+//        new UITableViewSource() with
+//            override this.GetCell(tableView, indexPath) =
+//                let user = users.[indexPath.Row]
+//                let cell = 
+//                    match tableView.DequeueReusableCell "room-user-cell" with
+//                    | null -> new UITableViewCell (UITableViewCellStyle.Subtitle, "room-user-cell")
+//                    | c -> c
+//                
+//                cell.Tag <- nint indexPath.Row
+//                cell.TextLabel.Text <- user.Name
+//                Image.loadImageForCell (App.imageUrl user.Avatar 100) Image.placeholder cell tableView
+//                cell
+//
+//            override this.RowsInSection(tableView, section) =
+//                nint users.Length
+//
+//            override this.RowSelected(tableView, indexPath) =
+//                tableView.DeselectRow (indexPath, false)
+//                let user = users.[indexPath.Row]
+//                Navigation.navigate ("/users/" + user.Slug) (Some { Id = user.Id; Label = user.Name; Slug = user.Slug; Image = user.Avatar })
+//                ()
+//        }
+//
     [<Outlet>]
     member val Table: UITableView = null with get, set
 
     override controller.ViewDidLoad () =
-        controller.Table.Source <- source
+//        controller.Table.Source <- source
         controller.Table.ReloadData ()
         ()
 
@@ -375,27 +375,27 @@ type ChatRoomViewController (room:Entity) as controller =
             | error -> controller.HandleApiFailure error)
 
 
-    member val WebViewDelegate = {
-        new UIWebViewDelegate() with
-        override this.ShouldStartLoad (view, request, navigationType) =
-            let uri = new Uri(request.Url.AbsoluteString)
-            match uri.Segments with
-            | [|_; "template" |] -> true
-            | [|_; "users/"; slug |] ->
-                match users.Values |> Seq.tryFind (fun (user, _) -> user.Slug = slug) with
-                | Some (user, _) -> Navigation.navigate (sprintf "/users/%s" slug) (Some { Id = user.Id; Label = user.Name; Slug = user.Slug; Image = user.Avatar })
-                | _ -> Navigation.navigate (sprintf "/users/%s" slug) None
-                false
-            | _ -> 
-                Navigation.navigate (uri.ToString()) None
-                false
-
-        override this.LoadFailed (view, error) =
-            showSimpleAlert "Error" error.Description "Close"
-
-        override this.LoadingFinished (view) =
-            load ()
-    }
+//    member val WebViewDelegate = {
+//        new UIWebViewDelegate() with
+//        override this.ShouldStartLoad (view, request, navigationType) =
+//            let uri = new Uri(request.Url.AbsoluteString)
+//            match uri.Segments with
+//            | [|_; "template" |] -> true
+//            | [|_; "users/"; slug |] ->
+//                match users.Values |> Seq.tryFind (fun (user, _) -> user.Slug = slug) with
+//                | Some (user, _) -> Navigation.navigate (sprintf "/users/%s" slug) (Some { Id = user.Id; Label = user.Name; Slug = user.Slug; Image = user.Avatar })
+//                | _ -> Navigation.navigate (sprintf "/users/%s" slug) None
+//                false
+//            | _ -> 
+//                Navigation.navigate (uri.ToString()) None
+//                false
+//
+//        override this.LoadFailed (view, error) =
+//            showSimpleAlert "Error" error.Description "Close"
+//
+//        override this.LoadingFinished (view) =
+//            load ()
+//    }
 
     member this.UserButton:UIBarButtonItem =
         new UIBarButtonItem(UIImage.FromFile "UIButtonBarProfile.png", UIBarButtonItemStyle.Plain, new EventHandler(fun (s:obj) (e:EventArgs) -> 
@@ -455,7 +455,7 @@ type ChatRoomViewController (room:Entity) as controller =
 
     override this.ViewDidLoad () =
         this.WebView.BackgroundColor <- UIColor.White
-        this.WebView.Delegate <- this.WebViewDelegate
+//        this.WebView.Delegate <- this.WebViewDelegate
 
         this.NavigationItem.Title <- room.Label
         this.NavigationItem.LeftItemsSupplementBackButton <- true

@@ -48,17 +48,17 @@ type AppDelegate () =
     let entryController = new EntryViewController()
     let navigationController = new WireclubNavigationController(entryController)
 
-    let transactionObserver = {
-        new SKPaymentTransactionObserver() with
-            override this.UpdatedTransactions(queue, transactions) =
-                printfn "UpdatedTransactions"
-                for transaction in transactions do
-                    if Api.userIdentity <> None then
-                        Credits.postTransaction transaction
-                    else
-                        Credits.transactionsAdd transaction
-            }
-
+//    let transactionObserver = {
+//        new SKPaymentTransactionObserver() with
+//            override this.UpdatedTransactions(queue, transactions) =
+//                printfn "UpdatedTransactions"
+//                for transaction in transactions do
+//                    if Api.userIdentity <> None then
+//                        Credits.postTransaction transaction
+//                    else
+//                        Credits.transactionsAdd transaction
+//            }
+//
     let parsePushNotification (info:NSDictionary) =
         match info.TryGetValue(NSObject.FromObject "aps") with
         | true, null -> Unknown
@@ -99,7 +99,7 @@ type AppDelegate () =
             )
 
 
-        SKPaymentQueue.DefaultQueue.AddTransactionObserver(transactionObserver)
+//        SKPaymentQueue.DefaultQueue.AddTransactionObserver(transactionObserver)
                     
         window.RootViewController <- navigationController
         window.MakeKeyAndVisible ()

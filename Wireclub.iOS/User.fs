@@ -17,16 +17,16 @@ open Wireclub.Boundary.Models
 open Routes
 
 module WebView =
-    let navigateDelegate = {
-        new UIWebViewDelegate() with
-        override this.ShouldStartLoad (view, request, navigationType) =
-            if navigationType = UIWebViewNavigationType.LinkClicked then
-                let uri = new Uri(request.Url.AbsoluteString)
-                Navigation.navigate (uri.ToString()) None
-                false
-            else
-                true
-    }
+//    let navigateDelegate = {
+//        new UIWebViewDelegate() with
+//        override this.ShouldStartLoad (view, request, navigationType) =
+//            if navigationType = UIWebViewNavigationType.LinkClicked then
+//                let uri = new Uri(request.Url.AbsoluteString)
+//                Navigation.navigate (uri.ToString()) None
+//                false
+//            else
+//                true
+//    }
 
     let setupWebView (webView:UIWebView, url:string) =
             webView.LoadRequest(new NSUrlRequest(new NSUrl(url)))
@@ -46,7 +46,7 @@ module WebView =
             )
 
             webView.LoadFinished.Add(fun _ ->
-                webView.Delegate <- navigateDelegate
+//                webView.Delegate <- navigateDelegate
                 webView.SetBodyBackgroundColor (colorToCss Utility.grayLightAccent)
             )
 

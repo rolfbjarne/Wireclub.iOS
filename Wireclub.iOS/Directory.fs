@@ -45,123 +45,123 @@ type ChatsViewController (rootController:RootViewContoller) as controller =
     let unreadColor = new UIColor(nfloat 0.0f, nfloat 0.0f, nfloat 0.0f, nfloat 1.0f)
     let mutable loaded = false
 
-    let tableSource = { 
-        new UITableViewSource() with
-        override this.GetCell(tableView, indexPath) =
-            match chats with
-            | [||] when loaded -> 
-                match tableView.DequeueReusableCell "no-chat-cell" with
-                | null -> 
-                    let cell = new UITableViewCell (UITableViewCellStyle.Subtitle, "no-chat-cell")
-                    let label = new UILabel(tableView.Frame)
-                    label.TextAlignment <- UITextAlignment.Center
-                    label.Text <- "No chats yet."
-                    cell.ContentView.AddSubview(label)
-                    cell.SelectionStyle <- UITableViewCellSelectionStyle.None
-                    cell
-                | c -> c
-            | _ -> 
-                let chat = chats.[indexPath.Row]
-                let cell = 
-                    match tableView.DequeueReusableCell "chat-cell" with
-                    | null -> new UITableViewCell (UITableViewCellStyle.Subtitle, "chat-cell")
-                    | c -> c
-                
-                cell.Tag <- nint indexPath.Row
-                match chat.Type with
-                | DB.ChatHistoryType.PrivateChat
-                | DB.ChatHistoryType.ChatRoom
-                | _ ->
-                    let color = if chat.Read then readColor else unreadColor
-                    cell.TextLabel.Text <- chat.Label
-                    cell.TextLabel.TextColor <- color
-                    cell.DetailTextLabel.Text <- chat.Last
-                    cell.DetailTextLabel.TextColor <- color
-                    Image.loadImageForCell (App.imageUrl chat.Image 100) Image.placeholder cell tableView
-                
-                cell
-
-        override this.RowsInSection(tableView, section) =
-            match chats with
-            | [||] when loaded -> nint 1
-            | _ -> nint chats.Length
-
-        override this.GetHeightForRow(tableView, index) =
-            match chats with
-            | [||] when loaded -> controller.Table.Frame.Height
-            | _ -> tableView.RowHeight
-    
-        override this.CanEditRow (tableView, index) = true
-
-        override this.TitleForDeleteConfirmation (tableView, index) = "Leave"
-
-        override this.CommitEditingStyle (tableView, style, index) = 
-            let session = chats.[index.Row]
-            let removeRow _ =
-                Async.startInBackgroundWithContinuation
-                    (fun _ -> DB.fetchChatHistory ())
-                    (fun sessions ->
-                        chats <- Seq.toArray sessions
-                        tableView.ReloadData()
-                        Async.startInBackgroundWithContinuation 
-                            (fun _ -> DB.fetchChatHistoryUnreadCount())
-                            (function
-                            | 0 -> rootController.Tabs.Items.[0].BadgeValue <- null
-                            | unread -> rootController.Tabs.Items.[0].BadgeValue <- string unread
-                            )
-                    )
-
-            match session.Type with
-            | DB.ChatHistoryType.ChatRoom ->
-                ChatRooms.leave session.EntityId
-                Async.startNetworkWithContinuation
-                    (Chat.leave session.Slug)
-                    (fun _ -> 
-                        Async.startInBackgroundWithContinuation
-                            (fun _ -> DB.removeChatHistoryById session.EntityId)
-                            (removeRow)
-                    )
-            | DB.ChatHistoryType.PrivateChat
-            | _ -> 
-                ChatSessions.leave session.EntityId
-                Async.startInBackgroundWithContinuation
-                    (fun _ -> DB.removeChatHistoryById session.EntityId)
-                    (removeRow)
-
-
-        override this.RowSelected(tableView, indexPath) =
-            match chats with
-            | [||] when loaded -> ()
-            | _ -> 
-                tableView.DeselectRow (indexPath, false)
-                let session = chats.[indexPath.Row]
-                let entity = {
-                    Id = session.EntityId
-                    Slug = session.Slug
-                    Label = session.Label
-                    Image = session.Image
-                }
-                match session.Type with
-                | DB.ChatHistoryType.PrivateChat ->
-                    let newController = ChatSessions.start entity
-                    controller.NavigationController.PushViewController(newController, true)
-                | DB.ChatHistoryType.ChatRoom
-                | _ ->
-                    let newController = ChatRooms.join entity
-                    controller.NavigationController.PushViewController(newController, true)
-
-                
-                Async.startInBackgroundWithContinuation 
-                    (fun _ ->
-                        DB.updateChatHistoryReadById entity.Id
-                        DB.fetchChatHistoryUnreadCount ()
-                    )
-                    (function
-                        | 0 -> rootController.Tabs.Items.[0].BadgeValue <- null
-                        | unread -> rootController.Tabs.Items.[0].BadgeValue <- string unread
-                    )
-
-    }
+//    let tableSource = { 
+//        new UITableViewSource() with
+//        override this.GetCell(tableView, indexPath) =
+//            match chats with
+//            | [||] when loaded -> 
+//                match tableView.DequeueReusableCell "no-chat-cell" with
+//                | null -> 
+//                    let cell = new UITableViewCell (UITableViewCellStyle.Subtitle, "no-chat-cell")
+//                    let label = new UILabel(tableView.Frame)
+//                    label.TextAlignment <- UITextAlignment.Center
+//                    label.Text <- "No chats yet."
+//                    cell.ContentView.AddSubview(label)
+//                    cell.SelectionStyle <- UITableViewCellSelectionStyle.None
+//                    cell
+//                | c -> c
+//            | _ -> 
+//                let chat = chats.[indexPath.Row]
+//                let cell = 
+//                    match tableView.DequeueReusableCell "chat-cell" with
+//                    | null -> new UITableViewCell (UITableViewCellStyle.Subtitle, "chat-cell")
+//                    | c -> c
+//                
+//                cell.Tag <- nint indexPath.Row
+//                match chat.Type with
+//                | DB.ChatHistoryType.PrivateChat
+//                | DB.ChatHistoryType.ChatRoom
+//                | _ ->
+//                    let color = if chat.Read then readColor else unreadColor
+//                    cell.TextLabel.Text <- chat.Label
+//                    cell.TextLabel.TextColor <- color
+//                    cell.DetailTextLabel.Text <- chat.Last
+//                    cell.DetailTextLabel.TextColor <- color
+//                    Image.loadImageForCell (App.imageUrl chat.Image 100) Image.placeholder cell tableView
+//                
+//                cell
+//
+//        override this.RowsInSection(tableView, section) =
+//            match chats with
+//            | [||] when loaded -> nint 1
+//            | _ -> nint chats.Length
+//
+//        override this.GetHeightForRow(tableView, index) =
+//            match chats with
+//            | [||] when loaded -> controller.Table.Frame.Height
+//            | _ -> tableView.RowHeight
+//    
+//        override this.CanEditRow (tableView, index) = true
+//
+//        override this.TitleForDeleteConfirmation (tableView, index) = "Leave"
+//
+//        override this.CommitEditingStyle (tableView, style, index) = 
+//            let session = chats.[index.Row]
+//            let removeRow _ =
+//                Async.startInBackgroundWithContinuation
+//                    (fun _ -> DB.fetchChatHistory ())
+//                    (fun sessions ->
+//                        chats <- Seq.toArray sessions
+//                        tableView.ReloadData()
+//                        Async.startInBackgroundWithContinuation 
+//                            (fun _ -> DB.fetchChatHistoryUnreadCount())
+//                            (function
+//                            | 0 -> rootController.Tabs.Items.[0].BadgeValue <- null
+//                            | unread -> rootController.Tabs.Items.[0].BadgeValue <- string unread
+//                            )
+//                    )
+//
+//            match session.Type with
+//            | DB.ChatHistoryType.ChatRoom ->
+//                ChatRooms.leave session.EntityId
+//                Async.startNetworkWithContinuation
+//                    (Chat.leave session.Slug)
+//                    (fun _ -> 
+//                        Async.startInBackgroundWithContinuation
+//                            (fun _ -> DB.removeChatHistoryById session.EntityId)
+//                            (removeRow)
+//                    )
+//            | DB.ChatHistoryType.PrivateChat
+//            | _ -> 
+//                ChatSessions.leave session.EntityId
+//                Async.startInBackgroundWithContinuation
+//                    (fun _ -> DB.removeChatHistoryById session.EntityId)
+//                    (removeRow)
+//
+//
+//        override this.RowSelected(tableView, indexPath) =
+//            match chats with
+//            | [||] when loaded -> ()
+//            | _ -> 
+//                tableView.DeselectRow (indexPath, false)
+//                let session = chats.[indexPath.Row]
+//                let entity = {
+//                    Id = session.EntityId
+//                    Slug = session.Slug
+//                    Label = session.Label
+//                    Image = session.Image
+//                }
+//                match session.Type with
+//                | DB.ChatHistoryType.PrivateChat ->
+//                    let newController = ChatSessions.start entity
+//                    controller.NavigationController.PushViewController(newController, true)
+//                | DB.ChatHistoryType.ChatRoom
+//                | _ ->
+//                    let newController = ChatRooms.join entity
+//                    controller.NavigationController.PushViewController(newController, true)
+//
+//                
+//                Async.startInBackgroundWithContinuation 
+//                    (fun _ ->
+//                        DB.updateChatHistoryReadById entity.Id
+//                        DB.fetchChatHistoryUnreadCount ()
+//                    )
+//                    (function
+//                        | 0 -> rootController.Tabs.Items.[0].BadgeValue <- null
+//                        | unread -> rootController.Tabs.Items.[0].BadgeValue <- string unread
+//                    )
+//
+//    }
 
     [<Outlet>]
     member val Table: UITableView = null with get, set
@@ -178,7 +178,7 @@ type ChatsViewController (rootController:RootViewContoller) as controller =
 
     override controller.ViewDidLoad () =
         base.ViewDidLoad ()
-        controller.Table.Source <- tableSource
+//        controller.Table.Source <- tableSource
         controller.Table.AllowsMultipleSelectionDuringEditing <- false
 
         Async.Start(Utility.Timer.ticker (fun _ -> controller.InvokeOnMainThread(fun _->  controller.Reload() )) (5 * 1000))
@@ -206,32 +206,32 @@ type ChatDirectoryViewController(rootController:RootViewContoller) as controller
         | null -> [||]
         | rooms -> rooms
    
-    let tableSource = { 
-        new UITableViewSource() with
-        override this.GetCell(tableView, indexPath) =
-            let room = rooms().[indexPath.Row]
-            let cell = 
-                match tableView.DequeueReusableCell "room-cell" with
-                | null -> new UITableViewCell (UITableViewCellStyle.Subtitle, "room-cell")
-                | c -> c
-
-            cell.Tag <- nint indexPath.Row
-            cell.TextLabel.Text <- room.Name
-            cell.DetailTextLabel.Text <- room.Description
-            cell.DetailTextLabel.TextColor <- UIColor.Gray
-            Image.loadImageForCell (App.imageUrl room.Image 100) Image.placeholderChat cell tableView
-            cell
-
-        override this.RowsInSection(tableView, section) =
-            nint (rooms().Length)
-
-        override this.RowSelected(tableView, indexPath) =
-            tableView.DeselectRow (indexPath, false)
-            let room = rooms().[indexPath.Row]
-            let roomController = ChatRooms.join { Id=room.Id; Slug=room.Slug; Label=room.Name; Image=room.Image }
-            controller.NavigationController.PushViewController(roomController, true)
-    }
-
+//    let tableSource = { 
+//        new UITableViewSource() with
+//        override this.GetCell(tableView, indexPath) =
+//            let room = rooms().[indexPath.Row]
+//            let cell = 
+//                match tableView.DequeueReusableCell "room-cell" with
+//                | null -> new UITableViewCell (UITableViewCellStyle.Subtitle, "room-cell")
+//                | c -> c
+//
+//            cell.Tag <- nint indexPath.Row
+//            cell.TextLabel.Text <- room.Name
+//            cell.DetailTextLabel.Text <- room.Description
+//            cell.DetailTextLabel.TextColor <- UIColor.Gray
+//            Image.loadImageForCell (App.imageUrl room.Image 100) Image.placeholderChat cell tableView
+//            cell
+//
+//        override this.RowsInSection(tableView, section) =
+//            nint (rooms().Length)
+//
+//        override this.RowSelected(tableView, indexPath) =
+//            tableView.DeselectRow (indexPath, false)
+//            let room = rooms().[indexPath.Row]
+//            let roomController = ChatRooms.join { Id=room.Id; Slug=room.Slug; Label=room.Name; Image=room.Image }
+//            controller.NavigationController.PushViewController(roomController, true)
+//    }
+//
     let refresh (tableController:UITableViewController) =
         Async.startNetworkWithContinuation
             (Chat.directory ())
@@ -258,7 +258,7 @@ type ChatDirectoryViewController(rootController:RootViewContoller) as controller
         this.RoomFilter.ValueChanged.Add(fun args -> tableController.TableView.ReloadData () )
 
         tableController.View.Frame <- new CGRect(nfloat 0.f, nfloat 0.f, this.ContentView.Frame.Width, this.ContentView.Frame.Height)
-        tableController.TableView.Source <- tableSource
+//        tableController.TableView.Source <- tableSource
         tableController.RefreshControl <- new UIRefreshControl()
         tableController.RefreshControl.ValueChanged.Add(fun _ -> refresh tableController)
         refresh tableController
@@ -270,73 +270,73 @@ type FriendsViewController (rootController:RootViewContoller) as controller =
     let mutable (friends:PrivateChatFriend[]) = [| |]
     let mutable loaded = false
 
-    let tableSource = { 
-        new UITableViewSource() with
-        override this.GetCell(tableView, indexPath) =
-            match friends with
-            | [||] when loaded -> 
-                    match tableView.DequeueReusableCell "no-friend-cell" with
-                    | null ->
-                        let cell = new UITableViewCell (UITableViewCellStyle.Subtitle, "no-friends-cell")
-                        let label = new UILabel(tableView.Frame)
-                        label.TextAlignment <- UITextAlignment.Center
-                        label.Text <- "No friends yet."
-                        cell.ContentView.AddSubview(label)
-                        cell.SelectionStyle <- UITableViewCellSelectionStyle.None
-                        cell
-                    | c -> c
-            | _ -> 
-                let friend = friends.[indexPath.Row]
-                let cell = 
-                    match tableView.DequeueReusableCell "friend-cell" with
-                    | null -> new UITableViewCell (UITableViewCellStyle.Subtitle, "friend-cell")
-                    | c -> c
-                
-                cell.Tag <- nint indexPath.Row
-                cell.TextLabel.Text <- friend.Name
-                match friend.State with
-                | OnlineStateType.Idle -> 
-                    cell.DetailTextLabel.Text <- "Away"
-                    cell.DetailTextLabel.TextColor <- UIColor.DarkTextColor
-                | OnlineStateType.Visible ->
-                    cell.DetailTextLabel.Text <- "Online"
-                    cell.DetailTextLabel.TextColor <- UIColor.DarkTextColor
-                | OnlineStateType.Mobile -> 
-                    cell.DetailTextLabel.Text <- "Mobile"
-                    cell.DetailTextLabel.TextColor <- UIColor.DarkTextColor
-                | _ -> 
-                    cell.DetailTextLabel.Text <- "Offline"
-                    cell.DetailTextLabel.TextColor <- UIColor.Gray
-
-                Image.loadImageForCell (App.imageUrl friend.Avatar 100) Image.placeholder cell tableView
-
-                cell
-
-        override this.RowsInSection(tableView, section) =
-            match friends with
-            | [||] when loaded -> nint 1
-            | _ -> nint friends.Length
-
-        override this.GetHeightForRow(tableView, index) =
-            match friends with
-            | [||] when loaded -> tableView.Frame.Height
-            | _ -> tableView.RowHeight
-    
-        override this.RowSelected(tableView, indexPath) =
-            match friends with
-            | [||] when loaded -> ()
-            | _ ->
-                tableView.DeselectRow (indexPath, false)
-                let friend = friends.[indexPath.Row]
-                let newController = ChatSessions.start {
-                        Id = friend.Id
-                        Slug = friend.Slug
-                        Label = friend.Name
-                        Image = friend.Avatar
-                    }
-                controller.NavigationController.PushViewController(newController, true)
-    }
-
+//    let tableSource = { 
+//        new UITableViewSource() with
+//        override this.GetCell(tableView, indexPath) =
+//            match friends with
+//            | [||] when loaded -> 
+//                    match tableView.DequeueReusableCell "no-friend-cell" with
+//                    | null ->
+//                        let cell = new UITableViewCell (UITableViewCellStyle.Subtitle, "no-friends-cell")
+//                        let label = new UILabel(tableView.Frame)
+//                        label.TextAlignment <- UITextAlignment.Center
+//                        label.Text <- "No friends yet."
+//                        cell.ContentView.AddSubview(label)
+//                        cell.SelectionStyle <- UITableViewCellSelectionStyle.None
+//                        cell
+//                    | c -> c
+//            | _ -> 
+//                let friend = friends.[indexPath.Row]
+//                let cell = 
+//                    match tableView.DequeueReusableCell "friend-cell" with
+//                    | null -> new UITableViewCell (UITableViewCellStyle.Subtitle, "friend-cell")
+//                    | c -> c
+//                
+//                cell.Tag <- nint indexPath.Row
+//                cell.TextLabel.Text <- friend.Name
+//                match friend.State with
+//                | OnlineStateType.Idle -> 
+//                    cell.DetailTextLabel.Text <- "Away"
+//                    cell.DetailTextLabel.TextColor <- UIColor.DarkTextColor
+//                | OnlineStateType.Visible ->
+//                    cell.DetailTextLabel.Text <- "Online"
+//                    cell.DetailTextLabel.TextColor <- UIColor.DarkTextColor
+//                | OnlineStateType.Mobile -> 
+//                    cell.DetailTextLabel.Text <- "Mobile"
+//                    cell.DetailTextLabel.TextColor <- UIColor.DarkTextColor
+//                | _ -> 
+//                    cell.DetailTextLabel.Text <- "Offline"
+//                    cell.DetailTextLabel.TextColor <- UIColor.Gray
+//
+//                Image.loadImageForCell (App.imageUrl friend.Avatar 100) Image.placeholder cell tableView
+//
+//                cell
+//
+//        override this.RowsInSection(tableView, section) =
+//            match friends with
+//            | [||] when loaded -> nint 1
+//            | _ -> nint friends.Length
+//
+//        override this.GetHeightForRow(tableView, index) =
+//            match friends with
+//            | [||] when loaded -> tableView.Frame.Height
+//            | _ -> tableView.RowHeight
+//    
+//        override this.RowSelected(tableView, indexPath) =
+//            match friends with
+//            | [||] when loaded -> ()
+//            | _ ->
+//                tableView.DeselectRow (indexPath, false)
+//                let friend = friends.[indexPath.Row]
+//                let newController = ChatSessions.start {
+//                        Id = friend.Id
+//                        Slug = friend.Slug
+//                        Label = friend.Name
+//                        Image = friend.Avatar
+//                    }
+//                controller.NavigationController.PushViewController(newController, true)
+//    }
+//
     let refresh (tableController:UITableViewController) =
         if Api.userIdentity.IsSome then
             Async.startNetworkWithContinuation
@@ -370,7 +370,7 @@ type FriendsViewController (rootController:RootViewContoller) as controller =
         this.ContentView.AddSubview tableController.View
 
         tableController.View.Frame <- new CGRect(nfloat 0.f, nfloat 0.f, this.ContentView.Frame.Width, this.ContentView.Frame.Height)
-        tableController.TableView.Source <- tableSource
+//        tableController.TableView.Source <- tableSource
         tableController.RefreshControl <- new UIRefreshControl()
         tableController.RefreshControl.ValueChanged.Add(fun _ -> refresh tableController)
         refresh tableController

@@ -92,16 +92,16 @@ type EditProfileViewController (handle:nativeint) as controller =
             (fun _ -> controller.Birthday.BecomeFirstResponder() |> ignore),
             (fun _ -> controller.Country.ResignFirstResponder() |> ignore)
         )
-    let sourceCountry =
-        { 
-            new UIPickerViewModel() with
-            override this.GetRowsInComponent(pickerView, comp) = nint countries.Length
-            override this.GetComponentCount(pickerView) = nint 1
-            override this.GetTitle(pickerView, row, comp) = countries.[int row].Name
-            override this.Selected(pickerView, row, comp) =
-                country <- Some countries.[int row]
-                controller.Country.Text <- country.Value.Name
-        }
+//    let sourceCountry =
+//        { 
+//            new UIPickerViewModel() with
+//            override this.GetRowsInComponent(pickerView, comp) = nint countries.Length
+//            override this.GetComponentCount(pickerView) = nint 1
+//            override this.GetTitle(pickerView, row, comp) = countries.[int row].Name
+//            override this.Selected(pickerView, row, comp) =
+//                country <- Some countries.[int row]
+//                controller.Country.Text <- country.Value.Name
+//        }
 
 
     let mutable region:LocationRegion option = None
@@ -113,16 +113,16 @@ type EditProfileViewController (handle:nativeint) as controller =
             (fun _ -> controller.Country.BecomeFirstResponder() |> ignore),
             (fun _ -> controller.Region.ResignFirstResponder() |> ignore)
         )
-    let sourceRegion =
-        { 
-            new UIPickerViewModel() with
-            override this.GetRowsInComponent(pickerView, comp) = nint regions.Length
-            override this.GetComponentCount(pickerView) = nint 1
-            override this.GetTitle(pickerView, row, comp) = regions.[int row].Name
-            override this.Selected(pickerView, row, comp) =
-                region <- Some regions.[int row]
-                controller.Region.Text <- region.Value.Name
-        }
+//    let sourceRegion =
+//        { 
+//            new UIPickerViewModel() with
+//            override this.GetRowsInComponent(pickerView, comp) = nint regions.Length
+//            override this.GetComponentCount(pickerView) = nint 1
+//            override this.GetTitle(pickerView, row, comp) = regions.[int row].Name
+//            override this.Selected(pickerView, row, comp) =
+//                region <- Some regions.[int row]
+//                controller.Region.Text <- region.Value.Name
+//        }
 
     let defaultDate = DateTime.UtcNow.AddYears(-100)
 
@@ -186,7 +186,7 @@ type EditProfileViewController (handle:nativeint) as controller =
         // Country Picker
         this.Country.InputView <- keyboardFrom pickerCountry.View accessoryCountry.View
         this.Country.TintColor <- UIColor.Clear
-        pickerCountry.Picker.Model <- sourceCountry
+//        pickerCountry.Picker.Model <- sourceCountry
         this.Country.EditingDidBegin.Add(fun _ ->
             Async.startNetworkWithContinuation
                 (Settings.countries ())
@@ -211,7 +211,7 @@ type EditProfileViewController (handle:nativeint) as controller =
         // Region Picker
         this.Region.InputView <- keyboardFrom pickerRegion.View accessoryRegion.View
         this.Region.TintColor <- UIColor.Clear
-        pickerRegion.Picker.Model <- sourceRegion
+//        pickerRegion.Picker.Model <- sourceRegion
         this.Region.EditingDidBegin.Add(fun _ ->
             match country with
             | Some country ->

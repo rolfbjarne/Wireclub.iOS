@@ -105,62 +105,62 @@ type CreditsViewController () as controller =
         formatter.StringFromNumber(product.Price)
 
     let font = UIFont.SystemFontOfSize UIFont.ButtonFontSize
-    let source = {
-        new UITableViewSource() with
-
-            override this.GetCell(tableView, indexPath) =
-                let (id, name, desc, price, product, bundle) = products.[indexPath.Row]
-                let cell = 
-                    match tableView.DequeueReusableCell "credits-product-cell" with
-                    | null -> new UITableViewCell (UITableViewCellStyle.Subtitle, "credits-product-cell")
-                    | c -> c
-                
-                cell.Tag <- nint indexPath.Row
-                cell.TextLabel.Text <- name
-                cell.DetailTextLabel.Text <- desc
-
-                let size = (new NSString(price)).StringSize(font)
-                cell.AccessoryView <- new UILabel(new CGRect(nfloat 0.f, nfloat 0.f, size.Width, size.Height), Text = price, Font = font)
-                cell.ImageView.Image <- UIImage.FromFile(String.Format( "purchase-{0}.png", (int bundle.Price)))
-                cell
-
-            override this.RowsInSection(tableView, section) = nint products.Length
-
-            override this.RowSelected(tableView, indexPath) =
-                tableView.DeselectRow (indexPath, false)
-                let (id, name, desc, price, product, bundle) = products.[indexPath.Row]
-
-                let payment = SKMutablePayment.PaymentWithProduct product
-                payment.Quantity <- nint 1
-                SKPaymentQueue.DefaultQueue.AddPayment(payment)
-    }
-
-    let products = { 
-        new SKProductsRequestDelegate () with
-            override this.ReceivedResponse (request, response) =
-                products <-
-                    [
-                        for product in response.Products do
-                            match bundles |> Seq.tryFind(fun p -> p.AppStoreId = product.ProductIdentifier) with
-                            | Some bundle ->
-                                yield (
-                                    product.ProductIdentifier,
-                                    product.LocalizedTitle,
-                                    product.LocalizedDescription,
-                                    (localizedPrice product),
-                                    product,
-                                    bundle
-                                )
-                            | _ -> ()
-                    ] |> List.sortBy(fun (_, _, _, _, _, bundle) -> bundle.RegularCredits)
-
-                for product in response.InvalidProducts do
-                    Logger.log (Exception(String.Format("[StoreKit] InvalidProduct - {0}", product)))
-
-                controller.Table.ReloadData()
-
-            override this.RequestFailed (request, error) = Logger.log (Exception( error.Description))
-        }
+//    let source = {
+//        new UITableViewSource() with
+//
+//            override this.GetCell(tableView, indexPath) =
+//                let (id, name, desc, price, product, bundle) = products.[indexPath.Row]
+//                let cell = 
+//                    match tableView.DequeueReusableCell "credits-product-cell" with
+//                    | null -> new UITableViewCell (UITableViewCellStyle.Subtitle, "credits-product-cell")
+//                    | c -> c
+//                
+//                cell.Tag <- nint indexPath.Row
+//                cell.TextLabel.Text <- name
+//                cell.DetailTextLabel.Text <- desc
+//
+//                let size = (new NSString(price)).StringSize(font)
+//                cell.AccessoryView <- new UILabel(new CGRect(nfloat 0.f, nfloat 0.f, size.Width, size.Height), Text = price, Font = font)
+//                cell.ImageView.Image <- UIImage.FromFile(String.Format( "purchase-{0}.png", (int bundle.Price)))
+//                cell
+//
+//            override this.RowsInSection(tableView, section) = nint products.Length
+//
+//            override this.RowSelected(tableView, indexPath) =
+//                tableView.DeselectRow (indexPath, false)
+//                let (id, name, desc, price, product, bundle) = products.[indexPath.Row]
+//
+//                let payment = SKMutablePayment.PaymentWithProduct product
+//                payment.Quantity <- nint 1
+//                SKPaymentQueue.DefaultQueue.AddPayment(payment)
+//    }
+//
+//    let products = { 
+//        new SKProductsRequestDelegate () with
+//            override this.ReceivedResponse (request, response) =
+//                products <-
+//                    [
+//                        for product in response.Products do
+//                            match bundles |> Seq.tryFind(fun p -> p.AppStoreId = product.ProductIdentifier) with
+//                            | Some bundle ->
+//                                yield (
+//                                    product.ProductIdentifier,
+//                                    product.LocalizedTitle,
+//                                    product.LocalizedDescription,
+//                                    (localizedPrice product),
+//                                    product,
+//                                    bundle
+//                                )
+//                            | _ -> ()
+//                    ] |> List.sortBy(fun (_, _, _, _, _, bundle) -> bundle.RegularCredits)
+//
+//                for product in response.InvalidProducts do
+//                    Logger.log (Exception(String.Format("[StoreKit] InvalidProduct - {0}", product)))
+//
+//                controller.Table.ReloadData()
+//
+//            override this.RequestFailed (request, error) = Logger.log (Exception( error.Description))
+//        }
 
     let mutable appEventObserver:NSObject = null
 
@@ -179,7 +179,7 @@ type CreditsViewController () as controller =
     member val Table: UITableView = null with get, set
 
     override this.ViewDidLoad () =
-        this.Table.Source <- source
+//        this.Table.Source <- source
         appEventObserver <- NSNotificationCenter.DefaultCenter.AddObserver(NSString.op_Explicit "Wireclub.AppEvent", (fun n -> this.OnAppEvent n))
 
         Async.startNetworkWithContinuation
@@ -188,14 +188,14 @@ type CreditsViewController () as controller =
                 | Api.ApiOk result ->  
                     this.SetBalance (result.Credits)   
                     bundles <- result.Bundles
-                    let ids = 
-                        [
-                            for bundle in bundles do
-                                yield bundle.AppStoreId
-                        ]
-                               
-                    let request = new SKProductsRequest(NSSet.MakeNSObjectSet<NSString>(ids.Select(fun s -> new NSString(s)).ToArray()), Delegate = products)
-                    request.Start()
+//                    let ids = 
+//                        [
+//                            for bundle in bundles do
+//                                yield bundle.AppStoreId
+//                        ]
+//                               
+//                    let request = new SKProductsRequest(NSSet.MakeNSObjectSet<NSString>(ids.Select(fun s -> new NSString(s)).ToArray()), Delegate = products)
+//                    request.Start()
                 | error -> this.HandleApiFailure error
             )
 

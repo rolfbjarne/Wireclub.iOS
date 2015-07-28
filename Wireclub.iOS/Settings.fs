@@ -45,15 +45,15 @@ type ChatOptionsViewController(handle:nativeint) as controller =
             (fun _ -> ()),
             (fun _ -> controller.Font.ResignFirstResponder() |> ignore)
         )
-    let sourceFont =
-        { 
-            new UIPickerViewModel() with
-            override this.GetRowsInComponent(pickerView, comp) = nint Utility.fonts.Length
-            override this.GetComponentCount(pickerView) = nint 1
-            override this.GetTitle(pickerView, row, comp) = snd Utility.fonts.[int row]
-            override this.Selected(pickerView, row, comp) =
-                controller.Font.Text <- snd Utility.fonts.[int row]
-        }
+//    let sourceFont =
+//        { 
+//            new UIPickerViewModel() with
+//            override this.GetRowsInComponent(pickerView, comp) = nint Utility.fonts.Length
+//            override this.GetComponentCount(pickerView) = nint 1
+//            override this.GetTitle(pickerView, row, comp) = snd Utility.fonts.[int row]
+//            override this.Selected(pickerView, row, comp) =
+//                controller.Font.Text <- snd Utility.fonts.[int row]
+//        }
                 
     let pickerColor = new UIPickerView() 
     let accessoryColor =
@@ -63,21 +63,21 @@ type ChatOptionsViewController(handle:nativeint) as controller =
             (fun _ -> controller.Color.ResignFirstResponder() |> ignore)
         )
 
-    let sourceColor =
-        { 
-            new UIPickerViewModel() with
-            override this.GetRowsInComponent(pickerView, comp) = nint Utility.colors.Length
-            override this.GetComponentCount(pickerView) = nint 1
-            override this.GetView(pickerView, row, comp, view) =
-                let colors = Utility.colors.[int row]
-                let label = new UILabel()
-                label.TextColor <- colors.Color
-                label.Text <- colors.Name
-                label.TextAlignment <- UITextAlignment.Center
-                upcast label
-            override this.Selected(pickerView, row, comp) = controller.Color.Text <- Utility.colors.[int row].Name
-        }
-
+//    let sourceColor =
+//        { 
+//            new UIPickerViewModel() with
+//            override this.GetRowsInComponent(pickerView, comp) = nint Utility.colors.Length
+//            override this.GetComponentCount(pickerView) = nint 1
+//            override this.GetView(pickerView, row, comp, view) =
+//                let colors = Utility.colors.[int row]
+//                let label = new UILabel()
+//                label.TextColor <- colors.Color
+//                label.Text <- colors.Name
+//                label.TextAlignment <- UITextAlignment.Center
+//                upcast label
+//            override this.Selected(pickerView, row, comp) = controller.Color.Text <- Utility.colors.[int row].Name
+//        }
+//
     let pickerJoinLeave = new UIPickerView() 
     let accessoryJoinLeave =
         new NavigateInputAccessoryViewController(
@@ -86,14 +86,14 @@ type ChatOptionsViewController(handle:nativeint) as controller =
             (fun _ -> controller.ShowJoinLeave.ResignFirstResponder() |> ignore)
         )
 
-    let sourceJoinLeave =
-        { 
-            new UIPickerViewModel() with
-            override this.GetRowsInComponent(pickerView, comp) = nint joinLeave.Length
-            override this.GetComponentCount(pickerView) = nint 1
-            override this.GetTitle(pickerView, row, comp) = snd joinLeave.[int row]
-            override this.Selected(pickerView, row, comp) = controller.ShowJoinLeave.Text <- snd joinLeave.[int row]
-        }
+//    let sourceJoinLeave =
+//        { 
+//            new UIPickerViewModel() with
+//            override this.GetRowsInComponent(pickerView, comp) = nint joinLeave.Length
+//            override this.GetComponentCount(pickerView) = nint 1
+//            override this.GetTitle(pickerView, row, comp) = snd joinLeave.[int row]
+//            override this.Selected(pickerView, row, comp) = controller.ShowJoinLeave.Text <- snd joinLeave.[int row]
+//        }
 
     [<Outlet>]
     member val Font:UITextField = null with get, set
@@ -123,7 +123,7 @@ type ChatOptionsViewController(handle:nativeint) as controller =
                     this.Font.Text <- Utility.fontFamily data.Font
                     this.Font.TintColor <- UIColor.Clear
                     this.Font.InputView <- keyboardFrom pickerFont accessoryFont.View
-                    pickerFont.Model <- sourceFont
+//                    pickerFont.Model <- sourceFont
                     pickerFont.Select(nint (Utility.fonts |> List.findIndex (fun (i, _) -> int i = data.Font)), nint 0, false)
                     this.Font.EditingDidBegin.Add(fun _ -> pickerFont.ReloadAllComponents())
 
@@ -132,14 +132,14 @@ type ChatOptionsViewController(handle:nativeint) as controller =
                     this.Color.Text <- (Utility.customColor data.ColorId).Name
                     this.Color.TintColor <- UIColor.Clear
                     this.Color.InputView <- keyboardFrom pickerColor accessoryColor.View
-                    pickerColor.Model <- sourceColor
+//                    pickerColor.Model <- sourceColor
                     pickerColor.Select(nint (Utility.colors |> List.findIndex (fun c -> c.Id = data.ColorId)), nint 0, false)
                     this.Color.EditingDidBegin.Add(fun _ -> pickerColor.ReloadAllComponents())
 
                     this.ShowJoinLeave.Text <- joinLeaveById data.JoinLeaveMessages
                     this.ShowJoinLeave.TintColor <- UIColor.Clear
                     this.ShowJoinLeave.InputView <- keyboardFrom pickerJoinLeave accessoryJoinLeave.View
-                    pickerJoinLeave.Model <- sourceJoinLeave
+//                    pickerJoinLeave.Model <- sourceJoinLeave
                     pickerJoinLeave.Select(nint (joinLeave |> List.findIndex (fun (i, _) -> i = data.JoinLeaveMessages)), nint 0, false)
                     this.ShowJoinLeave.EditingDidBegin.Add(fun _ -> pickerJoinLeave.ReloadAllComponents())
 
@@ -495,43 +495,43 @@ type BlockedUsersViewController (handle:nativeint) as controller =
 
     let mutable users:Entity [] = [||]
 
-    let source = {
-        new UITableViewSource() with
-            override this.GetCell(tableView, indexPath) =
-                let user = users.[indexPath.Row]
-                let cell = 
-                    match tableView.DequeueReusableCell "room-user-cell" with
-                    | null -> new UITableViewCell (UITableViewCellStyle.Subtitle, "room-user-cell")
-                    | c -> c
-
-                cell.SelectionStyle <- UITableViewCellSelectionStyle.None
-                cell.Tag <- nint indexPath.Row
-                cell.TextLabel.Text <- user.Label
-                Image.loadImageForCell (App.imageUrl user.Image 44) Image.placeholder cell tableView
-                cell
-
-            override this.RowsInSection(tableView, section) = nint users.Length
-            override this.RowSelected(tableView, indexPath) = ()
-            override this.CanEditRow(tableView, indexPath) = true
-            override this.EditingStyleForRow(tableView, indexPath) = UITableViewCellEditingStyle.Delete
-            override this.CommitEditingStyle(tableView, style, indexPath) =
-                let userId = users.[indexPath.Row].Id
-                Async.startNetworkWithContinuation
-                    (Settings.unblock [ userId ])
-                    (function
-                        | Api.ApiOk data -> 
-                            users <- [| for user in users do if user.Id <> userId then yield user |]
-                            tableView.DeleteRows([| indexPath |], UITableViewRowAnimation.Automatic)
-                        | error -> controller.HandleApiFailure error
-                    )
-
-           
-        }
+//    let source = {
+//        new UITableViewSource() with
+//            override this.GetCell(tableView, indexPath) =
+//                let user = users.[indexPath.Row]
+//                let cell = 
+//                    match tableView.DequeueReusableCell "room-user-cell" with
+//                    | null -> new UITableViewCell (UITableViewCellStyle.Subtitle, "room-user-cell")
+//                    | c -> c
+//
+//                cell.SelectionStyle <- UITableViewCellSelectionStyle.None
+//                cell.Tag <- nint indexPath.Row
+//                cell.TextLabel.Text <- user.Label
+//                Image.loadImageForCell (App.imageUrl user.Image 44) Image.placeholder cell tableView
+//                cell
+//
+//            override this.RowsInSection(tableView, section) = nint users.Length
+//            override this.RowSelected(tableView, indexPath) = ()
+//            override this.CanEditRow(tableView, indexPath) = true
+//            override this.EditingStyleForRow(tableView, indexPath) = UITableViewCellEditingStyle.Delete
+//            override this.CommitEditingStyle(tableView, style, indexPath) =
+//                let userId = users.[indexPath.Row].Id
+//                Async.startNetworkWithContinuation
+//                    (Settings.unblock [ userId ])
+//                    (function
+//                        | Api.ApiOk data -> 
+//                            users <- [| for user in users do if user.Id <> userId then yield user |]
+//                            tableView.DeleteRows([| indexPath |], UITableViewRowAnimation.Automatic)
+//                        | error -> controller.HandleApiFailure error
+//                    )
+//
+//           
+//        }
 
     override this.ViewDidLoad () =
         base.ViewDidLoad ()
 
-        this.TableView.Source <- source
+//        this.TableView.Source <- source
         Async.startNetworkWithContinuation
             (Settings.blocked ())
             (function
